@@ -1,0 +1,51 @@
+name: Build IPA for Sideloadly
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build and Package IPA
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.2.app/Contents/Developer
+        # If Xcode 15.2 is not available, you can remove the line above to use the default version.
+        continue-on-error: true 
+
+      - name: Build Xcode Project
+        run: |
+          # Build the project for generic iOS device, bypassing code signing
+          xcodebuild clean build \
+            -project MatchSplitter.xcodeproj \
+            -scheme MatchSplitter \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath derived_data \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Package IPA
+        run: |
+          # Create a Payload directory
+          mkdir -p Payload
+          # Move the built .app to the Payload directory
+          mv derived_data/Build/Products/Release-iphoneos/MatchSplitter.app Payload/
+          # Zip it up as an .ipa file
+          zip -r MatchSplitter.ipa Payload
+
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MatchSplitter-IPA
+          path: MatchSplitter.ipa
+          retention-days: 7
