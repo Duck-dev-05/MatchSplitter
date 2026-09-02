@@ -8,6 +8,11 @@ struct InvoicesView: View {
         animation: .default)
     private var invoices: FetchedResults<Invoice>
     
+    @FetchRequest(
+        sortDescriptors: [NSSortDescriptor(keyPath: \Client.name, ascending: true)],
+        animation: .default)
+    private var clients: FetchedResults<Client>
+    
     @State private var showingAddInvoice = false
     @State private var selectedInvoice: Invoice?
     
@@ -15,7 +20,7 @@ struct InvoicesView: View {
         NavigationView {
             List {
                 ForEach(invoices) { invoice in
-                    InvoiceRowView(invoice: invoice)
+                    InvoiceRowView(invoice: invoice, clients: clients)
                         .contentShape(Rectangle())
                         .onTapGesture {
                             selectedInvoice = invoice
