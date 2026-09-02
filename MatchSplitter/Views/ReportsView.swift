@@ -1,11 +1,12 @@
 import SwiftUI
-import SwiftData
+import CoreData
 
 struct ReportsView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var invoices: [Invoice]
-    @Query private var payments: [Payment]
-    @Query private var clients: [Client]
+    @Environment(\.managedObjectContext) private var viewContext
+    @FetchRequest(sortDescriptors: []) private var invoices: FetchedResults<Invoice>
+    @FetchRequest(sortDescriptors: []) private var payments: FetchedResults<Payment>
+    @FetchRequest(sortDescriptors: []) private var clients: FetchedResults<Client>
+    @FetchRequest(sortDescriptors: []) private var invoiceItems: FetchedResults<InvoiceItem>
     
     @State private var selectedPeriod: ReportPeriod = .thisMonth
     @State private var selectedReportType: ReportType = .revenue
@@ -35,13 +36,13 @@ struct ReportsView: View {
                     // Report Content
                     switch selectedReportType {
                     case .revenue:
-                        RevenueReportView(period: selectedPeriod, invoices: invoices, payments: payments)
+                        RevenueReportView(period: selectedPeriod, invoices: Array(invoices), payments: Array(payments))
                     case .outstanding:
-                        OutstandingReportView(period: selectedPeriod, invoices: invoices)
+                        OutstandingReportView(period: selectedPeriod, invoices: Array(invoices), payments: Array(payments), clients: Array(clients))
                     case .clients:
-                        ClientsReportView(clients: clients, invoices: invoices)
+                        ClientsReportView(clients: Array(clients), invoices: Array(invoices))
                     case .items:
-                        ItemsReportView(invoices: invoices)
+                        ItemsReportView(invoices: Array(invoices), invoiceItems: Array(invoiceItems))
                     }
                 }
                 .padding(.vertical)
@@ -102,7 +103,7 @@ struct RevenueReportView: View {
     var paymentMethods: [String: Double] {
         var methods: [String: Double] = [:]
         for payment in filteredPayments {
-            methods[payment.paymentMethod.rawValue, default: 0.0] += payment.amount
+            methods[payment.paymentMethod, default: 0.0] += payment.amount
         }
         return methods
     }
@@ -156,6 +157,18 @@ struct RevenueReportView: View {
 struct OutstandingReportView: View {
     let period: ReportsView.ReportPeriod
     let invoices: [Invoice]
+    let payments: [Payment]
+    let clients: [Client]
+    
+    func remainingAmount(for invoice: Invoice) -> Double {
+        let invoicePayments = payments.filter { $0.invoiceID == invoice.id }
+        let paidAmount = invoicePayments.reduce(0.0) { $0 + $1.amount }
+        return invoice.total - paidAmount
+    }
+    
+    func clientName(for invoice: Invoice) -> String {
+        return clients.first(where: { $0.id == invoice.clientID })?.name ?? "No Client"
+    }
     
     var filteredInvoices: [Invoice] {
         let calendar = Calendar.current
@@ -180,11 +193,11 @@ struct OutstandingReportView: View {
     }
     
     var totalOutstanding: Double {
-        filteredInvoices.reduce(0.0) { $0 + $1.remainingAmount }
+        filteredInvoices.reduce(0.0) { $0 + remainingAmount(for: $1) }
     }
     
     var overdueAmount: Double {
-        filteredInvoices.filter { $0.isOverdue }.reduce(0.0) { $0 + $1.remainingAmount }
+        filteredInvoices.filter { $0.isOverdue }.reduce(0.0) { $0 + remainingAmount(for: $1) }
     }
     
     var body: some View {
@@ -214,7 +227,7 @@ struct OutstandingReportView: View {
                                 Text(invoice.invoiceNumber)
                                     .font(.subheadline)
                                     .fontWeight(.medium)
-                                Text(invoice.client?.name ?? "No Client")
+                                Text(clientName(for: invoice))
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
@@ -222,7 +235,7 @@ struct OutstandingReportView: View {
                             Spacer()
                             
                             VStack(alignment: .trailing) {
-                                Text(invoice.remainingAmount.formatted(.currency(code: "USD")))
+                                Text(remainingAmount(for: invoice).formatted(.currency(code: "USD")))
                                     .font(.subheadline)
                                     .fontWeight(.medium)
                                 Text(invoice.dueDate.formatted(date: .abbreviated, time: .omitted))
@@ -297,13 +310,13 @@ struct ClientsReportView: View {
 
 struct ItemsReportView: View {
     let invoices: [Invoice]
+    let invoiceItems: [InvoiceItem]
     
     var allItems: [InvoiceItem] {
         var items: [InvoiceItem] = []
         for invoice in invoices {
-            if let invoiceItems = invoice.items {
-                items.append(contentsOf: invoiceItems)
-            }
+            let itemsForInvoice = invoiceItems.filter { $0.invoiceID == invoice.id }
+            items.append(contentsOf: itemsForInvoice)
         }
         return items
     }
@@ -311,10 +324,10 @@ struct ItemsReportView: View {
     var itemSales: [String: (quantity: Double, total: Double)] {
         var sales: [String: (quantity: Double, total: Double)] = [:]
         for item in allItems {
-            if let existing = sales[item.description] {
-                sales[item.description] = (existing.quantity + item.quantity, existing.total + item.finalTotal)
+            if let existing = sales[item.itemDescription] {
+                sales[item.itemDescription] = (existing.quantity + item.quantity, existing.total + item.finalTotal)
             } else {
-                sales[item.description] = (item.quantity, item.finalTotal)
+                sales[item.itemDescription] = (item.quantity, item.finalTotal)
             }
         }
         return sales
