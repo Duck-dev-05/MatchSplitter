@@ -67,8 +67,8 @@ struct AddInvoiceView: View {
                 }
                 
                 Section("Notes") {
-                    TextField("Additional Notes", text: $notes, axis: .vertical)
-                        .lineLimit(3...6)
+                    TextEditor(text: $notes)
+                        .frame(minHeight: 100)
                 }
             }
             .navigationTitle("New Invoice")
