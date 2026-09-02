@@ -46,7 +46,7 @@ struct DashboardView: View {
                                 .padding(.horizontal)
                         } else {
                             ForEach(recentInvoices.prefix(5)) { invoice in
-                                InvoiceRowView(invoice: invoice)
+                                InvoiceRowView(invoice: invoice, clients: clients)
                             }
                         }
                     }
@@ -63,7 +63,7 @@ struct DashboardView: View {
                                 .padding(.horizontal)
                         } else {
                             ForEach(recentPayments.prefix(5)) { payment in
-                                PaymentRowView(payment: payment)
+                                PaymentRowView(payment: payment, invoices: invoices)
                             }
                         }
                     }
@@ -79,7 +79,12 @@ struct DashboardView: View {
     }
     
     var outstandingAmount: Double {
-        invoices.filter { !$0.isPaid }.reduce(0.0) { $0 + $1.remainingAmount }
+        invoices.filter { !$0.isPaid }.reduce(0.0) { result, invoice in
+            let invoicePayments = payments.filter { $0.invoiceID == invoice.id }
+            let paidAmount = invoicePayments.reduce(0.0) { $0 + $1.amount }
+            let remaining = invoice.total - paidAmount
+            return result + remaining
+        }
     }
     
     var pendingInvoicesCount: Int {
@@ -98,11 +103,11 @@ struct DashboardView: View {
     }
     
     var recentInvoices: [Invoice] {
-        Array(invoices).sorted { $0.createdAt! > $1.createdAt! }
+        Array(invoices).sorted { $0.createdAt > $1.createdAt }
     }
     
     var recentPayments: [Payment] {
-        Array(payments).sorted { $0.paymentDate! > $1.paymentDate! }
+        Array(payments).sorted { $0.paymentDate > $1.paymentDate }
     }
 }
 
@@ -138,6 +143,11 @@ struct SummaryCard: View {
 
 struct InvoiceRowView: View {
     let invoice: Invoice
+    let clients: FetchedResults<Client>
+    
+    var clientName: String {
+        clients.first(where: { $0.id == invoice.clientID })?.name ?? "No Client"
+    }
     
     var body: some View {
         HStack {
@@ -145,7 +155,7 @@ struct InvoiceRowView: View {
                 Text(invoice.invoiceNumber)
                     .font(.subheadline)
                     .fontWeight(.medium)
-                Text(invoice.client?.name ?? "No Client")
+                Text(clientName)
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -180,11 +190,16 @@ struct InvoiceRowView: View {
 
 struct PaymentRowView: View {
     let payment: Payment
+    let invoices: FetchedResults<Invoice>
+    
+    var invoiceNumber: String {
+        invoices.first(where: { $0.id == payment.invoiceID })?.invoiceNumber ?? "Unknown Invoice"
+    }
     
     var body: some View {
         HStack {
             VStack(alignment: .leading) {
-                Text(payment.invoice?.invoiceNumber ?? "Unknown Invoice")
+                Text(invoiceNumber)
                     .font(.subheadline)
                     .fontWeight(.medium)
                 Text(payment.paymentMethod)
@@ -198,7 +213,7 @@ struct PaymentRowView: View {
                 Text(payment.amount.formatted(.currency(code: "USD")))
                     .font(.subheadline)
                     .fontWeight(.medium)
-                Text(payment.paymentDate!.formatted(date: .abbreviated, time: .omitted))
+                Text(payment.paymentDate.formatted(date: .abbreviated, time: .omitted))
                     .font(.caption)
                     .foregroundColor(.secondary)
             }

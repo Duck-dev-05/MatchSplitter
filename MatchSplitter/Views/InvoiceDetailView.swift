@@ -31,7 +31,7 @@ struct InvoiceDetailView: View {
                                 }
                             }
                             .pickerStyle(.menu)
-                            .onChange(of: selectedStatus) { _, newValue in
+                            .onChange(of: selectedStatus) { newValue in
                                 invoice.statusEnum = newValue
                                 invoice.updatedAt = Date()
                                 try? viewContext.save()

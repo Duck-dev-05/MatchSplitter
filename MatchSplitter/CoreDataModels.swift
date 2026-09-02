@@ -1,5 +1,6 @@
 import Foundation
 import CoreData
+import SwiftUI
 
 // MARK: - Client Entity
 @objc(Client)
@@ -136,3 +137,9 @@ extension Payment {
         return NSFetchRequest<Payment>(entityName: "Payment")
     }
 }
+
+// MARK: - Identifiable Conformance
+extension Client: Identifiable {}
+extension Invoice: Identifiable {}
+extension InvoiceItem: Identifiable {}
+extension Payment: Identifiable {}
