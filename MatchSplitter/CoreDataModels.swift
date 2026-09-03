@@ -21,7 +21,7 @@ extension User {
 
 // MARK: - BusinessGroup Entity
 @objc(BusinessGroup)
-public class BusinessGroup: NSManagedObject, Identifiable {
+public class BusinessGroup: NSManagedObject {
     @NSManaged public var id: UUID
     @NSManaged public var name: String
     @NSManaged public var ownerID: UUID

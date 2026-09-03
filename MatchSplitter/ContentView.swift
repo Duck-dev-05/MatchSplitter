@@ -118,6 +118,10 @@ struct Typography {
         .system(.title3, design: .rounded).bold()
     }
     
+    static func subheadlineBold() -> Font {
+        .system(.subheadline, design: .rounded).bold()
+    }
+    
     static func body() -> Font {
         .system(.body, design: .rounded)
     }
