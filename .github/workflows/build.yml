@@ -40,12 +40,12 @@ jobs:
           mkdir -p Payload
           # Move the built .app to the Payload directory
           mv derived_data/Build/Products/Release-iphoneos/MatchSplitter.app Payload/
-          # Zip it up as an .ipa file
-          zip -r MatchSplitter.ipa Payload
+          # Zip it up as an .tipa file
+          zip -r MatchSplitter.tipa Payload
 
-      - name: Upload IPA Artifact
+      - name: Upload TIPA Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: MatchSplitter-IPA
-          path: MatchSplitter.ipa
+          name: MatchSplitter-TrollStore
+          path: MatchSplitter.tipa
           retention-days: 7

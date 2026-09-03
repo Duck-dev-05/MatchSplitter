@@ -10,96 +10,104 @@ struct ClientDetailView: View {
     
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    // Client Header
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(client.name)
-                            .font(.title)
-                            .fontWeight(.bold)
-                        
-                        if !client.taxID.isEmpty {
-                            Text("Tax ID: \(client.taxID)")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                    .padding()
-                    .background(Color(.systemBackground))
-                    .cornerRadius(12)
-                    
-                    // Contact Information
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Contact Information")
-                            .font(.headline)
-                        
-                        if !client.email.isEmpty {
-                            HStack {
-                                Image(systemName: "envelope.fill")
-                                    .foregroundColor(.blue)
-                                    .frame(width: 24)
-                                Text(client.email)
-                                    .font(.subheadline)
-                            }
-                        }
-                        
-                        if !client.phone.isEmpty {
-                            HStack {
-                                Image(systemName: "phone.fill")
-                                    .foregroundColor(.green)
-                                    .frame(width: 24)
-                                Text(client.phone)
-                                    .font(.subheadline)
-                            }
-                        }
-                    }
-                    .padding()
-                    .background(Color(.systemBackground))
-                    .cornerRadius(12)
-                    
-                    // Address
-                    if !client.address.isEmpty {
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("Address")
-                                .font(.headline)
-                            
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(client.address)
-                                    .font(.subheadline)
-                                
-                                let addressParts = [client.city, client.state, client.zipCode].filter { !$0.isEmpty }
-                                if !addressParts.isEmpty {
-                                    Text(addressParts.joined(separator: ", "))
-                                        .font(.subheadline)
-                                }
-                                
-                                if !client.country.isEmpty {
-                                    Text(client.country)
-                                        .font(.subheadline)
-                                }
-                            }
-                        }
-                        .padding()
-                        .background(Color(.systemBackground))
-                        .cornerRadius(12)
-                    }
-                    
-                    // Notes
-                    if !client.notes.isEmpty {
+            ZStack {
+                Theme.background.ignoresSafeArea()
+                
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 20) {
+                        // Client Header
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("Notes")
-                                .font(.headline)
-                            Text(client.notes)
-                                .font(.subheadline)
+                            Text(client.name)
+                                .font(.system(.title2, design: .rounded).bold())
+                            
+                            if !client.taxID.isEmpty {
+                                Text("Tax ID: \(client.taxID)")
+                                    .font(.system(.caption, design: .rounded))
+                                    .foregroundColor(.secondary)
+                            }
                         }
-                        .padding()
-                        .background(Color(.systemBackground))
-                        .cornerRadius(12)
+                        .padding(16)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .cardStyle()
+                        
+                        // Contact Information
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Contact Information")
+                                .font(.system(.headline, design: .rounded).bold())
+                                .foregroundColor(Theme.primary)
+                            
+                            if !client.email.isEmpty {
+                                HStack(spacing: 12) {
+                                    Image(systemName: "envelope.fill")
+                                        .foregroundColor(Theme.primary.opacity(0.7))
+                                        .frame(width: 24)
+                                    Text(client.email)
+                                        .font(.system(.subheadline, design: .rounded))
+                                }
+                            }
+                            
+                            if !client.phone.isEmpty {
+                                HStack(spacing: 12) {
+                                    Image(systemName: "phone.fill")
+                                        .foregroundColor(Theme.primary.opacity(0.7))
+                                        .frame(width: 24)
+                                    Text(client.phone)
+                                        .font(.system(.subheadline, design: .rounded))
+                                }
+                            }
+                        }
+                        .padding(16)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .cardStyle()
+                        
+                        // Address
+                        if !client.address.isEmpty {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("Address")
+                                    .font(.system(.headline, design: .rounded).bold())
+                                    .foregroundColor(Theme.primary)
+                                
+                                VStack(alignment: .leading, spacing: 6) {
+                                    Text(client.address)
+                                        .font(.system(.subheadline, design: .rounded))
+                                    
+                                    let addressParts = [client.city, client.state, client.zipCode].filter { !$0.isEmpty }
+                                    if !addressParts.isEmpty {
+                                        Text(addressParts.joined(separator: ", "))
+                                            .font(.system(.subheadline, design: .rounded))
+                                    }
+                                    
+                                    if !client.country.isEmpty {
+                                        Text(client.country)
+                                            .font(.system(.subheadline, design: .rounded))
+                                    }
+                                }
+                            }
+                            .padding(16)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .cardStyle()
+                        }
+                        
+                        // Notes
+                        if !client.notes.isEmpty {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Notes")
+                                    .font(.system(.headline, design: .rounded).bold())
+                                    .foregroundColor(Theme.primary)
+                                Text(client.notes)
+                                    .font(.system(.subheadline, design: .rounded))
+                                    .foregroundColor(.secondary)
+                            }
+                            .padding(16)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .cardStyle()
+                        }
                     }
+                    .padding()
                 }
-                .padding()
             }
             .navigationTitle("Client Details")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Done") {
@@ -178,7 +186,10 @@ struct EditClientView: View {
                         .frame(minHeight: 100)
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(Theme.background.ignoresSafeArea())
             .navigationTitle("Edit Client")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {

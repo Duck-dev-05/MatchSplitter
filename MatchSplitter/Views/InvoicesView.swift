@@ -18,21 +18,35 @@ struct InvoicesView: View {
     
     var body: some View {
         NavigationView {
-            List {
-                ForEach(invoices) { invoice in
-                    InvoiceRowView(invoice: invoice, clients: clients)
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            selectedInvoice = invoice
+            ZStack {
+                Theme.background.ignoresSafeArea()
+                
+                if invoices.isEmpty {
+                    emptyStateView
+                } else {
+                    List {
+                        ForEach(invoices) { invoice in
+                            InvoiceRowView(invoice: invoice, clients: clients)
+                                .onTapGesture {
+                                    selectedInvoice = invoice
+                                }
+                                .listRowSeparator(.hidden)
+                                .listRowBackground(Color.clear)
+                                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                         }
+                        .onDelete(perform: deleteInvoices)
+                    }
+                    .listStyle(.plain)
+                    .padding(.top, 8)
                 }
-                .onDelete(perform: deleteInvoices)
             }
             .navigationTitle("Invoices")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: { showingAddInvoice = true }) {
-                        Image(systemName: "plus")
+                        Image(systemName: "plus.circle.fill")
+                            .font(.title2)
+                            .foregroundColor(Theme.primary)
                     }
                 }
             }
@@ -43,6 +57,32 @@ struct InvoicesView: View {
                 InvoiceDetailView(invoice: invoice)
             }
         }
+    }
+    
+    private var emptyStateView: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "doc.text.magnifyingglass")
+                .font(.system(size: 48))
+                .foregroundColor(Theme.primary.opacity(0.5))
+            Text("No Invoices Yet")
+                .font(.system(.title3, design: .rounded).bold())
+            Text("Create an invoice to bill your clients.")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+            
+            Button(action: { showingAddInvoice = true }) {
+                Text("Create Invoice")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .padding()
+                    .frame(maxWidth: 200)
+                    .background(Theme.gradientPrimary)
+                    .cornerRadius(12)
+                    .shadow(color: Theme.primary.opacity(0.3), radius: 5, x: 0, y: 3)
+            }
+            .padding(.top, 8)
+        }
+        .padding()
     }
     
     private func deleteInvoices(offsets: IndexSet) {

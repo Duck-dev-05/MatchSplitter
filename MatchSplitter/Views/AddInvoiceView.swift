@@ -71,7 +71,10 @@ struct AddInvoiceView: View {
                         .frame(minHeight: 100)
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(Theme.background.ignoresSafeArea())
             .navigationTitle("New Invoice")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {

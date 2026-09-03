@@ -20,58 +20,82 @@ struct DashboardView: View {
     
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(spacing: 20) {
-                    // Summary Cards
-                    LazyVGrid(columns: [
-                        GridItem(.flexible()),
-                        GridItem(.flexible())
-                    ], spacing: 16) {
-                        SummaryCard(title: "Total Revenue", amount: totalRevenue, icon: "dollarsign.circle.fill", color: .green)
-                        SummaryCard(title: "Outstanding", amount: outstandingAmount, icon: "exclamationmark.circle.fill", color: .orange)
-                        SummaryCard(title: "Pending Invoices", amount: Double(pendingInvoicesCount), icon: "doc.text.fill", color: .blue)
-                        SummaryCard(title: "This Month", amount: thisMonthRevenue, icon: "calendar.circle.fill", color: .purple)
-                    }
-                    .padding(.horizontal)
-                    
-                    // Recent Invoices
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Recent Invoices")
-                            .font(.headline)
-                            .padding(.horizontal)
+            ZStack {
+                Theme.background.ignoresSafeArea()
+                
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 24) {
+                        // Summary Cards
+                        LazyVGrid(columns: [
+                            GridItem(.flexible(), spacing: 16),
+                            GridItem(.flexible(), spacing: 16)
+                        ], spacing: 16) {
+                            SummaryCard(title: "Total Revenue", amount: totalRevenue, icon: "chart.line.uptrend.xyaxis", isPrimary: true)
+                            SummaryCard(title: "Outstanding", amount: outstandingAmount, icon: "exclamationmark.triangle.fill", color: .orange)
+                            SummaryCard(title: "Pending Invoices", amount: Double(pendingInvoicesCount), icon: "doc.text.fill", color: .blue, isCurrency: false)
+                            SummaryCard(title: "This Month", amount: thisMonthRevenue, icon: "calendar.badge.clock", color: .purple)
+                        }
+                        .padding(.horizontal)
+                        .padding(.top, 8)
                         
-                        if recentInvoices.isEmpty {
-                            Text("No invoices yet")
-                                .foregroundColor(.secondary)
+                        // Recent Invoices
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text("Recent Invoices")
+                                .font(.system(.title3, design: .rounded).bold())
                                 .padding(.horizontal)
-                        } else {
-                            ForEach(recentInvoices.prefix(5)) { invoice in
-                                InvoiceRowView(invoice: invoice, clients: clients)
+                            
+                            if recentInvoices.isEmpty {
+                                emptyStateView(message: "No invoices yet", icon: "doc.text.magnifyingglass")
+                            } else {
+                                VStack(spacing: 12) {
+                                    ForEach(recentInvoices.prefix(5)) { invoice in
+                                        InvoiceRowView(invoice: invoice, clients: clients)
+                                    }
+                                }
+                                .padding(.horizontal)
                             }
                         }
-                    }
-                    
-                    // Recent Payments
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Recent Payments")
-                            .font(.headline)
-                            .padding(.horizontal)
                         
-                        if recentPayments.isEmpty {
-                            Text("No payments yet")
-                                .foregroundColor(.secondary)
+                        // Recent Payments
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text("Recent Payments")
+                                .font(.system(.title3, design: .rounded).bold())
                                 .padding(.horizontal)
-                        } else {
-                            ForEach(recentPayments.prefix(5)) { payment in
-                                PaymentRowView(payment: payment, invoices: invoices)
+                            
+                            if recentPayments.isEmpty {
+                                emptyStateView(message: "No payments yet", icon: "creditcard.trianglebadge.exclamationmark")
+                            } else {
+                                VStack(spacing: 12) {
+                                    ForEach(recentPayments.prefix(5)) { payment in
+                                        PaymentRowView(payment: payment, invoices: invoices)
+                                    }
+                                }
+                                .padding(.horizontal)
                             }
                         }
+                        
+                        Spacer(minLength: 40)
                     }
+                    .padding(.vertical)
                 }
-                .padding(.vertical)
             }
             .navigationTitle("Dashboard")
         }
+    }
+    
+    private func emptyStateView(message: String, icon: String) -> some View {
+        VStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 32))
+                .foregroundColor(.secondary.opacity(0.5))
+            Text(message)
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 32)
+        .cardStyle()
+        .padding(.horizontal)
     }
     
     var totalRevenue: Double {
@@ -115,29 +139,54 @@ struct SummaryCard: View {
     let title: String
     let amount: Double
     let icon: String
-    let color: Color
+    var color: Color = Theme.primary
+    var isCurrency: Bool = true
+    var isPrimary: Bool = false
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: icon)
-                    .foregroundColor(color)
                     .font(.title2)
+                    .foregroundColor(isPrimary ? .white : color)
+                    .padding(8)
+                    .background(
+                        Circle().fill(isPrimary ? Color.white.opacity(0.2) : color.opacity(0.15))
+                    )
                 Spacer()
             }
             
-            Text(title)
-                .font(.caption)
-                .foregroundColor(.secondary)
-            
-            Text(amount.formatted(.currency(code: "USD")))
-                .font(.headline)
-                .foregroundColor(.primary)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.system(.caption, design: .rounded))
+                    .fontWeight(.medium)
+                    .foregroundColor(isPrimary ? .white.opacity(0.8) : .secondary)
+                
+                Group {
+                    if isCurrency {
+                        Text(amount.formatted(.currency(code: "USD")))
+                    } else {
+                        Text("\(Int(amount))")
+                    }
+                }
+                .font(.system(.title3, design: .rounded).bold())
+                .foregroundColor(isPrimary ? .white : .primary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+            }
         }
-        .padding()
-        .background(Color(.systemBackground))
-        .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+        .padding(16)
+        .background(
+            Group {
+                if isPrimary {
+                    Theme.gradientPrimary
+                } else {
+                    Theme.cardBackground
+                }
+            }
+        )
+        .cornerRadius(20)
+        .shadow(color: isPrimary ? Theme.primary.opacity(0.3) : Color.black.opacity(0.05), radius: 10, x: 0, y: 5)
     }
 }
 
@@ -151,30 +200,31 @@ struct InvoiceRowView: View {
     
     var body: some View {
         HStack {
-            VStack(alignment: .leading) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text(invoice.invoiceNumber)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
+                    .font(.system(.subheadline, design: .rounded).bold())
                 Text(clientName)
-                    .font(.caption)
+                    .font(.system(.caption, design: .rounded))
                     .foregroundColor(.secondary)
             }
             
             Spacer()
             
-            VStack(alignment: .trailing) {
+            VStack(alignment: .trailing, spacing: 4) {
                 Text(invoice.total.formatted(.currency(code: "USD")))
-                    .font(.subheadline)
-                    .fontWeight(.medium)
+                    .font(.system(.subheadline, design: .rounded).bold())
+                
                 Text(invoice.status)
-                    .font(.caption)
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
                     .foregroundColor(statusColor)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(statusColor.opacity(0.15))
+                    .clipShape(Capsule())
             }
         }
-        .padding()
-        .background(Color(.systemBackground))
-        .cornerRadius(8)
-        .padding(.horizontal)
+        .padding(16)
+        .cardStyle()
     }
     
     var statusColor: Color {
@@ -182,7 +232,7 @@ struct InvoiceRowView: View {
         case .paid: return .green
         case .partial: return .orange
         case .overdue: return .red
-        case .sent, .viewed: return .blue
+        case .sent, .viewed: return Theme.primary
         default: return .gray
         }
     }
@@ -198,29 +248,26 @@ struct PaymentRowView: View {
     
     var body: some View {
         HStack {
-            VStack(alignment: .leading) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text(invoiceNumber)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
+                    .font(.system(.subheadline, design: .rounded).bold())
                 Text(payment.paymentMethod)
-                    .font(.caption)
+                    .font(.system(.caption, design: .rounded))
                     .foregroundColor(.secondary)
             }
             
             Spacer()
             
-            VStack(alignment: .trailing) {
+            VStack(alignment: .trailing, spacing: 4) {
                 Text(payment.amount.formatted(.currency(code: "USD")))
-                    .font(.subheadline)
-                    .fontWeight(.medium)
+                    .font(.system(.subheadline, design: .rounded).bold())
+                    .foregroundColor(.green)
                 Text(payment.paymentDate.formatted(date: .abbreviated, time: .omitted))
-                    .font(.caption)
+                    .font(.system(.caption, design: .rounded))
                     .foregroundColor(.secondary)
             }
         }
-        .padding()
-        .background(Color(.systemBackground))
-        .cornerRadius(8)
-        .padding(.horizontal)
+        .padding(16)
+        .cardStyle()
     }
 }

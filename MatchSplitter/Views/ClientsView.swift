@@ -13,21 +13,35 @@ struct ClientsView: View {
     
     var body: some View {
         NavigationView {
-            List {
-                ForEach(clients) { client in
-                    ClientRowView(client: client)
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            selectedClient = client
+            ZStack {
+                Theme.background.ignoresSafeArea()
+                
+                if clients.isEmpty {
+                    emptyStateView
+                } else {
+                    List {
+                        ForEach(clients) { client in
+                            ClientRowView(client: client)
+                                .onTapGesture {
+                                    selectedClient = client
+                                }
+                                .listRowSeparator(.hidden)
+                                .listRowBackground(Color.clear)
+                                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                         }
+                        .onDelete(perform: deleteClients)
+                    }
+                    .listStyle(.plain)
+                    .padding(.top, 8)
                 }
-                .onDelete(perform: deleteClients)
             }
             .navigationTitle("Clients")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: { showingAddClient = true }) {
-                        Image(systemName: "plus")
+                        Image(systemName: "plus.circle.fill")
+                            .font(.title2)
+                            .foregroundColor(Theme.primary)
                     }
                 }
             }
@@ -38,6 +52,32 @@ struct ClientsView: View {
                 ClientDetailView(client: client)
             }
         }
+    }
+    
+    private var emptyStateView: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "person.3.sequence.fill")
+                .font(.system(size: 48))
+                .foregroundColor(Theme.primary.opacity(0.5))
+            Text("No Clients Yet")
+                .font(.system(.title3, design: .rounded).bold())
+            Text("Add your first client to get started.")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+            
+            Button(action: { showingAddClient = true }) {
+                Text("Add Client")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .padding()
+                    .frame(maxWidth: 200)
+                    .background(Theme.gradientPrimary)
+                    .cornerRadius(12)
+                    .shadow(color: Theme.primary.opacity(0.3), radius: 5, x: 0, y: 3)
+            }
+            .padding(.top, 8)
+        }
+        .padding()
     }
     
     private func deleteClients(offsets: IndexSet) {
@@ -58,14 +98,22 @@ struct ClientRowView: View {
     let client: Client
     
     var body: some View {
-        HStack {
-            VStack(alignment: .leading) {
+        HStack(spacing: 16) {
+            Circle()
+                .fill(Theme.primary.opacity(0.15))
+                .frame(width: 48, height: 48)
+                .overlay(
+                    Text(String(client.name.prefix(1)).uppercased())
+                        .font(.system(.title3, design: .rounded).bold())
+                        .foregroundColor(Theme.primary)
+                )
+            
+            VStack(alignment: .leading, spacing: 4) {
                 Text(client.name)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
+                    .font(.system(.headline, design: .rounded).bold())
                 if !client.email.isEmpty {
                     Text(client.email)
-                        .font(.caption)
+                        .font(.system(.caption, design: .rounded))
                         .foregroundColor(.secondary)
                 }
             }
@@ -73,9 +121,10 @@ struct ClientRowView: View {
             Spacer()
             
             Image(systemName: "chevron.right")
-                .foregroundColor(.secondary)
-                .font(.caption)
+                .foregroundColor(.secondary.opacity(0.5))
+                .font(.caption.bold())
         }
-        .padding(.vertical, 4)
+        .padding(16)
+        .cardStyle()
     }
 }
