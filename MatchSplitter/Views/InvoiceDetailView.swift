@@ -51,7 +51,6 @@ struct InvoiceDetailView: View {
                                 .font(Typography.captionBold())
                                 .foregroundColor(Theme.dynamicTextSecondary)
                                 .textCase(.uppercase)
-                                .tracking(1.2)
                             
                             Text(balanceDue.formatted(.currency(code: "VND")))
                                 .font(Typography.amountLarge())

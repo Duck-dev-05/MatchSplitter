@@ -49,7 +49,6 @@ struct DashboardView: View {
                                 .font(Typography.subheadlineBold())
                                 .foregroundColor(Theme.dynamicTextSecondary)
                                 .textCase(.uppercase)
-                                .tracking(1.2)
                             
                             Text(outstandingAmount.formatted(.currency(code: "VND")))
                                 .font(Typography.amountLarge())
