@@ -8,6 +8,7 @@
     </entity>
     <entity name="User" representedClassName="User" syncable="YES">
         <attribute name="createdAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="email" optional="YES" attributeType="String"/>
         <attribute name="id" optional="NO" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="pin" optional="YES" attributeType="String"/>
         <attribute name="username" optional="NO" attributeType="String"/>
