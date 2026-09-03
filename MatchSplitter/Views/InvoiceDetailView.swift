@@ -325,8 +325,6 @@ struct InvoiceDetailView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
-                        // Render a simple version without the done/share buttons
-                        let pdfView = AnyView(self.body) // Might be recursive, better to render a specific InvoicePDFView if we had one.
                         // Actually, for simplicity on iOS 15, we can just share self
                         if let url = self.renderAsPDF(fileName: "Invoice_\(invoice.invoiceNumber).pdf") {
                             self.pdfURL = url

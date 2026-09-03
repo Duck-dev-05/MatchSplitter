@@ -170,12 +170,12 @@ struct LoginView: View {
             }
             
             guard let user = signInResult?.user,
-                  let profile = user.profile,
-                  let email = profile.email else {
+                  let profile = user.profile else {
                 self.errorMessage = "Could not fetch Google profile."
                 return
             }
             
+            let email = profile.email
             let name = profile.name
             
             // Check if user already exists
