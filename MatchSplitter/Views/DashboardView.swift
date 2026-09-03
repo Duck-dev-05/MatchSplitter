@@ -65,11 +65,9 @@ struct DashboardView: View {
                                         .foregroundColor(Theme.dynamicTextSecondary)
                                 }
                                 Spacer()
-                                if let createdAt = group.createdAt {
-                                    Text("Since \(createdAt.formatted(date: .abbreviated, time: .omitted))")
-                                        .font(Typography.caption())
-                                        .foregroundColor(Theme.dynamicTextSecondary)
-                                }
+                                Text("Since \(group.createdAt.formatted(date: .abbreviated, time: .omitted))")
+                                    .font(Typography.caption())
+                                    .foregroundColor(Theme.dynamicTextSecondary)
                             }
                             .padding(.horizontal, Theme.spacingL)
                         }
