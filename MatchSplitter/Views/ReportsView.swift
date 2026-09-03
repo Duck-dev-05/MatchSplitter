@@ -156,8 +156,9 @@ struct RevenueReportView: View {
                 } else {
                     VStack(spacing: 0) {
                         let sortedMethods = paymentMethods.sorted(by: { $0.value > $1.value })
-                        ForEach(Array(sortedMethods.enumerated()), id: \.element.key) { index, element in
-                            let (method, amount) = element
+                        ForEach(Array(sortedMethods.enumerated()), id: \.offset) { tuple in
+                            let index = tuple.offset
+                            let (method, amount) = tuple.element
                             HStack {
                                 Text(method)
                                     .font(Typography.bodyBold())
@@ -264,7 +265,9 @@ struct OutstandingReportView: View {
                 } else {
                     VStack(spacing: 0) {
                         let sortedInvoices = filteredInvoices.sorted { $0.dueDate < $1.dueDate }
-                        ForEach(Array(sortedInvoices.enumerated()), id: \.element.id) { index, invoice in
+                        ForEach(Array(sortedInvoices.enumerated()), id: \.element.id) { tuple in
+                            let index = tuple.offset
+                            let invoice = tuple.element
                             HStack {
                                 VStack(alignment: .leading, spacing: Theme.spacingXS) {
                                     Text(invoice.invoiceNumber)
@@ -328,7 +331,9 @@ struct ClientsReportView: View {
                 } else {
                     VStack(spacing: 0) {
                         let sortedClients = clients.sorted { $0.name < $1.name }
-                        ForEach(Array(sortedClients.enumerated()), id: \.element.id) { index, client in
+                        ForEach(Array(sortedClients.enumerated()), id: \.element.id) { tuple in
+                            let index = tuple.offset
+                            let client = tuple.element
                             HStack {
                                 VStack(alignment: .leading, spacing: Theme.spacingXS) {
                                     Text(client.name)
@@ -411,8 +416,9 @@ struct ItemsReportView: View {
                 } else {
                     VStack(spacing: 0) {
                         let sortedItems = Array(itemSales.sorted(by: { $0.value.total > $1.value.total }).prefix(10))
-                        ForEach(Array(sortedItems.enumerated()), id: \.element.key) { index, element in
-                            let (itemName, data) = element
+                        ForEach(Array(sortedItems.enumerated()), id: \.offset) { tuple in
+                            let index = tuple.offset
+                            let (itemName, data) = tuple.element
                             HStack {
                                 VStack(alignment: .leading, spacing: Theme.spacingXS) {
                                     Text(itemName)
