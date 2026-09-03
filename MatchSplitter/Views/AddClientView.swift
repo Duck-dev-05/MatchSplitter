@@ -89,7 +89,7 @@ struct AddClientView: View {
             dismiss()
         } catch {
             let nsError = error as NSError
-            fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
+            print("Error saving client: \(nsError), \(nsError.userInfo)")
         }
     }
 }

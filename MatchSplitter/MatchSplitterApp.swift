@@ -47,8 +47,8 @@ class PersistenceController {
             do {
                 try context.save()
             } catch {
-                let nsError = error as NSError
-                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
+                let error = error as NSError
+                print("Unresolved error \(error), \(error.userInfo)")
             }
         }
     }

@@ -95,7 +95,7 @@ struct ClientsView: View {
                 try viewContext.save()
             } catch {
                 let nsError = error as NSError
-                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
+                print("Error deleting client: \(nsError), \(nsError.userInfo)")
             }
         }
     }

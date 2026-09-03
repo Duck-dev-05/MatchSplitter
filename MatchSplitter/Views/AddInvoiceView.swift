@@ -24,7 +24,16 @@ struct AddInvoiceView: View {
     @State private var notes: String = ""
     @State private var taxRate: Double = 0.0
     @State private var discount: Double = 0.0
-    @State private var total: Double = 0.0
+    @State private var items: [TempInvoiceItem] = [TempInvoiceItem()]
+    
+    var calculatedSubtotal: Double {
+        items.reduce(0) { $0 + ($1.quantity * $1.unitPrice) }
+    }
+    
+    var calculatedTotal: Double {
+        let sub = calculatedSubtotal
+        return sub - discount + (sub * (taxRate / 100.0))
+    }
     
     var body: some View {
         NavigationView {
@@ -45,13 +54,50 @@ struct AddInvoiceView: View {
                     TextField("Payment Terms", text: $paymentTerms)
                 }
                 
+                Section("Line Items") {
+                    ForEach($items) { $item in
+                        VStack(spacing: 8) {
+                            TextField("Item Description", text: $item.itemDescription)
+                            
+                            HStack {
+                                VStack(alignment: .leading) {
+                                    Text("Qty").font(.caption).foregroundColor(.secondary)
+                                    TextField("Qty", value: $item.quantity, format: .number)
+                                        .keyboardType(.decimalPad)
+                                }
+                                
+                                VStack(alignment: .leading) {
+                                    Text("Price").font(.caption).foregroundColor(.secondary)
+                                    TextField("Price", value: $item.unitPrice, format: .number)
+                                        .keyboardType(.decimalPad)
+                                }
+                                
+                                Spacer()
+                                
+                                VStack(alignment: .trailing) {
+                                    Text("Total").font(.caption).foregroundColor(.secondary)
+                                    Text((item.quantity * item.unitPrice).formatted(.currency(code: "VND")))
+                                }
+                            }
+                        }
+                        .padding(.vertical, 4)
+                    }
+                    .onDelete { indexSet in
+                        items.remove(atOffsets: indexSet)
+                    }
+                    
+                    Button {
+                        items.append(TempInvoiceItem())
+                    } label: {
+                        Label("Add Item", systemImage: "plus.circle")
+                    }
+                }
+                
                 Section("Financials") {
                     HStack {
-                        Text("Total Amount")
+                        Text("Subtotal")
                         Spacer()
-                        TextField("₫", value: $total, format: .currency(code: "VND"))
-                            .keyboardType(.decimalPad)
-                            .multilineTextAlignment(.trailing)
+                        Text(calculatedSubtotal.formatted(.currency(code: "VND")))
                     }
                     
                     HStack {
@@ -70,6 +116,14 @@ struct AddInvoiceView: View {
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.trailing)
                             .frame(width: 80)
+                    }
+                    
+                    HStack {
+                        Text("Total Amount")
+                            .bold()
+                        Spacer()
+                        Text(calculatedTotal.formatted(.currency(code: "VND")))
+                            .bold()
                     }
                 }
                 
@@ -111,11 +165,27 @@ struct AddInvoiceView: View {
         invoice.notes = notes
         invoice.taxRate = taxRate
         invoice.discount = discount
-        invoice.total = total
-        invoice.subtotal = total + discount - (total * (taxRate / 100.0))
-        invoice.taxAmount = total * (taxRate / 100.0)
+        let subtotal = calculatedSubtotal
+        let finalTotal = calculatedTotal
+        
+        invoice.total = finalTotal
+        invoice.subtotal = subtotal
+        invoice.taxAmount = subtotal * (taxRate / 100.0)
         invoice.createdAt = Date()
         invoice.updatedAt = Date()
+        
+        for tempItem in items {
+            let item = InvoiceItem(context: viewContext)
+            item.id = UUID()
+            item.invoiceID = invoice.id
+            item.itemDescription = tempItem.itemDescription
+            item.quantity = tempItem.quantity
+            item.unitPrice = tempItem.unitPrice
+            item.taxRate = 0
+            item.taxAmount = 0
+            item.discount = 0
+            item.total = tempItem.quantity * tempItem.unitPrice
+        }
         
         do {
             try viewContext.save()
@@ -125,4 +195,11 @@ struct AddInvoiceView: View {
             print("Error saving invoice: \(nsError)")
         }
     }
+}
+
+struct TempInvoiceItem: Identifiable {
+    var id = UUID()
+    var itemDescription: String = ""
+    var quantity: Double = 1.0
+    var unitPrice: Double = 0.0
 }
