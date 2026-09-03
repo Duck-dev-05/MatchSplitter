@@ -21,11 +21,14 @@ extension User {
 
 // MARK: - BusinessGroup Entity
 @objc(BusinessGroup)
-public class BusinessGroup: NSManagedObject {
+public class BusinessGroup: NSManagedObject, Identifiable {
     @NSManaged public var id: UUID
     @NSManaged public var name: String
     @NSManaged public var ownerID: UUID
     @NSManaged public var createdAt: Date
+    @NSManaged public var bankName: String?
+    @NSManaged public var accountNumber: String?
+    @NSManaged public var accountName: String?
 }
 
 extension BusinessGroup {

@@ -1,5 +1,6 @@
 import SwiftUI
 import CoreData
+import CoreImage.CIFilterBuiltins
 
 struct Theme {
     // Light Mode Colors
@@ -151,7 +152,7 @@ struct ContentView: View {
             TabView(selection: $selectedTab) {
                 DashboardView(groupID: group.id)
                     .tabItem {
-                        Label("Dashboard", systemImage: "chart.bar.fill")
+                        Label("Home", systemImage: "house.fill")
                     }
                     .tag(0)
                 
@@ -163,19 +164,19 @@ struct ContentView: View {
                 
                 ClientsView(groupID: group.id)
                     .tabItem {
-                        Label("Clients", systemImage: "person.2.fill")
+                        Label("Network", systemImage: "person.3.fill")
                     }
                     .tag(2)
                 
                 ReportsView(groupID: group.id)
                     .tabItem {
-                        Label("Reports", systemImage: "chart.pie.fill")
+                        Label("Insights", systemImage: "sparkles")
                     }
                     .tag(3)
                 
                 ProfileView()
                     .tabItem {
-                        Label("Profile", systemImage: "person.crop.circle")
+                        Label("Me", systemImage: "person.crop.circle")
                     }
                     .tag(4)
             }
@@ -193,6 +194,7 @@ struct ContentView: View {
 
 struct ProfileView: View {
     @EnvironmentObject private var session: SessionManager
+    @State private var showingEditBank = false
     
     var body: some View {
         NavigationView {
@@ -227,9 +229,9 @@ struct ProfileView: View {
                         }
                         .padding(.top, Theme.spacingL)
                         
-                        // Business Group Section
+                        // Workspace Section
                         VStack(alignment: .leading, spacing: Theme.spacingS) {
-                            Text("Active Business")
+                            Text("My Workspace")
                                 .font(Typography.captionBold())
                                 .foregroundColor(Theme.dynamicTextSecondary)
                                 .padding(.horizontal)
@@ -239,7 +241,7 @@ struct ProfileView: View {
                                     VStack(alignment: .leading, spacing: Theme.spacingXS) {
                                         Text(session.currentGroup?.name ?? "No Group")
                                             .font(Typography.bodyBold())
-                                        Text("Current active workspace")
+                                        Text("Active workspace")
                                             .font(Typography.caption())
                                             .foregroundColor(Theme.dynamicTextSecondary)
                                     }
@@ -265,9 +267,87 @@ struct ProfileView: View {
                             .padding(.horizontal)
                         }
                         
-                        // Danger Zone
+                        // Payment QR Section (Digital Business Card)
                         VStack(alignment: .leading, spacing: Theme.spacingS) {
-                            Text("Account")
+                            HStack {
+                                Text("Payment Card")
+                                    .font(Typography.captionBold())
+                                    .foregroundColor(Theme.dynamicTextSecondary)
+                                Spacer()
+                                Button("Edit") {
+                                    showingEditBank = true
+                                }
+                                .font(Typography.captionBold())
+                                .foregroundColor(Theme.primary)
+                            }
+                            .padding(.horizontal)
+                            
+                            if let bank = session.currentGroup?.bankName,
+                               let accName = session.currentGroup?.accountName,
+                               let accNum = session.currentGroup?.accountNumber,
+                               !bank.isEmpty, !accName.isEmpty, !accNum.isEmpty {
+                                
+                                let qrString = "Bank: \(bank)\nAccount: \(accNum)\nName: \(accName)"
+                                
+                                VStack(spacing: Theme.spacingM) {
+                                    Image(uiImage: QRCodeGenerator().generateQRCode(from: qrString))
+                                        .interpolation(.none)
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: 180, height: 180)
+                                        .padding(12)
+                                        .background(Color.white)
+                                        .cornerRadius(12)
+                                    
+                                    VStack(spacing: 4) {
+                                        Text(bank)
+                                            .font(Typography.headline())
+                                            .foregroundColor(.white)
+                                        Text(accNum)
+                                            .font(Typography.bodyBold())
+                                            .foregroundColor(.white.opacity(0.9))
+                                        Text(accName.uppercased())
+                                            .font(Typography.caption())
+                                            .foregroundColor(.white.opacity(0.7))
+                                    }
+                                    .padding(.bottom, Theme.spacingM)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.top, Theme.spacingL)
+                                .background(Theme.gradientPrimary)
+                                .cornerRadius(24)
+                                .shadow(color: Theme.primary.opacity(0.3), radius: 15, x: 0, y: 10)
+                                .padding(.horizontal)
+                                
+                            } else {
+                                VStack(spacing: Theme.spacingM) {
+                                    Image(systemName: "creditcard.and.123")
+                                        .font(.system(size: 40))
+                                        .foregroundColor(Theme.primary.opacity(0.5))
+                                    Text("Create your Digital Payment Card so clients can easily scan and pay you.")
+                                        .font(Typography.subheadline())
+                                        .foregroundColor(Theme.dynamicTextSecondary)
+                                        .multilineTextAlignment(.center)
+                                    Button("Set Up Payment Card") {
+                                        showingEditBank = true
+                                    }
+                                    .font(Typography.subheadlineBold())
+                                    .padding(.horizontal, Theme.spacingL)
+                                    .padding(.vertical, Theme.spacingS)
+                                    .background(Theme.primary)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(8)
+                                }
+                                .padding(Theme.spacingL)
+                                .frame(maxWidth: .infinity)
+                                .cardStyle()
+                                .padding(.horizontal)
+                            }
+                        }
+                        
+                        // Settings Zone
+                        VStack(alignment: .leading, spacing: Theme.spacingS) {
+                            Text("Settings")
                                 .font(Typography.captionBold())
                                 .foregroundColor(Theme.dynamicTextSecondary)
                                 .padding(.horizontal)
@@ -294,6 +374,88 @@ struct ProfileView: View {
                 }
             }
             .navigationTitle("Profile")
+            .sheet(isPresented: $showingEditBank) {
+                if let group = session.currentGroup {
+                    EditBankDetailsView(group: group)
+                }
+            }
         }
+    }
+}
+
+struct QRCodeGenerator {
+    let context = CIContext()
+    let filter = CIFilter.qrCodeGenerator()
+    
+    func generateQRCode(from string: String) -> UIImage {
+        filter.message = Data(string.utf8)
+        
+        if let outputImage = filter.outputImage {
+            if let cgImage = context.createCGImage(outputImage, from: outputImage.extent) {
+                return UIImage(cgImage: cgImage)
+            }
+        }
+        
+        return UIImage(systemName: "xmark.circle") ?? UIImage()
+    }
+}
+
+struct EditBankDetailsView: View {
+    @Environment(\.managedObjectContext) private var viewContext
+    @Environment(\.dismiss) private var dismiss
+    
+    let group: BusinessGroup
+    
+    @State private var bankName: String
+    @State private var accountName: String
+    @State private var accountNumber: String
+    
+    init(group: BusinessGroup) {
+        self.group = group
+        _bankName = State(initialValue: group.bankName ?? "")
+        _accountName = State(initialValue: group.accountName ?? "")
+        _accountNumber = State(initialValue: group.accountNumber ?? "")
+    }
+    
+    var body: some View {
+        NavigationView {
+            Form {
+                Section("Bank Information") {
+                    TextField("Bank Name (e.g. Vietcombank)", text: $bankName)
+                    TextField("Account Name", text: $accountName)
+                    TextField("Account Number", text: $accountNumber)
+                        .keyboardType(.numberPad)
+                }
+                
+                Section {
+                    Text("This information will be used to generate your Payment QR code.")
+                        .font(Typography.caption())
+                        .foregroundColor(Theme.dynamicTextSecondary)
+                }
+            }
+            .hideFormBackground()
+            .background(Theme.background.ignoresSafeArea())
+            .navigationTitle("Bank Details")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Save") {
+                        save()
+                    }
+                }
+            }
+        }
+    }
+    
+    private func save() {
+        group.bankName = bankName.isEmpty ? nil : bankName
+        group.accountName = accountName.isEmpty ? nil : accountName
+        group.accountNumber = accountNumber.isEmpty ? nil : accountNumber
+        
+        try? viewContext.save()
+        dismiss()
     }
 }
