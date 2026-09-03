@@ -3,15 +3,25 @@ import CoreData
 
 struct InvoicesView: View {
     @Environment(\.managedObjectContext) private var viewContext
-    @FetchRequest(
-        sortDescriptors: [NSSortDescriptor(keyPath: \Invoice.createdAt, ascending: false)],
-        animation: .default)
-    private var invoices: FetchedResults<Invoice>
+    @FetchRequest private var invoices: FetchedResults<Invoice>
+    @FetchRequest private var clients: FetchedResults<Client>
     
-    @FetchRequest(
-        sortDescriptors: [NSSortDescriptor(keyPath: \Client.name, ascending: true)],
-        animation: .default)
-    private var clients: FetchedResults<Client>
+    let groupID: UUID
+    
+    init(groupID: UUID) {
+        self.groupID = groupID
+        let predicate = NSPredicate(format: "groupID == %@", groupID as CVarArg)
+        
+        _invoices = FetchRequest(
+            sortDescriptors: [NSSortDescriptor(keyPath: \Invoice.createdAt, ascending: false)],
+            predicate: predicate,
+            animation: .default)
+            
+        _clients = FetchRequest(
+            sortDescriptors: [NSSortDescriptor(keyPath: \Client.name, ascending: true)],
+            predicate: predicate,
+            animation: .default)
+    }
     
     @State private var showingAddInvoice = false
     @State private var selectedInvoice: Invoice?
@@ -51,7 +61,7 @@ struct InvoicesView: View {
                 }
             }
             .sheet(isPresented: $showingAddInvoice) {
-                AddInvoiceView()
+                AddInvoiceView(groupID: groupID)
             }
             .sheet(item: $selectedInvoice) { invoice in
                 InvoiceDetailView(invoice: invoice)

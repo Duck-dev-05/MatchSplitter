@@ -3,20 +3,29 @@ import CoreData
 
 struct DashboardView: View {
     @Environment(\.managedObjectContext) private var viewContext
-    @FetchRequest(
-        sortDescriptors: [NSSortDescriptor(keyPath: \Invoice.createdAt, ascending: false)],
-        animation: .default)
-    private var invoices: FetchedResults<Invoice>
     
-    @FetchRequest(
-        sortDescriptors: [NSSortDescriptor(keyPath: \Payment.paymentDate, ascending: false)],
-        animation: .default)
-    private var payments: FetchedResults<Payment>
+    @FetchRequest private var invoices: FetchedResults<Invoice>
+    @FetchRequest private var payments: FetchedResults<Payment>
+    @FetchRequest private var clients: FetchedResults<Client>
     
-    @FetchRequest(
-        sortDescriptors: [NSSortDescriptor(keyPath: \Client.name, ascending: true)],
-        animation: .default)
-    private var clients: FetchedResults<Client>
+    init(groupID: UUID) {
+        let predicate = NSPredicate(format: "groupID == %@", groupID as CVarArg)
+        
+        _invoices = FetchRequest(
+            sortDescriptors: [NSSortDescriptor(keyPath: \Invoice.createdAt, ascending: false)],
+            predicate: predicate,
+            animation: .default)
+            
+        _payments = FetchRequest(
+            sortDescriptors: [NSSortDescriptor(keyPath: \Payment.paymentDate, ascending: false)],
+            predicate: predicate,
+            animation: .default)
+            
+        _clients = FetchRequest(
+            sortDescriptors: [NSSortDescriptor(keyPath: \Client.name, ascending: true)],
+            predicate: predicate,
+            animation: .default)
+    }
     
     var body: some View {
         NavigationView {

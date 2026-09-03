@@ -3,49 +3,67 @@ import CoreData
 
 struct ReportsView: View {
     @Environment(\.managedObjectContext) private var viewContext
-    @FetchRequest(sortDescriptors: []) private var invoices: FetchedResults<Invoice>
-    @FetchRequest(sortDescriptors: []) private var payments: FetchedResults<Payment>
-    @FetchRequest(sortDescriptors: []) private var clients: FetchedResults<Client>
-    @FetchRequest(sortDescriptors: []) private var invoiceItems: FetchedResults<InvoiceItem>
+    @FetchRequest private var invoices: FetchedResults<Invoice>
+    @FetchRequest private var payments: FetchedResults<Payment>
+    @FetchRequest private var clients: FetchedResults<Client>
+    @FetchRequest private var invoiceItems: FetchedResults<InvoiceItem>
+    
+    init(groupID: UUID) {
+        let predicate = NSPredicate(format: "groupID == %@", groupID as CVarArg)
+        
+        _invoices = FetchRequest(sortDescriptors: [], predicate: predicate)
+        _payments = FetchRequest(sortDescriptors: [], predicate: predicate)
+        _clients = FetchRequest(sortDescriptors: [], predicate: predicate)
+        // InvoiceItems don't have groupID currently; we'll fetch all and filter in code
+        _invoiceItems = FetchRequest(sortDescriptors: [])
+    }
     
     @State private var selectedPeriod: ReportPeriod = .thisMonth
     @State private var selectedReportType: ReportType = .revenue
     
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(spacing: 20) {
-                    // Period Selector
-                    Picker("Period", selection: $selectedPeriod) {
-                        ForEach(ReportPeriod.allCases, id: \.self) { period in
-                            Text(period.rawValue).tag(period)
+            ZStack {
+                Theme.background.ignoresSafeArea()
+                
+                ScrollView {
+                    VStack(spacing: 24) {
+                        // Selectors
+                        VStack(spacing: 16) {
+                            Picker("Period", selection: $selectedPeriod) {
+                                ForEach(ReportPeriod.allCases, id: \.self) { period in
+                                    Text(period.rawValue).tag(period)
+                                }
+                            }
+                            .pickerStyle(.segmented)
+                            
+                            Picker("Report Type", selection: $selectedReportType) {
+                                ForEach(ReportType.allCases, id: \.self) { type in
+                                    Text(type.rawValue).tag(type)
+                                }
+                            }
+                            .pickerStyle(.segmented)
                         }
-                    }
-                    .pickerStyle(.segmented)
-                    .padding(.horizontal)
-                    
-                    // Report Type Selector
-                    Picker("Report Type", selection: $selectedReportType) {
-                        ForEach(ReportType.allCases, id: \.self) { type in
-                            Text(type.rawValue).tag(type)
+                        .padding(16)
+                        .cardStyle()
+                        .padding(.horizontal)
+                        
+                        // Report Content
+                        switch selectedReportType {
+                        case .revenue:
+                            RevenueReportView(period: selectedPeriod, invoices: Array(invoices), payments: Array(payments))
+                        case .outstanding:
+                            OutstandingReportView(period: selectedPeriod, invoices: Array(invoices), payments: Array(payments), clients: Array(clients))
+                        case .clients:
+                            ClientsReportView(clients: Array(clients), invoices: Array(invoices))
+                        case .items:
+                            ItemsReportView(invoices: Array(invoices), invoiceItems: Array(invoiceItems))
                         }
+                        
+                        Spacer(minLength: 40)
                     }
-                    .pickerStyle(.segmented)
-                    .padding(.horizontal)
-                    
-                    // Report Content
-                    switch selectedReportType {
-                    case .revenue:
-                        RevenueReportView(period: selectedPeriod, invoices: Array(invoices), payments: Array(payments))
-                    case .outstanding:
-                        OutstandingReportView(period: selectedPeriod, invoices: Array(invoices), payments: Array(payments), clients: Array(clients))
-                    case .clients:
-                        ClientsReportView(clients: Array(clients), invoices: Array(invoices))
-                    case .items:
-                        ItemsReportView(invoices: Array(invoices), invoiceItems: Array(invoiceItems))
-                    }
+                    .padding(.vertical)
                 }
-                .padding(.vertical)
             }
             .navigationTitle("Reports")
         }
@@ -109,19 +127,26 @@ struct RevenueReportView: View {
     }
     
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 24) {
             // Summary Cards
+            LazyVGrid(columns: [
+                GridItem(.flexible(), spacing: 16),
+                GridItem(.flexible(), spacing: 16)
+            ], spacing: 16) {
+                SummaryCard(title: "Total Revenue", amount: totalRevenue, icon: "chart.line.uptrend.xyaxis", isPrimary: true)
+                SummaryCard(title: "Avg Payment", amount: averagePayment, icon: "chart.bar.fill", color: .blue)
+            }
+            .padding(.horizontal)
+            
             VStack(spacing: 12) {
-                SummaryCard(title: "Total Revenue", amount: totalRevenue, icon: "dollarsign.circle.fill", color: .green)
-                SummaryCard(title: "Average Payment", amount: averagePayment, icon: "chart.bar.fill", color: .blue)
-                SummaryCard(title: "Payment Count", amount: Double(filteredPayments.count), icon: "number.circle.fill", color: .purple)
+                SummaryCard(title: "Payment Count", amount: Double(filteredPayments.count), icon: "number.circle.fill", color: .purple, isCurrency: false)
             }
             .padding(.horizontal)
             
             // Payment Methods Breakdown
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 16) {
                 Text("Payment Methods")
-                    .font(.headline)
+                    .font(.system(.title3, design: .rounded).bold())
                     .padding(.horizontal)
                 
                 if paymentMethods.isEmpty {
@@ -129,25 +154,28 @@ struct RevenueReportView: View {
                         .foregroundColor(.secondary)
                         .padding(.horizontal)
                 } else {
-                    ForEach(paymentMethods.sorted(by: { $0.value > $1.value }), id: \.key) { method, amount in
-                        HStack {
-                            Text(method)
-                                .font(.subheadline)
-                            Spacer()
-                            Text(amount.formatted(.currency(code: "USD")))
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-                            
-                            let percentage = totalRevenue > 0 ? (amount / totalRevenue) * 100 : 0
-                            Text(String(format: "%.1f%%", percentage))
-                                .font(.caption)
-                                .foregroundColor(.secondary)
+                    VStack(spacing: 12) {
+                        ForEach(paymentMethods.sorted(by: { $0.value > $1.value }), id: \.key) { method, amount in
+                            HStack {
+                                Text(method)
+                                    .font(.system(.subheadline, design: .rounded).bold())
+                                Spacer()
+                                VStack(alignment: .trailing, spacing: 4) {
+                                    Text(amount.formatted(.currency(code: "USD")))
+                                        .font(.system(.subheadline, design: .rounded).bold())
+                                        .foregroundColor(Theme.primary)
+                                    
+                                    let percentage = totalRevenue > 0 ? (amount / totalRevenue) * 100 : 0
+                                    Text(String(format: "%.1f%%", percentage))
+                                        .font(.system(.caption, design: .rounded))
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                            .padding(16)
+                            .cardStyle()
                         }
-                        .padding()
-                        .background(Color(.systemBackground))
-                        .cornerRadius(8)
-                        .padding(.horizontal)
                     }
+                    .padding(.horizontal)
                 }
             }
         }
@@ -201,19 +229,26 @@ struct OutstandingReportView: View {
     }
     
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 24) {
             // Summary Cards
-            VStack(spacing: 12) {
-                SummaryCard(title: "Total Outstanding", amount: totalOutstanding, icon: "exclamationmark.circle.fill", color: .orange)
+            LazyVGrid(columns: [
+                GridItem(.flexible(), spacing: 16),
+                GridItem(.flexible(), spacing: 16)
+            ], spacing: 16) {
+                SummaryCard(title: "Outstanding", amount: totalOutstanding, icon: "exclamationmark.triangle.fill", color: .orange)
                 SummaryCard(title: "Overdue", amount: overdueAmount, icon: "xmark.circle.fill", color: .red)
-                SummaryCard(title: "Pending Invoices", amount: Double(filteredInvoices.count), icon: "doc.text.fill", color: .blue)
+            }
+            .padding(.horizontal)
+            
+            VStack(spacing: 12) {
+                SummaryCard(title: "Pending Invoices", amount: Double(filteredInvoices.count), icon: "doc.text.fill", color: .blue, isCurrency: false)
             }
             .padding(.horizontal)
             
             // Outstanding Invoices List
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 16) {
                 Text("Outstanding Invoices")
-                    .font(.headline)
+                    .font(.system(.title3, design: .rounded).bold())
                     .padding(.horizontal)
                 
                 if filteredInvoices.isEmpty {
@@ -221,33 +256,32 @@ struct OutstandingReportView: View {
                         .foregroundColor(.secondary)
                         .padding(.horizontal)
                 } else {
-                    ForEach(filteredInvoices.sorted { $0.dueDate < $1.dueDate }) { invoice in
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text(invoice.invoiceNumber)
-                                    .font(.subheadline)
-                                    .fontWeight(.medium)
-                                Text(clientName(for: invoice))
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
+                    VStack(spacing: 12) {
+                        ForEach(filteredInvoices.sorted { $0.dueDate < $1.dueDate }) { invoice in
+                            HStack {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(invoice.invoiceNumber)
+                                        .font(.system(.subheadline, design: .rounded).bold())
+                                    Text(clientName(for: invoice))
+                                        .font(.system(.caption, design: .rounded))
+                                        .foregroundColor(.secondary)
+                                }
+                                
+                                Spacer()
+                                
+                                VStack(alignment: .trailing, spacing: 4) {
+                                    Text(remainingAmount(for: invoice).formatted(.currency(code: "USD")))
+                                        .font(.system(.subheadline, design: .rounded).bold())
+                                    Text(invoice.dueDate.formatted(date: .abbreviated, time: .omitted))
+                                        .font(.system(.caption, design: .rounded))
+                                        .foregroundColor(invoice.isOverdue ? .red : .secondary)
+                                }
                             }
-                            
-                            Spacer()
-                            
-                            VStack(alignment: .trailing) {
-                                Text(remainingAmount(for: invoice).formatted(.currency(code: "USD")))
-                                    .font(.subheadline)
-                                    .fontWeight(.medium)
-                                Text(invoice.dueDate.formatted(date: .abbreviated, time: .omitted))
-                                    .font(.caption)
-                                    .foregroundColor(invoice.isOverdue ? .red : .secondary)
-                            }
+                            .padding(16)
+                            .cardStyle()
                         }
-                        .padding()
-                        .background(Color(.systemBackground))
-                        .cornerRadius(8)
-                        .padding(.horizontal)
                     }
+                    .padding(.horizontal)
                 }
             }
         }
@@ -259,18 +293,21 @@ struct ClientsReportView: View {
     let invoices: [Invoice]
     
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 24) {
             // Summary
-            VStack(spacing: 12) {
-                SummaryCard(title: "Total Clients", amount: Double(clients.count), icon: "person.2.fill", color: .blue)
-                SummaryCard(title: "Total Invoices", amount: Double(invoices.count), icon: "doc.text.fill", color: .green)
+            LazyVGrid(columns: [
+                GridItem(.flexible(), spacing: 16),
+                GridItem(.flexible(), spacing: 16)
+            ], spacing: 16) {
+                SummaryCard(title: "Total Clients", amount: Double(clients.count), icon: "person.2.fill", color: .blue, isCurrency: false)
+                SummaryCard(title: "Total Invoices", amount: Double(invoices.count), icon: "doc.text.fill", color: .green, isCurrency: false)
             }
             .padding(.horizontal)
             
             // Client List
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 16) {
                 Text("All Clients")
-                    .font(.headline)
+                    .font(.system(.title3, design: .rounded).bold())
                     .padding(.horizontal)
                 
                 if clients.isEmpty {
@@ -278,30 +315,30 @@ struct ClientsReportView: View {
                         .foregroundColor(.secondary)
                         .padding(.horizontal)
                 } else {
-                    ForEach(clients.sorted { $0.name < $1.name }) { client in
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text(client.name)
-                                    .font(.subheadline)
-                                    .fontWeight(.medium)
-                                if !client.email.isEmpty {
-                                    Text(client.email)
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
+                    VStack(spacing: 12) {
+                        ForEach(clients.sorted { $0.name < $1.name }) { client in
+                            HStack {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(client.name)
+                                        .font(.system(.subheadline, design: .rounded).bold())
+                                    if !client.email.isEmpty {
+                                        Text(client.email)
+                                            .font(.system(.caption, design: .rounded))
+                                            .foregroundColor(.secondary)
+                                    }
                                 }
+                                
+                                Spacer()
+                                
+                                Image(systemName: "chevron.right")
+                                    .foregroundColor(.secondary.opacity(0.5))
+                                    .font(.caption.bold())
                             }
-                            
-                            Spacer()
-                            
-                            Image(systemName: "chevron.right")
-                                .foregroundColor(.secondary)
-                                .font(.caption)
+                            .padding(16)
+                            .cardStyle()
                         }
-                        .padding()
-                        .background(Color(.systemBackground))
-                        .cornerRadius(8)
-                        .padding(.horizontal)
                     }
+                    .padding(.horizontal)
                 }
             }
         }
@@ -334,18 +371,21 @@ struct ItemsReportView: View {
     }
     
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 24) {
             // Summary
-            VStack(spacing: 12) {
-                SummaryCard(title: "Total Items Sold", amount: allItems.reduce(0.0) { $0 + $1.quantity }, icon: "cube.fill", color: .purple)
-                SummaryCard(title: "Unique Items", amount: Double(itemSales.count), icon: "list.bullet", color: .blue)
+            LazyVGrid(columns: [
+                GridItem(.flexible(), spacing: 16),
+                GridItem(.flexible(), spacing: 16)
+            ], spacing: 16) {
+                SummaryCard(title: "Total Items Sold", amount: allItems.reduce(0.0) { $0 + $1.quantity }, icon: "cube.fill", color: .purple, isCurrency: false)
+                SummaryCard(title: "Unique Items", amount: Double(itemSales.count), icon: "list.bullet", color: .blue, isCurrency: false)
             }
             .padding(.horizontal)
             
             // Top Items
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 16) {
                 Text("Top Selling Items")
-                    .font(.headline)
+                    .font(.system(.title3, design: .rounded).bold())
                     .padding(.horizontal)
                 
                 if itemSales.isEmpty {
@@ -353,30 +393,30 @@ struct ItemsReportView: View {
                         .foregroundColor(.secondary)
                         .padding(.horizontal)
                 } else {
-                    ForEach(itemSales.sorted(by: { $0.value.total > $1.value.total }).prefix(10), id: \.key) { itemName, data in
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text(itemName)
-                                    .font(.subheadline)
-                                    .fontWeight(.medium)
-                                Text("Qty: \(data.quantity, specifier: "%.0f")")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
+                    VStack(spacing: 12) {
+                        ForEach(itemSales.sorted(by: { $0.value.total > $1.value.total }).prefix(10), id: \.key) { itemName, data in
+                            HStack {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(itemName)
+                                        .font(.system(.subheadline, design: .rounded).bold())
+                                    Text("Qty: \(data.quantity, specifier: "%.0f")")
+                                        .font(.system(.caption, design: .rounded))
+                                        .foregroundColor(.secondary)
+                                }
+                                
+                                Spacer()
+                                
+                                VStack(alignment: .trailing) {
+                                    Text(data.total.formatted(.currency(code: "USD")))
+                                        .font(.system(.subheadline, design: .rounded).bold())
+                                        .foregroundColor(Theme.primary)
+                                }
                             }
-                            
-                            Spacer()
-                            
-                            VStack(alignment: .trailing) {
-                                Text(data.total.formatted(.currency(code: "USD")))
-                                    .font(.subheadline)
-                                    .fontWeight(.medium)
-                            }
+                            .padding(16)
+                            .cardStyle()
                         }
-                        .padding()
-                        .background(Color(.systemBackground))
-                        .cornerRadius(8)
-                        .padding(.horizontal)
                     }
+                    .padding(.horizontal)
                 }
             }
         }

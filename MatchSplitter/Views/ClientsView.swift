@@ -3,10 +3,17 @@ import CoreData
 
 struct ClientsView: View {
     @Environment(\.managedObjectContext) private var viewContext
-    @FetchRequest(
-        sortDescriptors: [NSSortDescriptor(keyPath: \Client.name, ascending: true)],
-        animation: .default)
-    private var clients: FetchedResults<Client>
+    @FetchRequest private var clients: FetchedResults<Client>
+    
+    let groupID: UUID
+    
+    init(groupID: UUID) {
+        self.groupID = groupID
+        _clients = FetchRequest(
+            sortDescriptors: [NSSortDescriptor(keyPath: \Client.name, ascending: true)],
+            predicate: NSPredicate(format: "groupID == %@", groupID as CVarArg),
+            animation: .default)
+    }
     
     @State private var showingAddClient = false
     @State private var selectedClient: Client?
@@ -46,7 +53,7 @@ struct ClientsView: View {
                 }
             }
             .sheet(isPresented: $showingAddClient) {
-                AddClientView()
+                AddClientView(groupID: groupID)
             }
             .sheet(item: $selectedClient) { client in
                 ClientDetailView(client: client)

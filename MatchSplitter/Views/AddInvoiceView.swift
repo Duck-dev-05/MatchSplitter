@@ -4,10 +4,17 @@ import CoreData
 struct AddInvoiceView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.dismiss) private var dismiss
-    @FetchRequest(
-        sortDescriptors: [NSSortDescriptor(keyPath: \Client.name, ascending: true)],
-        animation: .default)
-    private var clients: FetchedResults<Client>
+    @FetchRequest private var clients: FetchedResults<Client>
+    
+    let groupID: UUID
+    
+    init(groupID: UUID) {
+        self.groupID = groupID
+        _clients = FetchRequest(
+            sortDescriptors: [NSSortDescriptor(keyPath: \Client.name, ascending: true)],
+            predicate: NSPredicate(format: "groupID == %@", groupID as CVarArg),
+            animation: .default)
+    }
     
     @State private var invoiceNumber: String = ""
     @State private var selectedClient: Client?
@@ -94,6 +101,7 @@ struct AddInvoiceView: View {
     private func saveInvoice() {
         let invoice = Invoice(context: viewContext)
         invoice.id = UUID()
+        invoice.groupID = groupID
         invoice.invoiceNumber = invoiceNumber
         invoice.clientID = selectedClient?.id
         invoice.issueDate = issueDate

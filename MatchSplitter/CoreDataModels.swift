@@ -2,10 +2,41 @@ import Foundation
 import CoreData
 import SwiftUI
 
+// MARK: - User Entity
+@objc(User)
+public class User: NSManagedObject {
+    @NSManaged public var id: UUID
+    @NSManaged public var username: String
+    @NSManaged public var pin: String?
+    @NSManaged public var createdAt: Date
+}
+
+extension User {
+    @nonobjc public class func fetchRequest() -> NSFetchRequest<User> {
+        return NSFetchRequest<User>(entityName: "User")
+    }
+}
+
+// MARK: - Group Entity
+@objc(Group)
+public class Group: NSManagedObject {
+    @NSManaged public var id: UUID
+    @NSManaged public var name: String
+    @NSManaged public var ownerID: UUID
+    @NSManaged public var createdAt: Date
+}
+
+extension Group {
+    @nonobjc public class func fetchRequest() -> NSFetchRequest<Group> {
+        return NSFetchRequest<Group>(entityName: "Group")
+    }
+}
+
 // MARK: - Client Entity
 @objc(Client)
 public class Client: NSManagedObject {
     @NSManaged public var id: UUID
+    @NSManaged public var groupID: UUID?
     @NSManaged public var name: String
     @NSManaged public var email: String
     @NSManaged public var phone: String
@@ -30,6 +61,7 @@ extension Client {
 @objc(Invoice)
 public class Invoice: NSManagedObject {
     @NSManaged public var id: UUID
+    @NSManaged public var groupID: UUID?
     @NSManaged public var invoiceNumber: String
     @NSManaged public var clientID: UUID?
     @NSManaged public var issueDate: Date
@@ -107,6 +139,7 @@ extension InvoiceItem {
 @objc(Payment)
 public class Payment: NSManagedObject {
     @NSManaged public var id: UUID
+    @NSManaged public var groupID: UUID?
     @NSManaged public var invoiceID: UUID?
     @NSManaged public var amount: Double
     @NSManaged public var paymentDate: Date
@@ -139,6 +172,8 @@ extension Payment {
 }
 
 // MARK: - Identifiable Conformance
+extension User: Identifiable {}
+extension Group: Identifiable {}
 extension Client: Identifiable {}
 extension Invoice: Identifiable {}
 extension InvoiceItem: Identifiable {}

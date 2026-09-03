@@ -37,28 +37,41 @@ extension View {
 }
 
 struct ContentView: View {
+    @EnvironmentObject private var session: SessionManager
     @State private var selectedTab: Int = 0
     
     var body: some View {
-        TabView(selection: $selectedTab) {
-            DashboardView()
-                .tabItem {
-                    Label("Dashboard", systemImage: "chart.bar.fill")
-                }
-                .tag(0)
-            
-            InvoicesView()
-                .tabItem {
-                    Label("Invoices", systemImage: "doc.text.fill")
-                }
-                .tag(1)
-            
-            ClientsView()
-                .tabItem {
-                    Label("Clients", systemImage: "person.2.fill")
-                }
-                .tag(2)
+        if !session.isAuthenticated {
+            LoginView()
+        } else if !session.hasActiveGroup, let user = session.currentUser {
+            GroupSelectionView(userID: user.id)
+        } else if let group = session.currentGroup {
+            TabView(selection: $selectedTab) {
+                DashboardView(groupID: group.id)
+                    .tabItem {
+                        Label("Dashboard", systemImage: "chart.bar.fill")
+                    }
+                    .tag(0)
+                
+                InvoicesView(groupID: group.id)
+                    .tabItem {
+                        Label("Invoices", systemImage: "doc.text.fill")
+                    }
+                    .tag(1)
+                
+                ClientsView(groupID: group.id)
+                    .tabItem {
+                        Label("Clients", systemImage: "person.2.fill")
+                    }
+                    .tag(2)
+                
+                ReportsView(groupID: group.id)
+                    .tabItem {
+                        Label("Reports", systemImage: "chart.pie.fill")
+                    }
+                    .tag(3)
+            }
+            .accentColor(Theme.primary)
         }
-        .accentColor(Theme.primary)
     }
 }

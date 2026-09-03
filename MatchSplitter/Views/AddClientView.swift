@@ -5,6 +5,8 @@ struct AddClientView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.dismiss) private var dismiss
     
+    let groupID: UUID
+    
     @State private var name: String = ""
     @State private var email: String = ""
     @State private var phone: String = ""
@@ -68,6 +70,7 @@ struct AddClientView: View {
     private func saveClient() {
         let client = Client(context: viewContext)
         client.id = UUID()
+        client.groupID = groupID
         client.name = name
         client.email = email
         client.phone = phone

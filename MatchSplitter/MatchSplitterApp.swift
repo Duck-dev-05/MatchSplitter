@@ -4,11 +4,16 @@ import CoreData
 @main
 struct MatchSplitterApp: App {
     let persistenceController = PersistenceController.shared
+    @StateObject private var session = SessionManager()
     
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environment(\.managedObjectContext, persistenceController.container.viewContext)
+                .environmentObject(session)
+                .onAppear {
+                    session.autoLogin(context: persistenceController.container.viewContext)
+                }
         }
     }
 }
