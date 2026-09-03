@@ -65,7 +65,7 @@ struct ReportsView: View {
                     .padding(.vertical)
                 }
             }
-            .navigationTitle("Reports")
+            .navigationTitle("Activity")
         }
     }
     
@@ -78,10 +78,10 @@ struct ReportsView: View {
     }
     
     enum ReportType: String, CaseIterable {
-        case revenue = "Revenue"
-        case outstanding = "Outstanding"
-        case clients = "Clients"
-        case items = "Items"
+        case revenue = "Collected"
+        case outstanding = "Owed to You"
+        case clients = "Players"
+        case items = "Expenses"
     }
 }
 
@@ -133,8 +133,8 @@ struct RevenueReportView: View {
                 GridItem(.flexible(), spacing: Theme.spacingM),
                 GridItem(.flexible(), spacing: Theme.spacingM)
             ], spacing: Theme.spacingM) {
-                SummaryCard(title: "Total Revenue", amount: totalRevenue, icon: "chart.line.uptrend.xyaxis", isPrimary: true)
-                SummaryCard(title: "Avg Payment", amount: averagePayment, icon: "chart.bar.fill", color: .blue)
+                SummaryCard(title: "Total Collected", amount: totalRevenue, icon: "chart.line.uptrend.xyaxis", isPrimary: true)
+                SummaryCard(title: "Avg Collection", amount: averagePayment, icon: "chart.bar.fill", color: .blue)
             }
             .padding(.horizontal)
             
@@ -241,18 +241,18 @@ struct OutstandingReportView: View {
             .padding(.horizontal)
             
             VStack(spacing: Theme.spacingM) {
-                SummaryCard(title: "Pending Invoices", amount: Double(filteredInvoices.count), icon: "doc.text.fill", color: .blue, isCurrency: false)
+                SummaryCard(title: "Pending Splits", amount: Double(filteredInvoices.count), icon: "doc.text.fill", color: .blue, isCurrency: false)
             }
             .padding(.horizontal)
             
-            // Outstanding Invoices List
+            // Outstanding Splits List
             VStack(alignment: .leading, spacing: Theme.spacingM) {
-                Text("Outstanding Invoices")
+                Text("Outstanding Splits")
                     .font(Typography.subheadline())
                     .padding(.horizontal)
                 
                 if filteredInvoices.isEmpty {
-                    Text("No outstanding invoices")
+                    Text("No outstanding splits")
                         .foregroundColor(Theme.dynamicTextSecondary)
                         .padding(.horizontal)
                 } else {
@@ -299,19 +299,19 @@ struct ClientsReportView: View {
                 GridItem(.flexible(), spacing: Theme.spacingM),
                 GridItem(.flexible(), spacing: Theme.spacingM)
             ], spacing: Theme.spacingM) {
-                SummaryCard(title: "Total Clients", amount: Double(clients.count), icon: "person.2.fill", color: .blue, isCurrency: false)
-                SummaryCard(title: "Total Invoices", amount: Double(invoices.count), icon: "doc.text.fill", color: Theme.success, isCurrency: false)
+                SummaryCard(title: "Total Players", amount: Double(clients.count), icon: "person.2.fill", color: .blue, isCurrency: false)
+                SummaryCard(title: "Total Splits", amount: Double(invoices.count), icon: "sportscourt", color: Theme.success, isCurrency: false)
             }
             .padding(.horizontal)
             
-            // Client List
+            // Player List
             VStack(alignment: .leading, spacing: Theme.spacingM) {
-                Text("All Clients")
+                Text("All Players")
                     .font(Typography.subheadline())
                     .padding(.horizontal)
                 
                 if clients.isEmpty {
-                    Text("No clients yet")
+                    Text("No players yet")
                         .foregroundColor(Theme.dynamicTextSecondary)
                         .padding(.horizontal)
                 } else {
@@ -377,19 +377,19 @@ struct ItemsReportView: View {
                 GridItem(.flexible(), spacing: Theme.spacingM),
                 GridItem(.flexible(), spacing: Theme.spacingM)
             ], spacing: Theme.spacingM) {
-                SummaryCard(title: "Total Items Sold", amount: allItems.reduce(0.0) { $0 + $1.quantity }, icon: "cube.fill", color: Theme.secondary, isCurrency: false)
-                SummaryCard(title: "Unique Items", amount: Double(itemSales.count), icon: "list.bullet", color: .blue, isCurrency: false)
+                SummaryCard(title: "Total Expenses Logged", amount: allItems.reduce(0.0) { $0 + $1.quantity }, icon: "cube.fill", color: Theme.secondary, isCurrency: false)
+                SummaryCard(title: "Unique Expenses", amount: Double(itemSales.count), icon: "list.bullet", color: .blue, isCurrency: false)
             }
             .padding(.horizontal)
             
-            // Top Items
+            // Top Expenses
             VStack(alignment: .leading, spacing: Theme.spacingM) {
-                Text("Top Selling Items")
+                Text("Top Expenses")
                     .font(Typography.subheadline())
                     .padding(.horizontal)
                 
                 if itemSales.isEmpty {
-                    Text("No item data")
+                    Text("No expense data")
                         .foregroundColor(Theme.dynamicTextSecondary)
                         .padding(.horizontal)
                 } else {

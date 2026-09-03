@@ -50,7 +50,7 @@ struct InvoicesView: View {
                     .padding(.top, Theme.spacingS)
                 }
             }
-            .navigationTitle("Invoices")
+            .navigationTitle("Splits")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: { showingAddInvoice = true }) {
@@ -71,17 +71,17 @@ struct InvoicesView: View {
     
     private var emptyStateView: some View {
         VStack(spacing: Theme.spacingM) {
-            Image(systemName: "doc.text.magnifyingglass")
+            Image(systemName: "sportscourt")
                 .font(.system(size: 48))
                 .foregroundColor(Theme.primary.opacity(0.5))
-            Text("No Invoices Yet")
+            Text("No Splits Yet")
                 .font(Typography.subheadline())
-            Text("Create an invoice to bill your clients.")
+            Text("Create a split to divide match costs with players.")
                 .font(Typography.body())
                 .foregroundColor(Theme.dynamicTextSecondary)
             
             Button(action: { showingAddInvoice = true }) {
-                Text("Create Invoice")
+                Text("Create Split")
                     .font(Typography.button())
                     .foregroundColor(.white)
                     .padding()

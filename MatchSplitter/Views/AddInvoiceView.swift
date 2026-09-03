@@ -38,23 +38,21 @@ struct AddInvoiceView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section("Invoice Details") {
-                    TextField("Invoice Number", text: $invoiceNumber)
+                Section("Match Details") {
+                    TextField("Split Title (e.g. Wed Night Football)", text: $invoiceNumber)
                     
-                    Picker("Client", selection: $selectedClient) {
-                        Text("Select Client").tag(nil as Client?)
+                    Picker("Player", selection: $selectedClient) {
+                        Text("Select Player").tag(nil as Client?)
                         ForEach(clients) { client in
                             Text(client.name).tag(client as Client?)
                         }
                     }
                     
-                    DatePicker("Issue Date", selection: $issueDate, displayedComponents: .date)
+                    DatePicker("Match Date", selection: $issueDate, displayedComponents: .date)
                     DatePicker("Due Date", selection: $dueDate, displayedComponents: .date)
-                    
-                    TextField("Payment Terms", text: $paymentTerms)
                 }
                 
-                Section("Line Items") {
+                Section("Match Expenses") {
                     ForEach($items) { $item in
                         VStack(spacing: 8) {
                             TextField("Item Description", text: $item.itemDescription)
@@ -93,48 +91,24 @@ struct AddInvoiceView: View {
                     }
                 }
                 
-                Section("Financials") {
-                    HStack {
-                        Text("Subtotal")
-                        Spacer()
-                        Text(calculatedSubtotal.formatted(.currency(code: "VND")))
+                Section("Summary") {
+                        HStack {
+                            Text("Total Amount")
+                                .bold()
+                            Spacer()
+                            Text(calculatedSubtotal.formatted(.currency(code: "VND")))
+                                .bold()
+                        }
                     }
                     
-                    HStack {
-                        Text("Tax Rate")
-                        Spacer()
-                        TextField("%", value: $taxRate, format: .number)
-                            .keyboardType(.decimalPad)
-                            .multilineTextAlignment(.trailing)
-                            .frame(width: 60)
-                    }
-                    
-                    HStack {
-                        Text("Discount")
-                        Spacer()
-                        TextField("₫", value: $discount, format: .number)
-                            .keyboardType(.decimalPad)
-                            .multilineTextAlignment(.trailing)
-                            .frame(width: 80)
-                    }
-                    
-                    HStack {
-                        Text("Total Amount")
-                            .bold()
-                        Spacer()
-                        Text(calculatedTotal.formatted(.currency(code: "VND")))
-                            .bold()
+                    Section("Notes") {
+                        TextEditor(text: $notes)
+                            .frame(minHeight: 100)
                     }
                 }
-                
-                Section("Notes") {
-                    TextEditor(text: $notes)
-                        .frame(minHeight: 100)
-                }
-            }
-            .hideFormBackground()
-            .background(Theme.dynamicBackground.ignoresSafeArea())
-            .navigationTitle("New Invoice")
+                .hideFormBackground()
+                .background(Theme.dynamicBackground.ignoresSafeArea())
+                .navigationTitle("New Split")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {

@@ -1,5 +1,6 @@
 import SwiftUI
 import CoreData
+import GoogleSignIn
 
 @main
 struct MatchSplitterApp: App {
@@ -13,6 +14,9 @@ struct MatchSplitterApp: App {
                 .environmentObject(session)
                 .onAppear {
                     session.autoLogin(context: persistenceController.container.viewContext)
+                }
+                .onOpenURL { url in
+                    GIDSignIn.sharedInstance.handle(url)
                 }
         }
     }

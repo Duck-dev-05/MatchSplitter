@@ -21,8 +21,8 @@ struct AddClientView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section("Contact Information") {
-                    TextField("Client Name", text: $name)
+                Section("Player Info") {
+                    TextField("Player Name", text: $name)
                     TextField("Email", text: $email)
                         .keyboardType(.emailAddress)
                         .autocapitalization(.none)
@@ -30,16 +30,6 @@ struct AddClientView: View {
                         .keyboardType(.phonePad)
                 }
                 
-                Section("Address") {
-                    TextField("Street Address", text: $address)
-                    TextField("City", text: $city)
-                    TextField("State/Province", text: $state)
-                    TextField("ZIP/Postal Code", text: $zipCode)
-                    TextField("Country", text: $country)
-                }
-                
-                Section("Business Information") {
-                    TextField("Tax ID / VAT Number", text: $taxID)
                 }
                 
                 Section("Notes") {
@@ -49,7 +39,7 @@ struct AddClientView: View {
             }
             .hideFormBackground()
             .background(Theme.dynamicBackground.ignoresSafeArea())
-            .navigationTitle("New Client")
+            .navigationTitle("New Player")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {

@@ -162,19 +162,19 @@ struct ContentView: View {
                 
                 InvoicesView(groupID: group.id)
                     .tabItem {
-                        Label("Invoices", systemImage: "doc.text.fill")
+                        Label("Splits", systemImage: "doc.text.fill")
                     }
                     .tag(1)
                 
                 ClientsView(groupID: group.id)
                     .tabItem {
-                        Label("Network", systemImage: "person.3.fill")
+                        Label("Players", systemImage: "person.3.fill")
                     }
                     .tag(2)
                 
                 ReportsView(groupID: group.id)
                     .tabItem {
-                        Label("Insights", systemImage: "sparkles")
+                        Label("Activity", systemImage: "sparkles")
                     }
                     .tag(3)
                 

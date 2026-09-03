@@ -42,7 +42,7 @@ struct ClientsView: View {
                     .padding(.top, Theme.spacingS)
                 }
             }
-            .navigationTitle("Clients")
+            .navigationTitle("Players")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: { showingAddClient = true }) {
@@ -66,14 +66,14 @@ struct ClientsView: View {
             Image(systemName: "person.3.sequence.fill")
                 .font(.system(size: 48))
                 .foregroundColor(Theme.primary.opacity(0.5))
-            Text("No Clients Yet")
+            Text("No Players Yet")
                 .font(Typography.subheadline())
-            Text("Add your first client to get started.")
+            Text("Add your teammates to start splitting matches.")
                 .font(Typography.body())
                 .foregroundColor(Theme.dynamicTextSecondary)
             
             Button(action: { showingAddClient = true }) {
-                Text("Add Client")
+                Text("Add Player")
                     .font(Typography.button())
                     .foregroundColor(.white)
                     .padding()

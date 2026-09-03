@@ -1,5 +1,7 @@
 import SwiftUI
 import CoreData
+import GoogleSignIn
+import GoogleSignInSwift
 
 struct LoginView: View {
     @Environment(\.managedObjectContext) private var viewContext
@@ -69,6 +71,30 @@ struct LoginView: View {
                         .cardStyle()
                         .padding(.horizontal)
                         
+                        HStack {
+                            VStack { Divider() }
+                            Text("OR")
+                                .font(Typography.caption())
+                                .foregroundColor(Theme.dynamicTextSecondary)
+                            VStack { Divider() }
+                        }
+                        .padding(.horizontal, Theme.spacingXL)
+                        
+                        Button(action: loginWithGoogle) {
+                            HStack {
+                                Image(systemName: "envelope.fill") // Can be replaced with Google logo
+                                Text("Continue with Google")
+                            }
+                            .font(Typography.button())
+                            .foregroundColor(Theme.dynamicTextPrimary)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Theme.dynamicCardBackground)
+                            .cornerRadius(Theme.radiusM)
+                            .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
+                        }
+                        .padding(.horizontal, Theme.spacingL)
+                        
                         Spacer()
                     }
                 }
@@ -129,5 +155,70 @@ struct LoginView: View {
                 errorMessage = "Error creating account. Please try again."
             }
         }
+    }
+    
+    private func loginWithGoogle() {
+        errorMessage = ""
+        
+        let rootVC = ApplicationUtility.rootViewController
+        
+        GIDSignIn.sharedInstance.signIn(withPresenting: rootVC) { signInResult, error in
+            if let error = error {
+                print("Error signing in: \(error.localizedDescription)")
+                self.errorMessage = "Failed to sign in with Google."
+                return
+            }
+            
+            guard let user = signInResult?.user,
+                  let profile = user.profile,
+                  let email = profile.email else {
+                self.errorMessage = "Could not fetch Google profile."
+                return
+            }
+            
+            let name = profile.name
+            
+            // Check if user already exists
+            let req: NSFetchRequest<User> = User.fetchRequest()
+            req.predicate = NSPredicate(format: "email == %@", email.lowercased())
+            
+            if let existingUser = try? viewContext.fetch(req).first {
+                // Log in existing user
+                withAnimation {
+                    session.login(user: existingUser)
+                }
+            } else {
+                // Register new user
+                let newUser = User(context: viewContext)
+                newUser.id = UUID()
+                newUser.username = name
+                newUser.email = email.lowercased()
+                // No password needed for Google users, but we can set a dummy one or leave it empty if your model allows
+                newUser.password = "GOOGLE_OAUTH_PLACEHOLDER"
+                newUser.createdAt = Date()
+                
+                do {
+                    try viewContext.save()
+                    withAnimation {
+                        session.login(user: newUser)
+                    }
+                } catch {
+                    self.errorMessage = "Error creating account with Google."
+                }
+            }
+        }
+    }
+}
+
+// Utility to get the root view controller for presenting Google Sign-In
+struct ApplicationUtility {
+    static var rootViewController: UIViewController {
+        guard let screen = UIApplication.shared.connectedScenes.first as? UIWindowScene else {
+            return .init()
+        }
+        guard let root = screen.windows.first?.rootViewController else {
+            return .init()
+        }
+        return root
     }
 }

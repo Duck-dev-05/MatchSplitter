@@ -41,27 +41,53 @@ struct DashboardView: View {
                 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: Theme.spacingL) {
-                        // Summary Cards
-                        LazyVGrid(columns: [
-                            GridItem(.flexible(), spacing: Theme.spacingM),
-                            GridItem(.flexible(), spacing: Theme.spacingM)
-                        ], spacing: Theme.spacingM) {
-                            SummaryCard(title: "Total Revenue", amount: totalRevenue, icon: "chart.line.uptrend.xyaxis", isPrimary: true)
-                            SummaryCard(title: "Outstanding", amount: outstandingAmount, icon: "exclamationmark.triangle.fill", color: Theme.warning)
-                            SummaryCard(title: "Pending Invoices", amount: Double(pendingInvoicesCount), icon: "doc.text.fill", color: .blue, isCurrency: false)
-                            SummaryCard(title: "This Month", amount: thisMonthRevenue, icon: "calendar.badge.clock", color: Theme.secondary)
+                        // Summary Card
+                        VStack(spacing: Theme.spacingM) {
+                            Text("Your Balance")
+                                .font(Typography.captionBold())
+                                .foregroundColor(Theme.dynamicTextSecondary)
+                                .textCase(.uppercase)
+                            
+                            HStack(spacing: Theme.spacingXL) {
+                                VStack {
+                                    Text("Collected")
+                                        .font(Typography.caption())
+                                        .foregroundColor(.white.opacity(0.8))
+                                    Text(totalRevenue.formatted(.currency(code: "VND")))
+                                        .font(.system(.title3, design: .rounded).bold())
+                                        .foregroundColor(.white)
+                                }
+                                
+                                Divider()
+                                    .background(Color.white.opacity(0.3))
+                                    .frame(height: 40)
+                                
+                                VStack {
+                                    Text("Owed to You")
+                                        .font(Typography.caption())
+                                        .foregroundColor(.white.opacity(0.8))
+                                    Text(outstandingAmount.formatted(.currency(code: "VND")))
+                                        .font(.system(.title3, design: .rounded).bold())
+                                        .foregroundColor(outstandingAmount > 0 ? Theme.warning : .white)
+                                }
+                            }
                         }
+                        .padding(Theme.spacingL)
+                        .frame(maxWidth: .infinity)
+                        .background(Theme.gradientPrimary)
+                        .cornerRadius(Theme.radiusXL)
+                        .shadow(color: Theme.primary.opacity(0.3), radius: 10, x: 0, y: 5)
                         .padding(.horizontal)
                         .padding(.top, Theme.spacingS)
                         
-                        // Recent Invoices
+                        // Recent Splits
                         VStack(alignment: .leading, spacing: Theme.spacingM) {
-                            Text("Recent Invoices")
+                            Text("Recent Splits")
                                 .font(Typography.subheadline())
                                 .padding(.horizontal)
                             
                             if recentInvoices.isEmpty {
-                                emptyStateView(message: "No invoices yet", icon: "doc.text.magnifyingglass")
+                                emptyStateView(message: "No matches yet. Add a split!", icon: "sportscourt")
                             } else {
                                 VStack(spacing: Theme.spacingM) {
                                     ForEach(recentInvoices.prefix(5)) { invoice in
@@ -72,14 +98,14 @@ struct DashboardView: View {
                             }
                         }
                         
-                        // Recent Payments
+                        // Recent Activity
                         VStack(alignment: .leading, spacing: Theme.spacingM) {
-                            Text("Recent Payments")
+                            Text("Recent Activity")
                                 .font(Typography.subheadline())
                                 .padding(.horizontal)
                             
                             if recentPayments.isEmpty {
-                                emptyStateView(message: "No payments yet", icon: "creditcard.trianglebadge.exclamationmark")
+                                emptyStateView(message: "No payments yet", icon: "clock.arrow.circlepath")
                             } else {
                                 VStack(spacing: Theme.spacingM) {
                                     ForEach(recentPayments.prefix(5)) { payment in
@@ -95,7 +121,7 @@ struct DashboardView: View {
                     .padding(.vertical)
                 }
             }
-            .navigationTitle("Dashboard")
+            .navigationTitle("Home")
         }
         .fullScreenCover(isPresented: $showingClientOnboarding) {
             FirstClientOnboardingView(groupID: groupID, isPresented: $showingClientOnboarding)
@@ -224,7 +250,7 @@ struct InvoiceRowView: View {
     let clients: FetchedResults<Client>
     
     var clientName: String {
-        clients.first(where: { $0.id == invoice.clientID })?.name ?? "No Client"
+        clients.first(where: { $0.id == invoice.clientID })?.name ?? "No Player"
     }
     
     var body: some View {
@@ -272,7 +298,7 @@ struct PaymentRowView: View {
     let invoices: FetchedResults<Invoice>
     
     var invoiceNumber: String {
-        invoices.first(where: { $0.id == payment.invoiceID })?.invoiceNumber ?? "Unknown Invoice"
+        invoices.first(where: { $0.id == payment.invoiceID })?.invoiceNumber ?? "Unknown Split"
     }
     
     var body: some View {
@@ -338,10 +364,10 @@ struct FirstClientOnboardingView: View {
                 }
                 
                 VStack(spacing: Theme.spacingM) {
-                    Text("Add Your First Client")
+                    Text("Add Your First Player")
                         .font(.system(.title, design: .rounded).bold())
                     
-                    Text("Great job creating your group! Now, let's add a client so you can start generating invoices and tracking revenue.")
+                    Text("Great job creating your team! Now, let's add your teammates so you can start splitting matches.")
                         .font(Typography.body())
                         .foregroundColor(Theme.dynamicTextSecondary)
                         .multilineTextAlignment(.center)
@@ -356,7 +382,7 @@ struct FirstClientOnboardingView: View {
                     } label: {
                         HStack {
                             Image(systemName: "plus.circle.fill")
-                            Text("Add Client Now")
+                            Text("Add Player Now")
                         }
                         .font(Typography.button())
                         .foregroundColor(.white)
