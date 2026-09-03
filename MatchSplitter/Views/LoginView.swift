@@ -19,83 +19,140 @@ struct LoginView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                Theme.dynamicBackground.ignoresSafeArea()
+                // Dynamic background gradient
+                LinearGradient(
+                    colors: [Theme.primary.opacity(0.7), Theme.secondary.opacity(0.5), Theme.dynamicBackground],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
                 
-                ScrollView {
+                // Floating shapes
+                Circle()
+                    .fill(Theme.primary.opacity(0.3))
+                    .frame(width: 300, height: 300)
+                    .blur(radius: 50)
+                    .offset(x: -100, y: -200)
+                    
+                Circle()
+                    .fill(Theme.secondary.opacity(0.3))
+                    .frame(width: 250, height: 250)
+                    .blur(radius: 40)
+                    .offset(x: 150, y: 300)
+                
+                ScrollView(showsIndicators: false) {
                     VStack(spacing: Theme.spacingL) {
-                        Text("MatchSplitter")
-                            .font(.system(size: 32, weight: .bold, design: .rounded))
-                            .padding(.top, Theme.spacingXL)
                         
-                        Picker("Mode", selection: $isLoginMode) {
-                            Text("Log In").tag(true)
-                            Text("Register").tag(false)
+                        // Header
+                        VStack(spacing: Theme.spacingS) {
+                            Image(systemName: "flame.fill")
+                                .font(.system(size: 56, weight: .bold))
+                                .foregroundColor(.white)
+                                .shadow(radius: 10)
+                            
+                            Text("MatchSplitter")
+                                .font(.system(size: 38, weight: .heavy, design: .rounded))
+                                .foregroundColor(.white)
+                                .shadow(radius: 5)
+                            
+                            Text("Your team. Your expenses. Sorted.")
+                                .font(Typography.body())
+                                .foregroundColor(.white.opacity(0.9))
                         }
-                        .pickerStyle(SegmentedPickerStyle())
-                        .padding(.horizontal, Theme.spacingL)
+                        .padding(.top, Theme.spacingXL)
+                        .padding(.bottom, Theme.spacingM)
                         
-                        VStack(spacing: Theme.spacingM) {
-                            if !isLoginMode {
-                                TextField("Full Name", text: $name)
-                                    .textFieldStyle(.roundedBorder)
-                                    .textContentType(.name)
+                        // Custom Segmented Picker
+                        HStack(spacing: 0) {
+                            Button(action: { withAnimation(.spring()) { isLoginMode = true } }) {
+                                Text("Log In")
+                                    .font(Typography.button())
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 12)
+                                    .background(isLoginMode ? Color.white : Color.clear)
+                                    .foregroundColor(isLoginMode ? Theme.primary : .white)
+                                    .cornerRadius(20)
                             }
                             
-                            TextField("Email", text: $email)
-                                .textFieldStyle(.roundedBorder)
-                                .keyboardType(.emailAddress)
-                                .autocapitalization(.none)
-                                .disableAutocorrection(true)
+                            Button(action: { withAnimation(.spring()) { isLoginMode = false } }) {
+                                Text("Register")
+                                    .font(Typography.button())
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 12)
+                                    .background(!isLoginMode ? Color.white : Color.clear)
+                                    .foregroundColor(!isLoginMode ? Theme.primary : .white)
+                                    .cornerRadius(20)
+                            }
+                        }
+                        .padding(4)
+                        .background(Color.black.opacity(0.2))
+                        .cornerRadius(24)
+                        .padding(.horizontal, Theme.spacingL)
+                        
+                        // Main Form Card
+                        VStack(spacing: Theme.spacingM) {
+                            if !isLoginMode {
+                                CustomTextField(icon: "person.fill", placeholder: "Full Name", text: $name)
+                            }
                             
-                            SecureField("Password", text: $password)
-                                .textFieldStyle(.roundedBorder)
+                            CustomTextField(icon: "envelope.fill", placeholder: "Email", text: $email, keyboardType: .emailAddress)
+                            
+                            CustomSecureField(icon: "lock.fill", placeholder: "Password", text: $password)
                             
                             if !errorMessage.isEmpty {
                                 Text(errorMessage)
                                     .foregroundColor(Theme.error)
-                                    .font(Typography.caption())
+                                    .font(Typography.captionBold())
+                                    .multilineTextAlignment(.center)
+                                    .padding(.top, 4)
                             }
                             
                             Button(action: handleAction) {
-                                Text(isLoginMode ? "Log In" : "Create Account")
+                                Text(isLoginMode ? "Sign In" : "Create Account")
                                     .font(Typography.button())
                                     .foregroundColor(.white)
                                     .frame(maxWidth: .infinity)
                                     .padding()
                                     .background(Theme.gradientPrimary)
                                     .cornerRadius(Theme.radiusM)
+                                    .shadow(color: Theme.primary.opacity(0.3), radius: 10, x: 0, y: 5)
                             }
                             .padding(.top, Theme.spacingS)
                         }
                         .padding(Theme.spacingL)
-                        .cardStyle()
-                        .padding(.horizontal)
+                        .background(.ultraThinMaterial)
+                        .cornerRadius(Theme.radiusL)
+                        .shadow(color: Color.black.opacity(0.15), radius: 15, x: 0, y: 10)
+                        .padding(.horizontal, Theme.spacingL)
                         
+                        // Divider
                         HStack {
-                            VStack { Divider() }
+                            VStack { Divider().background(Color.white.opacity(0.4)) }
                             Text("OR")
-                                .font(Typography.caption())
-                                .foregroundColor(Theme.dynamicTextSecondary)
-                            VStack { Divider() }
+                                .font(Typography.captionBold())
+                                .foregroundColor(.white.opacity(0.8))
+                            VStack { Divider().background(Color.white.opacity(0.4)) }
                         }
                         .padding(.horizontal, Theme.spacingXL)
                         
+                        // Google Button
                         Button(action: loginWithGoogle) {
-                            HStack {
-                                Image(systemName: "envelope.fill") // Can be replaced with Google logo
+                            HStack(spacing: 12) {
+                                Image(systemName: "globe")
+                                    .font(.system(size: 20))
                                 Text("Continue with Google")
                             }
                             .font(Typography.button())
-                            .foregroundColor(Theme.dynamicTextPrimary)
+                            .foregroundColor(.primary)
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(Theme.dynamicCardBackground)
+                            .background(Color(UIColor.systemBackground))
                             .cornerRadius(Theme.radiusM)
                             .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
                         }
                         .padding(.horizontal, Theme.spacingL)
                         
-                        Spacer()
+                        Spacer(minLength: 40)
                     }
                 }
             }
@@ -220,5 +277,50 @@ struct ApplicationUtility {
             return .init()
         }
         return root
+    }
+}
+
+// Custom View Components for Premium UI
+struct CustomTextField: View {
+    let icon: String
+    let placeholder: String
+    @Binding var text: String
+    var keyboardType: UIKeyboardType = .default
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .foregroundColor(Theme.primary.opacity(0.8))
+                .frame(width: 24)
+            
+            TextField(placeholder, text: $text)
+                .keyboardType(keyboardType)
+                .autocapitalization(.none)
+                .disableAutocorrection(true)
+                .foregroundColor(Theme.dynamicTextPrimary)
+        }
+        .padding()
+        .background(Color(UIColor.systemBackground).opacity(0.7))
+        .cornerRadius(Theme.radiusM)
+    }
+}
+
+struct CustomSecureField: View {
+    let icon: String
+    let placeholder: String
+    @Binding var text: String
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .foregroundColor(Theme.primary.opacity(0.8))
+                .frame(width: 24)
+            
+            SecureField(placeholder, text: $text)
+                .foregroundColor(Theme.dynamicTextPrimary)
+        }
+        .padding()
+        .background(Color(UIColor.systemBackground).opacity(0.7))
+        .cornerRadius(Theme.radiusM)
     }
 }
