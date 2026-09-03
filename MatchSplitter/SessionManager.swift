@@ -14,10 +14,17 @@ class SessionManager: ObservableObject {
         currentGroup != nil
     }
     
-    func login(user: User) {
+    func login(user: User, context: NSManagedObjectContext) {
         self.currentUser = user
-        // We could also persist this to UserDefaults to auto-login next time
         UserDefaults.standard.set(user.id.uuidString, forKey: "lastUserID")
+        
+        // Auto-select group if they only have exactly 1
+        let groupReq: NSFetchRequest<BusinessGroup> = BusinessGroup.fetchRequest()
+        groupReq.predicate = NSPredicate(format: "ownerID == %@", user.id as CVarArg)
+        
+        if let groups = try? context.fetch(groupReq), groups.count == 1 {
+            selectGroup(group: groups[0])
+        }
     }
     
     func logout() {
@@ -56,6 +63,15 @@ class SessionManager: ObservableObject {
                     
                     if let group = try? context.fetch(groupReq).first {
                         self.currentGroup = group
+                    }
+                }
+                
+                // If no group is selected (e.g. cleared or first time), but the user has exactly 1 group, auto-select it
+                if self.currentGroup == nil {
+                    let groupReq: NSFetchRequest<BusinessGroup> = BusinessGroup.fetchRequest()
+                    groupReq.predicate = NSPredicate(format: "ownerID == %@", user.id as CVarArg)
+                    if let groups = try? context.fetch(groupReq), groups.count == 1 {
+                        self.selectGroup(group: groups[0])
                     }
                 }
             }

@@ -175,7 +175,7 @@ struct LoginView: View {
             
             if let user = try? viewContext.fetch(req).first {
                 withAnimation {
-                    session.login(user: user)
+                    session.login(user: user, context: viewContext)
                 }
             } else {
                 errorMessage = "Invalid email or password."
@@ -203,10 +203,17 @@ struct LoginView: View {
             newUser.password = password
             newUser.createdAt = Date()
             
+            // Auto-create default team
+            let defaultGroup = BusinessGroup(context: viewContext)
+            defaultGroup.id = UUID()
+            defaultGroup.name = "My Team"
+            defaultGroup.ownerID = newUser.id
+            defaultGroup.createdAt = Date()
+            
             do {
                 try viewContext.save()
                 withAnimation {
-                    session.login(user: newUser)
+                    session.login(user: newUser, context: viewContext)
                 }
             } catch {
                 errorMessage = "Error creating account. Please try again."
@@ -242,7 +249,7 @@ struct LoginView: View {
             if let existingUser = try? viewContext.fetch(req).first {
                 // Log in existing user
                 withAnimation {
-                    session.login(user: existingUser)
+                    session.login(user: existingUser, context: viewContext)
                 }
             } else {
                 // Register new user
@@ -254,10 +261,17 @@ struct LoginView: View {
                 newUser.password = "GOOGLE_OAUTH_PLACEHOLDER"
                 newUser.createdAt = Date()
                 
+                // Auto-create default team
+                let defaultGroup = BusinessGroup(context: viewContext)
+                defaultGroup.id = UUID()
+                defaultGroup.name = "My Team"
+                defaultGroup.ownerID = newUser.id
+                defaultGroup.createdAt = Date()
+                
                 do {
                     try viewContext.save()
                     withAnimation {
-                        session.login(user: newUser)
+                        session.login(user: newUser, context: viewContext)
                     }
                 } catch {
                     self.errorMessage = "Error creating account with Google."
