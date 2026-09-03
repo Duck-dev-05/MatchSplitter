@@ -5,15 +5,15 @@ struct GroupSelectionView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @EnvironmentObject private var session: SessionManager
     
-    @FetchRequest private var groups: FetchedResults<Group>
+    @FetchRequest private var groups: FetchedResults<BusinessGroup>
     
     @State private var showingAddGroup = false
     @State private var newGroupName = ""
     
     init(userID: UUID) {
-        let request: NSFetchRequest<Group> = Group.fetchRequest()
+        let request: NSFetchRequest<BusinessGroup> = BusinessGroup.fetchRequest()
         request.predicate = NSPredicate(format: "ownerID == %@", userID as CVarArg)
-        request.sortDescriptors = [NSSortDescriptor(keyPath: \Group.name, ascending: true)]
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \BusinessGroup.name, ascending: true)]
         _groups = FetchRequest(fetchRequest: request, animation: .default)
     }
     
@@ -147,7 +147,7 @@ struct GroupSelectionView: View {
         guard let userID = session.currentUser?.id else { return }
         
         withAnimation {
-            let newGroup = Group(context: viewContext)
+            let newGroup = BusinessGroup(context: viewContext)
             newGroup.id = UUID()
             newGroup.name = newGroupName
             newGroup.ownerID = userID

@@ -17,18 +17,18 @@ extension User {
     }
 }
 
-// MARK: - Group Entity
-@objc(Group)
-public class Group: NSManagedObject {
+// MARK: - BusinessGroup Entity
+@objc(BusinessGroup)
+public class BusinessGroup: NSManagedObject {
     @NSManaged public var id: UUID
     @NSManaged public var name: String
     @NSManaged public var ownerID: UUID
     @NSManaged public var createdAt: Date
 }
 
-extension Group {
-    @nonobjc public class func fetchRequest() -> NSFetchRequest<Group> {
-        return NSFetchRequest<Group>(entityName: "Group")
+extension BusinessGroup {
+    @nonobjc public class func fetchRequest() -> NSFetchRequest<BusinessGroup> {
+        return NSFetchRequest<BusinessGroup>(entityName: "BusinessGroup")
     }
 }
 
@@ -173,7 +173,7 @@ extension Payment {
 
 // MARK: - Identifiable Conformance
 extension User: Identifiable {}
-extension Group: Identifiable {}
+extension BusinessGroup: Identifiable {}
 extension Client: Identifiable {}
 extension Invoice: Identifiable {}
 extension InvoiceItem: Identifiable {}

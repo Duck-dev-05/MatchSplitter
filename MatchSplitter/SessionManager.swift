@@ -3,7 +3,7 @@ import CoreData
 
 class SessionManager: ObservableObject {
     @Published var currentUser: User?
-    @Published var currentGroup: Group?
+    @Published var currentGroup: BusinessGroup?
     
     // Check if the user is authenticated and has a group selected
     var isAuthenticated: Bool {
@@ -27,7 +27,7 @@ class SessionManager: ObservableObject {
         UserDefaults.standard.removeObject(forKey: "lastGroupID")
     }
     
-    func selectGroup(group: Group) {
+    func selectGroup(group: BusinessGroup) {
         self.currentGroup = group
         UserDefaults.standard.set(group.id.uuidString, forKey: "lastGroupID")
     }
@@ -51,7 +51,7 @@ class SessionManager: ObservableObject {
                 if let groupIDString = UserDefaults.standard.string(forKey: "lastGroupID"),
                    let groupID = UUID(uuidString: groupIDString) {
                     
-                    let groupReq: NSFetchRequest<Group> = Group.fetchRequest()
+                    let groupReq: NSFetchRequest<BusinessGroup> = BusinessGroup.fetchRequest()
                     groupReq.predicate = NSPredicate(format: "id == %@", groupID as CVarArg)
                     
                     if let group = try? context.fetch(groupReq).first {
