@@ -69,30 +69,6 @@ struct LoginView: View {
                         .cardStyle()
                         .padding(.horizontal)
                         
-                        HStack {
-                            VStack { Divider() }
-                            Text("OR")
-                                .font(Typography.caption())
-                                .foregroundColor(Theme.dynamicTextSecondary)
-                            VStack { Divider() }
-                        }
-                        .padding(.horizontal, Theme.spacingXL)
-                        
-                        Button(action: loginWithGoogleMock) {
-                            HStack {
-                                Image(systemName: "envelope.fill")
-                                Text("Continue with Google")
-                            }
-                            .font(Typography.button())
-                            .foregroundColor(Theme.dynamicTextPrimary)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Theme.dynamicCardBackground)
-                            .cornerRadius(Theme.radiusM)
-                            .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
-                        }
-                        .padding(.horizontal, Theme.spacingL)
-                        
                         Spacer()
                     }
                 }
@@ -151,37 +127,6 @@ struct LoginView: View {
                 }
             } catch {
                 errorMessage = "Error creating account. Please try again."
-            }
-        }
-    }
-    
-    private func loginWithGoogleMock() {
-        errorMessage = ""
-        let mockEmail = "demo@google.com"
-        let mockName = "Google User"
-        
-        let req: NSFetchRequest<User> = User.fetchRequest()
-        req.predicate = NSPredicate(format: "email == %@", mockEmail)
-        
-        if let existingUser = try? viewContext.fetch(req).first {
-            withAnimation {
-                session.login(user: existingUser)
-            }
-        } else {
-            let newUser = User(context: viewContext)
-            newUser.id = UUID()
-            newUser.username = mockName
-            newUser.email = mockEmail
-            // Google users don't have a local password by default
-            newUser.createdAt = Date()
-            
-            do {
-                try viewContext.save()
-                withAnimation {
-                    session.login(user: newUser)
-                }
-            } catch {
-                errorMessage = "Error with Google Login."
             }
         }
     }
