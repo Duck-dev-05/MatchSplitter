@@ -3,50 +3,33 @@ import CoreData
 import CoreImage.CIFilterBuiltins
 
 struct Theme {
-    // Light Mode Colors
-    static let primary = Color.indigo
-    static let secondary = Color.purple
-    static let background = Color(UIColor.systemGroupedBackground)
-    static let cardBackground = Color(UIColor.secondarySystemGroupedBackground)
+    // Brand Colors
+    static let primary = Color(red: 0.0, green: 0.82, blue: 0.33) // Emerald Green
+    static let secondary = Color(red: 0.0, green: 0.5, blue: 0.3) // Dark Green
+    
+    // Dynamic System Colors
+    static let background = Color(UIColor.systemBackground)
+    static let cardBackground = Color(UIColor.secondarySystemBackground)
+    static let groupedBackground = Color(UIColor.systemGroupedBackground)
     static let textPrimary = Color(UIColor.label)
     static let textSecondary = Color(UIColor.secondaryLabel)
     static let border = Color(UIColor.separator)
+    
     static let success = Color.green
     static let warning = Color.orange
     static let error = Color.red
     
-    // Dark Mode Colors
-    static let darkBackground = Color(UIColor.systemGroupedBackground)
-    static let darkCardBackground = Color(UIColor.secondarySystemGroupedBackground)
-    static let darkTextPrimary = Color(UIColor.label)
-    static let darkTextSecondary = Color(UIColor.secondaryLabel)
-    static let darkBorder = Color(UIColor.separator)
-    
-    // Dynamic Colors
     @Environment(\.colorScheme) static var colorScheme
     
-    static var dynamicBackground: Color {
-        background
-    }
+    // For backwards compatibility in existing views
+    static var dynamicBackground: Color { background }
+    static var dynamicCardBackground: Color { cardBackground }
+    static var dynamicTextPrimary: Color { textPrimary }
+    static var dynamicTextSecondary: Color { textSecondary }
+    static var dynamicBorder: Color { border }
     
-    static var dynamicCardBackground: Color {
-        cardBackground
-    }
-    
-    static var dynamicTextPrimary: Color {
-        textPrimary
-    }
-    
-    static var dynamicTextSecondary: Color {
-        textSecondary
-    }
-    
-    static var dynamicBorder: Color {
-        border
-    }
-    
-    static let gradientPrimary = LinearGradient(colors: [primary, secondary], startPoint: .topLeading, endPoint: .bottomTrailing)
-    static let gradientDark = LinearGradient(colors: [Color.indigo.opacity(0.8), Color.purple.opacity(0.8)], startPoint: .topLeading, endPoint: .bottomTrailing)
+    static let gradientPrimary = LinearGradient(colors: [primary, primary.opacity(0.8)], startPoint: .topLeading, endPoint: .bottomTrailing)
+    static let gradientDark = LinearGradient(colors: [primary.opacity(0.8), primary.opacity(0.5)], startPoint: .topLeading, endPoint: .bottomTrailing)
     
     // Spacing System
     static let spacingXS: CGFloat = 4
@@ -60,7 +43,7 @@ struct Theme {
     static let radiusS: CGFloat = 8
     static let radiusM: CGFloat = 12
     static let radiusL: CGFloat = 16
-    static let radiusXL: CGFloat = 20
+    static let radiusXL: CGFloat = 24
 }
 
 struct CardModifier: ViewModifier {
@@ -69,8 +52,12 @@ struct CardModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .background(Theme.dynamicCardBackground)
-            .cornerRadius(Theme.radiusL)
-            .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.3 : 0.05), radius: 10, x: 0, y: 5)
+            .cornerRadius(Theme.radiusM)
+            .overlay(
+                RoundedRectangle(cornerRadius: Theme.radiusM)
+                    .stroke(Theme.border.opacity(0.3), lineWidth: 0.5)
+            )
+            .shadow(color: Color.black.opacity(colorScheme == .dark ? 0 : 0.03), radius: 5, x: 0, y: 2)
     }
 }
 
@@ -93,53 +80,45 @@ extension View {
 
 // Typography System
 struct Typography {
-    // Font Sizes
-    static let fontSizeXS: CGFloat = 11
-    static let fontSizeS: CGFloat = 13
-    static let fontSizeM: CGFloat = 15
-    static let fontSizeL: CGFloat = 17
-    static let fontSizeXL: CGFloat = 20
-    static let fontSizeXXL: CGFloat = 24
-    static let fontSizeXXXL: CGFloat = 32
-    
-    // Font Weights
-    static let weightLight = Font.Weight.light
-    static let weightRegular = Font.Weight.regular
-    static let weightMedium = Font.Weight.medium
-    static let weightSemibold = Font.Weight.semibold
-    static let weightBold = Font.Weight.bold
-    
     // Font Styles
     static func headline() -> Font {
-        .system(.title2, design: .rounded).bold()
+        .system(.title3, design: .default).weight(.semibold)
     }
     
     static func subheadline() -> Font {
-        .system(.title3, design: .rounded).bold()
+        .system(.headline, design: .default).weight(.medium)
     }
     
     static func subheadlineBold() -> Font {
-        .system(.subheadline, design: .rounded).bold()
+        .system(.headline, design: .default).weight(.bold)
     }
     
     static func body() -> Font {
-        .system(.body, design: .rounded)
+        .system(.body, design: .default)
     }
     
     static func bodyBold() -> Font {
-        .system(.body, design: .rounded).bold()
+        .system(.body, design: .default).weight(.semibold)
     }
     
     static func caption() -> Font {
-        .system(.caption, design: .rounded)
+        .system(.subheadline, design: .default)
     }
     
     static func captionBold() -> Font {
-        .system(.caption, design: .rounded).bold()
+        .system(.subheadline, design: .default).weight(.semibold)
     }
     
     static func button() -> Font {
-        .system(.headline, design: .rounded).bold()
+        .system(.headline, design: .default).weight(.semibold)
+    }
+    
+    static func amountLarge() -> Font {
+        .system(size: 44, weight: .bold, design: .rounded)
+    }
+    
+    static func amount() -> Font {
+        .system(size: 24, weight: .semibold, design: .rounded)
     }
 }
 

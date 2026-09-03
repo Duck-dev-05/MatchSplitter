@@ -43,63 +43,54 @@ struct DashboardView: View {
                 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: Theme.spacingL) {
-                        // Summary Card
-                        VStack(spacing: Theme.spacingM) {
-                            Text("Your Balance")
-                                .font(Typography.captionBold())
+                        // Premium Fintech Balance Display
+                        VStack(spacing: Theme.spacingS) {
+                            Text("Total Outstanding")
+                                .font(Typography.subheadlineBold())
                                 .foregroundColor(Theme.dynamicTextSecondary)
                                 .textCase(.uppercase)
+                                .tracking(1.2)
                             
-                            HStack(spacing: Theme.spacingXL) {
-                                VStack {
-                                    Text("Collected")
-                                        .font(Typography.caption())
-                                        .foregroundColor(.white.opacity(0.8))
-                                    Text(totalRevenue.formatted(.currency(code: "VND")))
-                                        .font(.system(.title3, design: .rounded).bold())
-                                        .foregroundColor(.white)
-                                }
-                                
-                                Divider()
-                                    .background(Color.white.opacity(0.3))
-                                    .frame(height: 40)
-                                
-                                VStack {
-                                    Text("Owed to You")
-                                        .font(Typography.caption())
-                                        .foregroundColor(.white.opacity(0.8))
-                                    Text(outstandingAmount.formatted(.currency(code: "VND")))
-                                        .font(.system(.title3, design: .rounded).bold())
-                                        .foregroundColor(outstandingAmount > 0 ? Theme.warning : .white)
-                                }
-                            }
-                        }
-                        .padding(Theme.spacingL)
-                        .frame(maxWidth: .infinity)
-                        .background(Theme.gradientPrimary)
-                        .cornerRadius(Theme.radiusXL)
-                        .shadow(color: Theme.primary.opacity(0.3), radius: 10, x: 0, y: 5)
-                        .padding(.horizontal)
-                        .padding(.top, Theme.spacingS)
-                        
-                        // Action Buttons
-                        if let bank = session.currentGroup?.bankName, !bank.isEmpty {
-                            Button {
-                                showingPaymentQR = true
-                            } label: {
+                            Text(outstandingAmount.formatted(.currency(code: "VND")))
+                                .font(Typography.amountLarge())
+                                .foregroundColor(outstandingAmount > 0 ? Theme.primary : Theme.dynamicTextPrimary)
+                            
+                            HStack(spacing: Theme.spacingM) {
                                 HStack {
-                                    Image(systemName: "qrcode")
-                                    Text("Show Payment QR")
+                                    Circle()
+                                        .fill(Theme.success)
+                                        .frame(width: 8, height: 8)
+                                    Text("Collected: \(totalRevenue.formatted(.currency(code: "VND")))")
+                                        .font(Typography.caption())
+                                        .foregroundColor(Theme.dynamicTextSecondary)
                                 }
-                                .font(Typography.button())
-                                .foregroundColor(Theme.primary)
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(Theme.primary.opacity(0.1))
-                                .cornerRadius(Theme.radiusM)
                             }
-                            .padding(.horizontal)
+                            .padding(.top, Theme.spacingXS)
+                            
+                            // Action Buttons
+                            if let bank = session.currentGroup?.bankName, !bank.isEmpty {
+                                Button {
+                                    showingPaymentQR = true
+                                } label: {
+                                    HStack {
+                                        Image(systemName: "qrcode")
+                                        Text("Receive Payment")
+                                    }
+                                    .font(Typography.button())
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                                    .background(Theme.primary)
+                                    .cornerRadius(Theme.radiusXL)
+                                    .shadow(color: Theme.primary.opacity(0.3), radius: 8, x: 0, y: 4)
+                                }
+                                .padding(.top, Theme.spacingM)
+                                .padding(.horizontal, Theme.spacingL)
+                            }
                         }
+                        .padding(.vertical, Theme.spacingXL)
+                        .frame(maxWidth: .infinity)
+                        .background(Theme.dynamicBackground)
                         
                         // Recent Splits
                         VStack(alignment: .leading, spacing: Theme.spacingM) {
@@ -281,10 +272,21 @@ struct InvoiceRowView: View {
     
     var body: some View {
         HStack {
+            ZStack {
+                Circle()
+                    .fill(Theme.primary.opacity(0.1))
+                    .frame(width: 44, height: 44)
+                
+                Image(systemName: "doc.text.fill")
+                    .foregroundColor(Theme.primary)
+                    .font(.system(size: 20))
+            }
+            
             VStack(alignment: .leading, spacing: Theme.spacingXS) {
-                Text(invoice.invoiceNumber)
-                    .font(Typography.bodyBold())
                 Text(clientName)
+                    .font(Typography.bodyBold())
+                    .foregroundColor(Theme.dynamicTextPrimary)
+                Text(invoice.invoiceNumber)
                     .font(Typography.caption())
                     .foregroundColor(Theme.dynamicTextSecondary)
             }
@@ -294,18 +296,17 @@ struct InvoiceRowView: View {
             VStack(alignment: .trailing, spacing: Theme.spacingXS) {
                 Text(invoice.total.formatted(.currency(code: "VND")))
                     .font(Typography.bodyBold())
+                    .foregroundColor(Theme.dynamicTextPrimary)
                 
                 Text(invoice.status)
-                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .font(.system(size: 11, weight: .bold, design: .rounded))
                     .foregroundColor(statusColor)
-                    .padding(.horizontal, Theme.spacingS)
-                    .padding(.vertical, Theme.spacingXS)
-                    .background(statusColor.opacity(0.15))
-                    .clipShape(Capsule())
             }
         }
-        .padding(Theme.spacingM)
-        .cardStyle()
+        .padding(.vertical, Theme.spacingS)
+        .padding(.horizontal, Theme.spacingM)
+        .background(Theme.dynamicCardBackground)
+        .cornerRadius(Theme.radiusM)
     }
     
     var statusColor: Color {
@@ -314,7 +315,7 @@ struct InvoiceRowView: View {
         case .partial: return Theme.warning
         case .overdue: return Theme.error
         case .sent, .viewed: return Theme.primary
-        default: return .gray
+        default: return Theme.dynamicTextSecondary
         }
     }
 }
@@ -329,9 +330,20 @@ struct PaymentRowView: View {
     
     var body: some View {
         HStack {
+            ZStack {
+                Circle()
+                    .fill(Theme.success.opacity(0.1))
+                    .frame(width: 44, height: 44)
+                
+                Image(systemName: "arrow.down.left")
+                    .foregroundColor(Theme.success)
+                    .font(.system(size: 20, weight: .bold))
+            }
+            
             VStack(alignment: .leading, spacing: Theme.spacingXS) {
                 Text(invoiceNumber)
                     .font(Typography.bodyBold())
+                    .foregroundColor(Theme.dynamicTextPrimary)
                 Text(payment.paymentMethod)
                     .font(Typography.caption())
                     .foregroundColor(Theme.dynamicTextSecondary)
@@ -340,7 +352,7 @@ struct PaymentRowView: View {
             Spacer()
             
             VStack(alignment: .trailing, spacing: Theme.spacingXS) {
-                Text(payment.amount.formatted(.currency(code: "VND")))
+                Text("+\(payment.amount.formatted(.currency(code: "VND")))")
                     .font(Typography.bodyBold())
                     .foregroundColor(Theme.success)
                 Text(payment.paymentDate.formatted(date: .abbreviated, time: .omitted))
@@ -348,8 +360,10 @@ struct PaymentRowView: View {
                     .foregroundColor(Theme.dynamicTextSecondary)
             }
         }
-        .padding(Theme.spacingM)
-        .cardStyle()
+        .padding(.vertical, Theme.spacingS)
+        .padding(.horizontal, Theme.spacingM)
+        .background(Theme.dynamicCardBackground)
+        .cornerRadius(Theme.radiusM)
     }
 }
 

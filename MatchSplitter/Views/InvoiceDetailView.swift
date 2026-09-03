@@ -46,13 +46,20 @@ struct InvoiceDetailView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
                         // Invoice Header
-                        VStack(alignment: .leading, spacing: 12) {
+                        VStack(spacing: Theme.spacingM) {
                             Text(invoice.invoiceNumber)
-                                .font(.system(.title2, design: .rounded).bold())
+                                .font(Typography.captionBold())
+                                .foregroundColor(Theme.dynamicTextSecondary)
+                                .textCase(.uppercase)
+                                .tracking(1.2)
+                            
+                            Text(balanceDue.formatted(.currency(code: "VND")))
+                                .font(Typography.amountLarge())
+                                .foregroundColor(balanceDue > 0 ? Theme.dynamicTextPrimary : Theme.success)
                             
                             HStack {
                                 Label("Status", systemImage: "flag.fill")
-                                    .font(.system(.subheadline, design: .rounded).bold())
+                                    .font(Typography.subheadlineBold())
                                     .foregroundColor(Theme.primary)
                                 
                                 Spacer()
@@ -70,168 +77,170 @@ struct InvoiceDetailView: View {
                                     try? viewContext.save()
                                 }
                             }
-                            .padding(.top, 4)
+                            .padding(.top, Theme.spacingS)
                         }
-                        .padding(16)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .cardStyle()
+                        .padding(Theme.spacingM)
+                        .frame(maxWidth: .infinity)
+                        .background(Theme.dynamicCardBackground)
                         
                         // Client Info
                         if let client = client {
-                            VStack(alignment: .leading, spacing: 8) {
+                            VStack(alignment: .leading, spacing: Theme.spacingS) {
                                 Text("Player")
-                                    .font(.system(.caption, design: .rounded))
-                                    .foregroundColor(.secondary)
+                                    .font(Typography.caption())
+                                    .foregroundColor(Theme.dynamicTextSecondary)
                                 Text(client.name)
-                                    .font(.system(.headline, design: .rounded).bold())
+                                    .font(Typography.headline())
+                                    .foregroundColor(Theme.dynamicTextPrimary)
                                 if !client.email.isEmpty {
                                     Text(client.email)
-                                        .font(.system(.subheadline, design: .rounded))
+                                        .font(Typography.body())
                                 }
                                 if !client.address.isEmpty {
                                     Text(client.address)
-                                        .font(.system(.subheadline, design: .rounded))
+                                        .font(Typography.body())
                                 }
                             }
-                            .padding(16)
+                            .padding(Theme.spacingM)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .cardStyle()
+                            .padding(.horizontal)
                         }
                         
                         // Match Details
-                        VStack(alignment: .leading, spacing: 12) {
+                        VStack(alignment: .leading, spacing: Theme.spacingM) {
                             HStack {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text("Match Date")
-                                        .font(.system(.caption, design: .rounded))
-                                        .foregroundColor(.secondary)
+                                        .font(Typography.caption())
+                                        .foregroundColor(Theme.dynamicTextSecondary)
                                     Text(invoice.issueDate.formatted(date: .abbreviated, time: .omitted))
-                                        .font(.system(.subheadline, design: .rounded).bold())
+                                        .font(Typography.bodyBold())
                                 }
                                 
                                 Spacer()
                                 
                                 VStack(alignment: .trailing, spacing: 4) {
                                     Text("Due Date")
-                                        .font(.system(.caption, design: .rounded))
-                                        .foregroundColor(.secondary)
+                                        .font(Typography.caption())
+                                        .foregroundColor(Theme.dynamicTextSecondary)
                                     Text(invoice.dueDate.formatted(date: .abbreviated, time: .omitted))
-                                        .font(.system(.subheadline, design: .rounded).bold())
-                                        .foregroundColor(invoice.isOverdue ? .red : .primary)
+                                        .font(Typography.bodyBold())
+                                        .foregroundColor(invoice.isOverdue ? Theme.error : Theme.dynamicTextPrimary)
                                 }
                             }
                             
                             Divider()
-                                .padding(.vertical, 4)
                             
                             HStack {
                                 Text("Payment Terms")
-                                    .font(.system(.caption, design: .rounded))
-                                    .foregroundColor(.secondary)
+                                    .font(Typography.caption())
+                                    .foregroundColor(Theme.dynamicTextSecondary)
                                 Spacer()
                                 Text(invoice.paymentTerms)
-                                    .font(.system(.subheadline, design: .rounded).bold())
+                                    .font(Typography.bodyBold())
                             }
                         }
-                        .padding(16)
+                        .padding(Theme.spacingM)
                         .cardStyle()
+                        .padding(.horizontal)
                         
                         // Match Expenses
                         if !items.isEmpty {
-                            VStack(alignment: .leading, spacing: 12) {
+                            VStack(alignment: .leading, spacing: Theme.spacingM) {
                                 Text("Match Expenses")
-                                    .font(.system(.headline, design: .rounded).bold())
+                                    .font(Typography.headline())
                                     .foregroundColor(Theme.primary)
                                 
                                 ForEach(items) { item in
                                     HStack {
                                         VStack(alignment: .leading) {
                                             Text(item.itemDescription)
-                                                .font(.system(.subheadline, design: .rounded).bold())
+                                                .font(Typography.bodyBold())
                                             Text("\(item.quantity, specifier: "%g") x \(item.unitPrice.formatted(.currency(code: "VND")))")
-                                                .font(.system(.caption, design: .rounded))
-                                                .foregroundColor(.secondary)
+                                                .font(Typography.caption())
+                                                .foregroundColor(Theme.dynamicTextSecondary)
                                         }
                                         Spacer()
                                         Text(item.total.formatted(.currency(code: "VND")))
-                                            .font(.system(.subheadline, design: .rounded))
+                                            .font(Typography.body())
                                     }
                                     if item.id != items.last?.id {
                                         Divider()
                                     }
                                 }
                             }
-                            .padding(16)
+                            .padding(Theme.spacingM)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .cardStyle()
+                            .padding(.horizontal)
                         }
                         
                         // Financial Summary
-                        VStack(alignment: .leading, spacing: 12) {
+                        VStack(alignment: .leading, spacing: Theme.spacingM) {
                             HStack {
                                 Text("Subtotal")
-                                    .font(.system(.subheadline, design: .rounded))
+                                    .font(Typography.body())
                                 Spacer()
                                 Text(invoice.subtotal.formatted(.currency(code: "VND")))
-                                    .font(.system(.subheadline, design: .rounded))
+                                    .font(Typography.body())
                             }
                             
                             HStack {
                                 Text("Tax (\(invoice.taxRate, specifier: "%.1f")%)")
-                                    .font(.system(.subheadline, design: .rounded))
+                                    .font(Typography.body())
                                 Spacer()
                                 Text(invoice.taxAmount.formatted(.currency(code: "VND")))
-                                    .font(.system(.subheadline, design: .rounded))
+                                    .font(Typography.body())
                             }
                             
                             if invoice.discount > 0 {
                                 HStack {
                                     Text("Discount")
-                                        .font(.system(.subheadline, design: .rounded))
-                                        .foregroundColor(.green)
+                                        .font(Typography.body())
+                                        .foregroundColor(Theme.success)
                                     Spacer()
                                     Text("-\(invoice.discount.formatted(.currency(code: "VND")))")
-                                        .font(.system(.subheadline, design: .rounded))
-                                        .foregroundColor(.green)
+                                        .font(Typography.body())
+                                        .foregroundColor(Theme.success)
                                 }
                             }
                             
                             Divider()
-                                .padding(.vertical, 4)
                             
                             HStack {
                                 Text("Total Match Cost")
-                                    .font(.system(.title3, design: .rounded).bold())
+                                    .font(Typography.headline())
                                 Spacer()
                                 Text(invoice.total.formatted(.currency(code: "VND")))
-                                    .font(.system(.title3, design: .rounded).bold())
+                                    .font(Typography.headline())
                             }
                             
                             if totalPayments > 0 {
                                 HStack {
                                     Text("Payments")
-                                        .font(.system(.subheadline, design: .rounded))
+                                        .font(Typography.body())
                                     Spacer()
                                     Text("-\(totalPayments.formatted(.currency(code: "VND")))")
-                                        .font(.system(.subheadline, design: .rounded))
-                                        .foregroundColor(.green)
+                                        .font(Typography.body())
+                                        .foregroundColor(Theme.success)
                                 }
                             }
                             
                             Divider()
-                                .padding(.vertical, 4)
                             
                             HStack {
                                 Text("Balance Due")
-                                    .font(.system(.title3, design: .rounded).bold())
+                                    .font(Typography.headline())
                                 Spacer()
                                 Text(balanceDue.formatted(.currency(code: "VND")))
-                                    .font(.system(.title3, design: .rounded).bold())
+                                    .font(Typography.headline())
                                     .foregroundColor(Theme.primary)
                             }
                         }
-                        .padding(16)
+                        .padding(Theme.spacingM)
                         .cardStyle()
+                        .padding(.horizontal)
                         
                         // Notes
                         if !invoice.notes.isEmpty {

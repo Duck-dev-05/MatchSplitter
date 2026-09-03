@@ -78,7 +78,7 @@ struct ClientsView: View {
                     .foregroundColor(.white)
                     .padding()
                     .frame(maxWidth: 200)
-                    .background(Theme.gradientPrimary)
+                    .background(Theme.primary)
                     .cornerRadius(Theme.radiusM)
                     .shadow(color: Theme.primary.opacity(0.3), radius: 5, x: 0, y: 3)
             }
@@ -131,7 +131,9 @@ struct ClientRowView: View {
                 .foregroundColor(Theme.dynamicTextSecondary.opacity(0.5))
                 .font(.caption.bold())
         }
-        .padding(Theme.spacingM)
-        .cardStyle()
+        .padding(.vertical, Theme.spacingS)
+        .padding(.horizontal, Theme.spacingM)
+        .background(Theme.dynamicCardBackground)
+        .cornerRadius(Theme.radiusM)
     }
 }
