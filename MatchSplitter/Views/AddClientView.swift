@@ -30,8 +30,6 @@ struct AddClientView: View {
                         .keyboardType(.phonePad)
                 }
                 
-                }
-                
                 Section("Notes") {
                     TextEditor(text: $notes)
                         .frame(minHeight: 100)
