@@ -21,6 +21,10 @@ jobs:
         # If Xcode 15.2 is not available, you can remove the line above to use the default version.
         continue-on-error: true 
 
+      - name: Disable Code Signing for App Target
+        run: |
+          sed -i '' 's/CODE_SIGN_STYLE = Automatic;/CODE_SIGN_STYLE = Manual; CODE_SIGNING_ALLOWED = NO;/g' MatchSplitter.xcodeproj/project.pbxproj
+
       - name: Build Xcode Project
         run: |
           # Build the project for generic iOS device, bypassing code signing
@@ -29,11 +33,8 @@ jobs:
             -scheme MatchSplitter \
             -configuration Release \
             -sdk iphoneos \
-            -derivedDataPath derived_data \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO
-
+            -derivedDataPath derived_data
+            
       - name: Package IPA
         run: |
           # Create a Payload directory

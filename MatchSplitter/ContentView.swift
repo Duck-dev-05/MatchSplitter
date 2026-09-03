@@ -235,7 +235,7 @@ struct ProfileView: View {
                         
                         // Workspace Section
                         VStack(alignment: .leading, spacing: Theme.spacingS) {
-                            Text("My Workspace")
+                            Text("My Team")
                                 .font(Typography.captionBold())
                                 .foregroundColor(Theme.dynamicTextSecondary)
                                 .padding(.horizontal)
@@ -245,7 +245,7 @@ struct ProfileView: View {
                                     VStack(alignment: .leading, spacing: Theme.spacingXS) {
                                         Text(session.currentGroup?.name ?? "No Group")
                                             .font(Typography.bodyBold())
-                                        Text("Active workspace")
+                                        Text("Active team")
                                             .font(Typography.caption())
                                             .foregroundColor(Theme.dynamicTextSecondary)
                                     }

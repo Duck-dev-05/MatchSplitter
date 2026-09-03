@@ -27,7 +27,7 @@ struct GroupSelectionView: View {
                         VStack(alignment: .leading, spacing: Theme.spacingXS) {
                             Text("Welcome, \(session.currentUser?.username ?? "User")!")
                                 .font(Typography.headline())
-                            Text("Select a group or business to continue.")
+                            Text("Select a team to continue.")
                                 .font(Typography.body())
                                 .foregroundColor(Theme.dynamicTextSecondary)
                         }
@@ -46,9 +46,9 @@ struct GroupSelectionView: View {
                             Image(systemName: "briefcase.fill")
                                 .font(.system(size: 60))
                                 .foregroundColor(Theme.primary)
-                            Text("No groups found.")
+                            Text("No teams found.")
                                 .font(Typography.subheadline())
-                            Text("Create your first group to start generating invoices.")
+                            Text("Create your first team to start tracking splits.")
                                 .font(Typography.body())
                                 .foregroundColor(Theme.dynamicTextSecondary)
                                 .multilineTextAlignment(.center)
@@ -90,7 +90,7 @@ struct GroupSelectionView: View {
                     } label: {
                         HStack {
                             Image(systemName: "plus.circle.fill")
-                            Text("Create New Group")
+                            Text("Create New Team")
                         }
                         .font(Typography.button())
                         .foregroundColor(.white)
@@ -112,7 +112,7 @@ struct GroupSelectionView: View {
                         
                         VStack(spacing: Theme.spacingL) {
                             VStack(alignment: .leading, spacing: Theme.spacingS) {
-                                Text("Group Name")
+                                Text("Team Name")
                                     .font(Typography.captionBold())
                                 TextField("e.g. Acme Corp, Personal", text: $newGroupName)
                                     .textFieldStyle(.roundedBorder)
@@ -124,7 +124,7 @@ struct GroupSelectionView: View {
                             Spacer()
                         }
                     }
-                    .navigationTitle("New Group")
+                    .navigationTitle("New Team")
                     .navigationBarTitleDisplayMode(.inline)
                     .toolbar {
                         ToolbarItem(placement: .navigationBarLeading) {

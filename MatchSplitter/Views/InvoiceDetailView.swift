@@ -509,7 +509,7 @@ struct InvoiceQRView: View {
                 Theme.dynamicBackground.ignoresSafeArea()
                 
                 VStack(spacing: Theme.spacingL) {
-                    Text("Have your client scan this code to pay the remaining balance.")
+                    Text("Have your friends scan this code to pay the remaining balance.")
                         .font(Typography.body())
                         .foregroundColor(Theme.dynamicTextSecondary)
                         .multilineTextAlignment(.center)

@@ -3,8 +3,10 @@ import CoreData
 
 struct DashboardView: View {
     @Environment(\.managedObjectContext) private var viewContext
+    @EnvironmentObject private var session: SessionManager
     @AppStorage private var hasSeenClientOnboarding: Bool
     @State private var showingClientOnboarding = false
+    @State private var showingPaymentQR = false
     
     @FetchRequest private var invoices: FetchedResults<Invoice>
     @FetchRequest private var payments: FetchedResults<Payment>
@@ -80,6 +82,25 @@ struct DashboardView: View {
                         .padding(.horizontal)
                         .padding(.top, Theme.spacingS)
                         
+                        // Action Buttons
+                        if let bank = session.currentGroup?.bankName, !bank.isEmpty {
+                            Button {
+                                showingPaymentQR = true
+                            } label: {
+                                HStack {
+                                    Image(systemName: "qrcode")
+                                    Text("Show Payment QR")
+                                }
+                                .font(Typography.button())
+                                .foregroundColor(Theme.primary)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Theme.primary.opacity(0.1))
+                                .cornerRadius(Theme.radiusM)
+                            }
+                            .padding(.horizontal)
+                        }
+                        
                         // Recent Splits
                         VStack(alignment: .leading, spacing: Theme.spacingM) {
                             Text("Recent Splits")
@@ -128,6 +149,11 @@ struct DashboardView: View {
                 .onDisappear {
                     hasSeenClientOnboarding = true
                 }
+        }
+        .sheet(isPresented: $showingPaymentQR) {
+            if let group = session.currentGroup {
+                PaymentQRSheetView(group: group)
+            }
         }
         .onAppear {
             if clients.isEmpty && !hasSeenClientOnboarding {
@@ -416,3 +442,76 @@ struct FirstClientOnboardingView: View {
         }
     }
 }
+
+struct PaymentQRSheetView: View {
+    let group: BusinessGroup
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationView {
+            ZStack {
+                Theme.dynamicBackground.ignoresSafeArea()
+                
+                VStack(spacing: Theme.spacingL) {
+                    if let bank = group.bankName,
+                       let accName = group.accountName,
+                       let accNum = group.accountNumber {
+                        
+                        let qrString = "Bank: \(bank)\nAccount: \(accNum)\nName: \(accName)"
+                        
+                        VStack(spacing: Theme.spacingM) {
+                            Image(uiImage: QRCodeGenerator().generateQRCode(from: qrString))
+                                .interpolation(.none)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 220, height: 220)
+                                .padding(16)
+                                .background(Color.white)
+                                .cornerRadius(16)
+                            
+                            VStack(spacing: Theme.spacingXS) {
+                                Text(bank)
+                                    .font(Typography.headline())
+                                    .foregroundColor(.white)
+                                Text(accNum)
+                                    .font(Typography.bodyBold())
+                                    .foregroundColor(.white.opacity(0.9))
+                                Text(accName.uppercased())
+                                    .font(Typography.caption())
+                                    .foregroundColor(.white.opacity(0.7))
+                            }
+                            .padding(.bottom, Theme.spacingL)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, Theme.spacingXL)
+                        .background(Theme.gradientPrimary)
+                        .cornerRadius(24)
+                        .shadow(color: Theme.primary.opacity(0.3), radius: 15, x: 0, y: 10)
+                        .padding(.horizontal, Theme.spacingXL)
+                        
+                        Text("Show this QR code to your friends so they can scan and pay you directly.")
+                            .font(Typography.body())
+                            .foregroundColor(Theme.dynamicTextSecondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, Theme.spacingXL)
+                            .padding(.top, Theme.spacingM)
+                        
+                    } else {
+                        Text("Payment details not set up.")
+                            .foregroundColor(Theme.dynamicTextSecondary)
+                    }
+                    
+                    Spacer()
+                }
+                .padding(.top, Theme.spacingXL)
+            }
+            .navigationTitle("Payment QR")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") { dismiss() }
+                }
+            }
+        }
+    }
+}
