@@ -186,7 +186,7 @@ struct EditClientView: View {
                         .frame(minHeight: 100)
                 }
             }
-            .scrollContentBackground(.hidden)
+            .hideFormBackground()
             .background(Theme.background.ignoresSafeArea())
             .navigationTitle("Edit Client")
             .navigationBarTitleDisplayMode(.inline)

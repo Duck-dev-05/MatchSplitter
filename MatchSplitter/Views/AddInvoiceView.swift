@@ -71,7 +71,7 @@ struct AddInvoiceView: View {
                         .frame(minHeight: 100)
                 }
             }
-            .scrollContentBackground(.hidden)
+            .hideFormBackground()
             .background(Theme.background.ignoresSafeArea())
             .navigationTitle("New Invoice")
             .navigationBarTitleDisplayMode(.inline)

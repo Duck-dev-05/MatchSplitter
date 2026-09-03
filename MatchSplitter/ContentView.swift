@@ -23,6 +23,17 @@ extension View {
     func cardStyle() -> some View {
         self.modifier(CardModifier())
     }
+    
+    @ViewBuilder
+    func hideFormBackground() -> some View {
+        if #available(iOS 16.0, *) {
+            self.scrollContentBackground(.hidden)
+        } else {
+            self.onAppear {
+                UITableView.appearance().backgroundColor = .clear
+            }
+        }
+    }
 }
 
 struct ContentView: View {
