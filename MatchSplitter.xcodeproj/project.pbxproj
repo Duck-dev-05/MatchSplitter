@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A100000000000000000002000 /* SessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000000000000000001000 /* SessionManager.swift */; };
+		A100000000000000000002001 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000000000000000001001 /* LoginView.swift */; };
+		A100000000000000000002002 /* GroupSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000000000000000001002 /* GroupSelectionView.swift */; };
 		A100000000000000000000001 /* MatchSplitterApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000000000000000000002 /* MatchSplitterApp.swift */; };
 		A100000000000000000000003 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000000000000000000004 /* ContentView.swift */; };
 		A100000000000000000000005 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000000000000000000006 /* DashboardView.swift */; };
@@ -22,6 +25,9 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		A100000000000000000001000 /* SessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionManager.swift; sourceTree = "<group>"; };
+		A100000000000000000001001 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
+		A100000000000000000001002 /* GroupSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupSelectionView.swift; sourceTree = "<group>"; };
 		A100000000000000000000000 /* MatchSplitter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MatchSplitter.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A100000000000000000000002 /* MatchSplitterApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchSplitterApp.swift; sourceTree = "<group>"; };
 		A100000000000000000000004 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -63,6 +69,7 @@
 		A100000000000000000000033 /* MatchSplitter */ = {
 			isa = PBXGroup;
 			children = (
+				A100000000000000000001000 /* SessionManager.swift */,
 				A100000000000000000000002 /* MatchSplitterApp.swift */,
 				A100000000000000000000004 /* ContentView.swift */,
 				A100000000000000000000022 /* CoreDataModels.swift */,
@@ -83,6 +90,8 @@
 		A100000000000000000000035 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				A100000000000000000001001 /* LoginView.swift */,
+				A100000000000000000001002 /* GroupSelectionView.swift */,
 				A100000000000000000000006 /* DashboardView.swift */,
 				A100000000000000000000008 /* InvoicesView.swift */,
 				A10000000000000000000000A /* AddInvoiceView.swift */,
@@ -163,6 +172,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A100000000000000000002000 /* SessionManager.swift in Sources */,
+				A100000000000000000002001 /* LoginView.swift in Sources */,
+				A100000000000000000002002 /* GroupSelectionView.swift in Sources */,
 				A100000000000000000000001 /* MatchSplitterApp.swift in Sources */,
 				A100000000000000000000003 /* ContentView.swift in Sources */,
 				A100000000000000000000005 /* DashboardView.swift in Sources */,
