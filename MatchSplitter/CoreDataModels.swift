@@ -8,6 +8,7 @@ public class User: NSManagedObject {
     @NSManaged public var id: UUID
     @NSManaged public var username: String
     @NSManaged public var email: String?
+    @NSManaged public var password: String?
     @NSManaged public var pin: String?
     @NSManaged public var createdAt: Date
 }
