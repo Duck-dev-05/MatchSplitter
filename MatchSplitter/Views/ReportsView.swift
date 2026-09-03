@@ -154,8 +154,10 @@ struct RevenueReportView: View {
                         .foregroundColor(Theme.dynamicTextSecondary)
                         .padding(.horizontal)
                 } else {
-                    VStack(spacing: Theme.spacingM) {
-                        ForEach(paymentMethods.sorted(by: { $0.value > $1.value }), id: \.key) { method, amount in
+                    VStack(spacing: 0) {
+                        let sortedMethods = paymentMethods.sorted(by: { $0.value > $1.value })
+                        ForEach(Array(sortedMethods.enumerated()), id: \.element.key) { index, element in
+                            let (method, amount) = element
                             HStack {
                                 Text(method)
                                     .font(Typography.bodyBold())
@@ -172,9 +174,13 @@ struct RevenueReportView: View {
                                 }
                             }
                             .padding(Theme.spacingM)
-                            .cardStyle()
+                            
+                            if index < sortedMethods.count - 1 {
+                                Divider().padding(.leading, Theme.spacingM)
+                            }
                         }
                     }
+                    .cardStyle()
                     .padding(.horizontal)
                 }
             }
@@ -256,8 +262,9 @@ struct OutstandingReportView: View {
                         .foregroundColor(Theme.dynamicTextSecondary)
                         .padding(.horizontal)
                 } else {
-                    VStack(spacing: Theme.spacingM) {
-                        ForEach(filteredInvoices.sorted { $0.dueDate < $1.dueDate }) { invoice in
+                    VStack(spacing: 0) {
+                        let sortedInvoices = filteredInvoices.sorted { $0.dueDate < $1.dueDate }
+                        ForEach(Array(sortedInvoices.enumerated()), id: \.element.id) { index, invoice in
                             HStack {
                                 VStack(alignment: .leading, spacing: Theme.spacingXS) {
                                     Text(invoice.invoiceNumber)
@@ -278,9 +285,13 @@ struct OutstandingReportView: View {
                                 }
                             }
                             .padding(Theme.spacingM)
-                            .cardStyle()
+                            
+                            if index < sortedInvoices.count - 1 {
+                                Divider().padding(.leading, Theme.spacingM)
+                            }
                         }
                     }
+                    .cardStyle()
                     .padding(.horizontal)
                 }
             }
@@ -315,8 +326,9 @@ struct ClientsReportView: View {
                         .foregroundColor(Theme.dynamicTextSecondary)
                         .padding(.horizontal)
                 } else {
-                    VStack(spacing: Theme.spacingM) {
-                        ForEach(clients.sorted { $0.name < $1.name }) { client in
+                    VStack(spacing: 0) {
+                        let sortedClients = clients.sorted { $0.name < $1.name }
+                        ForEach(Array(sortedClients.enumerated()), id: \.element.id) { index, client in
                             HStack {
                                 VStack(alignment: .leading, spacing: Theme.spacingXS) {
                                     Text(client.name)
@@ -335,9 +347,13 @@ struct ClientsReportView: View {
                                     .font(.caption.bold())
                             }
                             .padding(Theme.spacingM)
-                            .cardStyle()
+                            
+                            if index < sortedClients.count - 1 {
+                                Divider().padding(.leading, Theme.spacingM)
+                            }
                         }
                     }
+                    .cardStyle()
                     .padding(.horizontal)
                 }
             }
@@ -393,8 +409,10 @@ struct ItemsReportView: View {
                         .foregroundColor(Theme.dynamicTextSecondary)
                         .padding(.horizontal)
                 } else {
-                    VStack(spacing: Theme.spacingM) {
-                        ForEach(itemSales.sorted(by: { $0.value.total > $1.value.total }).prefix(10), id: \.key) { itemName, data in
+                    VStack(spacing: 0) {
+                        let sortedItems = Array(itemSales.sorted(by: { $0.value.total > $1.value.total }).prefix(10))
+                        ForEach(Array(sortedItems.enumerated()), id: \.element.key) { index, element in
+                            let (itemName, data) = element
                             HStack {
                                 VStack(alignment: .leading, spacing: Theme.spacingXS) {
                                     Text(itemName)
@@ -413,9 +431,13 @@ struct ItemsReportView: View {
                                 }
                             }
                             .padding(Theme.spacingM)
-                            .cardStyle()
+                            
+                            if index < sortedItems.count - 1 {
+                                Divider().padding(.leading, Theme.spacingM)
+                            }
                         }
                     }
+                    .cardStyle()
                     .padding(.horizontal)
                 }
             }

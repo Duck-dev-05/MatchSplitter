@@ -11,6 +11,15 @@ struct DashboardView: View {
     @FetchRequest private var invoices: FetchedResults<Invoice>
     @FetchRequest private var payments: FetchedResults<Payment>
     @FetchRequest private var clients: FetchedResults<Client>
+    @FetchRequest(
+        sortDescriptors: [NSSortDescriptor(keyPath: \BusinessGroup.name, ascending: true)],
+        animation: .default
+    ) private var allGroups: FetchedResults<BusinessGroup>
+    
+    var myGroups: [BusinessGroup] {
+        guard let userID = session.currentUser?.id else { return [] }
+        return allGroups.filter { $0.ownerID == userID }
+    }
     
     let groupID: UUID
     
@@ -43,6 +52,28 @@ struct DashboardView: View {
                 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: Theme.spacingL) {
+                        
+                        // Team Details Context Header
+                        if let group = session.currentGroup {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(group.name)
+                                        .font(Typography.headline())
+                                        .foregroundColor(Theme.dynamicTextPrimary)
+                                    Text("\(clients.count) Player\(clients.count == 1 ? "" : "s")")
+                                        .font(Typography.caption())
+                                        .foregroundColor(Theme.dynamicTextSecondary)
+                                }
+                                Spacer()
+                                if let createdAt = group.createdAt {
+                                    Text("Since \(createdAt.formatted(date: .abbreviated, time: .omitted))")
+                                        .font(Typography.caption())
+                                        .foregroundColor(Theme.dynamicTextSecondary)
+                                }
+                            }
+                            .padding(.horizontal, Theme.spacingL)
+                        }
+                        
                         // Premium Fintech Balance Display
                         VStack(spacing: Theme.spacingS) {
                             Text("Total Outstanding")
@@ -132,7 +163,45 @@ struct DashboardView: View {
                     .padding(.vertical)
                 }
             }
-            .navigationTitle("Home")
+            .navigationTitle("")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Menu {
+                        ForEach(myGroups) { group in
+                            Button {
+                                withAnimation {
+                                    session.selectGroup(group: group)
+                                }
+                            } label: {
+                                HStack {
+                                    Text(group.name)
+                                    if group.id == session.currentGroup?.id {
+                                        Image(systemName: "checkmark")
+                                    }
+                                }
+                            }
+                        }
+                        Divider()
+                        Button {
+                            withAnimation {
+                                session.clearGroup()
+                            }
+                        } label: {
+                            Label("Manage Teams...", systemImage: "building.2.crop.circle")
+                        }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Text(session.currentGroup?.name ?? "My Team")
+                                .font(Typography.headline())
+                                .foregroundColor(Theme.primary)
+                            Image(systemName: "chevron.up.chevron.down")
+                                .font(.caption)
+                                .foregroundColor(Theme.primary)
+                        }
+                    }
+                }
+            }
         }
         .fullScreenCover(isPresented: $showingClientOnboarding) {
             FirstClientOnboardingView(groupID: groupID, isPresented: $showingClientOnboarding)
