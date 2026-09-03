@@ -21,7 +21,7 @@ struct ClientsView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                Theme.background.ignoresSafeArea()
+                Theme.dynamicBackground.ignoresSafeArea()
                 
                 if clients.isEmpty {
                     emptyStateView
@@ -34,12 +34,12 @@ struct ClientsView: View {
                                 }
                                 .listRowSeparator(.hidden)
                                 .listRowBackground(Color.clear)
-                                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                                .listRowInsets(EdgeInsets(top: Theme.spacingS, leading: Theme.spacingM, bottom: Theme.spacingS, trailing: Theme.spacingM))
                         }
                         .onDelete(perform: deleteClients)
                     }
                     .listStyle(.plain)
-                    .padding(.top, 8)
+                    .padding(.top, Theme.spacingS)
                 }
             }
             .navigationTitle("Clients")
@@ -62,27 +62,27 @@ struct ClientsView: View {
     }
     
     private var emptyStateView: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: Theme.spacingM) {
             Image(systemName: "person.3.sequence.fill")
                 .font(.system(size: 48))
                 .foregroundColor(Theme.primary.opacity(0.5))
             Text("No Clients Yet")
-                .font(.system(.title3, design: .rounded).bold())
+                .font(Typography.subheadline())
             Text("Add your first client to get started.")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
+                .font(Typography.body())
+                .foregroundColor(Theme.dynamicTextSecondary)
             
             Button(action: { showingAddClient = true }) {
                 Text("Add Client")
-                    .font(.headline)
+                    .font(Typography.button())
                     .foregroundColor(.white)
                     .padding()
                     .frame(maxWidth: 200)
                     .background(Theme.gradientPrimary)
-                    .cornerRadius(12)
+                    .cornerRadius(Theme.radiusM)
                     .shadow(color: Theme.primary.opacity(0.3), radius: 5, x: 0, y: 3)
             }
-            .padding(.top, 8)
+            .padding(.top, Theme.spacingS)
         }
         .padding()
     }
@@ -105,7 +105,7 @@ struct ClientRowView: View {
     let client: Client
     
     var body: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: Theme.spacingM) {
             Circle()
                 .fill(Theme.primary.opacity(0.15))
                 .frame(width: 48, height: 48)
@@ -115,23 +115,23 @@ struct ClientRowView: View {
                         .foregroundColor(Theme.primary)
                 )
             
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: Theme.spacingXS) {
                 Text(client.name)
-                    .font(.system(.headline, design: .rounded).bold())
+                    .font(Typography.bodyBold())
                 if !client.email.isEmpty {
                     Text(client.email)
-                        .font(.system(.caption, design: .rounded))
-                        .foregroundColor(.secondary)
+                        .font(Typography.caption())
+                        .foregroundColor(Theme.dynamicTextSecondary)
                 }
             }
             
             Spacer()
             
             Image(systemName: "chevron.right")
-                .foregroundColor(.secondary.opacity(0.5))
+                .foregroundColor(Theme.dynamicTextSecondary.opacity(0.5))
                 .font(.caption.bold())
         }
-        .padding(16)
+        .padding(Theme.spacingM)
         .cardStyle()
     }
 }

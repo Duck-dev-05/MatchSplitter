@@ -20,45 +20,45 @@ struct GroupSelectionView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                Theme.background.ignoresSafeArea()
+                Theme.dynamicBackground.ignoresSafeArea()
                 
-                VStack(spacing: 24) {
+                VStack(spacing: Theme.spacingL) {
                     HStack {
-                        VStack(alignment: .leading, spacing: 4) {
+                        VStack(alignment: .leading, spacing: Theme.spacingXS) {
                             Text("Welcome, \(session.currentUser?.username ?? "User")!")
-                                .font(.system(.title2, design: .rounded).bold())
+                                .font(Typography.headline())
                             Text("Select a group or business to continue.")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
+                                .font(Typography.body())
+                                .foregroundColor(Theme.dynamicTextSecondary)
                         }
                         Spacer()
                         Button("Log Out") {
                             session.logout()
                         }
-                        .font(.system(.subheadline, design: .rounded).bold())
-                        .foregroundColor(.red)
+                        .font(Typography.captionBold())
+                        .foregroundColor(Theme.error)
                     }
                     .padding(.horizontal)
-                    .padding(.top, 20)
+                    .padding(.top, Theme.spacingL)
                     
                     if groups.isEmpty {
-                        VStack(spacing: 20) {
+                        VStack(spacing: Theme.spacingL) {
                             Image(systemName: "briefcase.fill")
                                 .font(.system(size: 60))
                                 .foregroundColor(Theme.primary)
                             Text("No groups found.")
-                                .font(.headline)
+                                .font(Typography.subheadline())
                             Text("Create your first group to start generating invoices.")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
+                                .font(Typography.body())
+                                .foregroundColor(Theme.dynamicTextSecondary)
                                 .multilineTextAlignment(.center)
                         }
-                        .padding(40)
+                        .padding(Theme.spacingXL)
                         .cardStyle()
-                        .padding(.top, 20)
+                        .padding(.top, Theme.spacingL)
                     } else {
                         ScrollView {
-                            VStack(spacing: 12) {
+                            VStack(spacing: Theme.spacingM) {
                                 ForEach(groups) { group in
                                     Button {
                                         session.selectGroup(group: group)
@@ -68,13 +68,13 @@ struct GroupSelectionView: View {
                                                 .font(.title2)
                                                 .foregroundColor(Theme.secondary)
                                             Text(group.name)
-                                                .font(.system(.headline, design: .rounded))
-                                                .foregroundColor(.primary)
+                                                .font(Typography.bodyBold())
+                                                .foregroundColor(Theme.dynamicTextPrimary)
                                             Spacer()
                                             Image(systemName: "chevron.right")
-                                                .foregroundColor(.secondary.opacity(0.5))
+                                                .foregroundColor(Theme.dynamicTextSecondary.opacity(0.5))
                                         }
-                                        .padding(16)
+                                        .padding(Theme.spacingM)
                                         .cardStyle()
                                     }
                                 }
@@ -92,32 +92,32 @@ struct GroupSelectionView: View {
                             Image(systemName: "plus.circle.fill")
                             Text("Create New Group")
                         }
-                        .font(.system(.headline, design: .rounded).bold())
+                        .font(Typography.button())
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(Theme.gradientPrimary)
-                        .cornerRadius(12)
+                        .cornerRadius(Theme.radiusM)
                         .shadow(color: Theme.primary.opacity(0.3), radius: 8, x: 0, y: 4)
                     }
                     .padding(.horizontal)
-                    .padding(.bottom, 20)
+                    .padding(.bottom, Theme.spacingL)
                 }
             }
             .navigationBarHidden(true)
             .sheet(isPresented: $showingAddGroup) {
                 NavigationView {
                     ZStack {
-                        Theme.background.ignoresSafeArea()
+                        Theme.dynamicBackground.ignoresSafeArea()
                         
-                        VStack(spacing: 20) {
-                            VStack(alignment: .leading, spacing: 8) {
+                        VStack(spacing: Theme.spacingL) {
+                            VStack(alignment: .leading, spacing: Theme.spacingS) {
                                 Text("Group Name")
-                                    .font(.system(.subheadline, design: .rounded).bold())
+                                    .font(Typography.captionBold())
                                 TextField("e.g. Acme Corp, Personal", text: $newGroupName)
                                     .textFieldStyle(.roundedBorder)
                             }
-                            .padding(16)
+                            .padding(Theme.spacingM)
                             .cardStyle()
                             .padding()
                             

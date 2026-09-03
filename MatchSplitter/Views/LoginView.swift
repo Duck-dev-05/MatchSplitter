@@ -17,22 +17,22 @@ struct LoginView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                Theme.background.ignoresSafeArea()
+                Theme.dynamicBackground.ignoresSafeArea()
                 
                 ScrollView {
-                    VStack(spacing: 24) {
+                    VStack(spacing: Theme.spacingL) {
                         Text("MatchSplitter")
                             .font(.system(size: 32, weight: .bold, design: .rounded))
-                            .padding(.top, 40)
+                            .padding(.top, Theme.spacingXL)
                         
                         Picker("Mode", selection: $isLoginMode) {
                             Text("Log In").tag(true)
                             Text("Register").tag(false)
                         }
                         .pickerStyle(SegmentedPickerStyle())
-                        .padding(.horizontal, 24)
+                        .padding(.horizontal, Theme.spacingL)
                         
-                        VStack(spacing: 16) {
+                        VStack(spacing: Theme.spacingM) {
                             if !isLoginMode {
                                 TextField("Full Name", text: $name)
                                     .textFieldStyle(.roundedBorder)
@@ -50,48 +50,48 @@ struct LoginView: View {
                             
                             if !errorMessage.isEmpty {
                                 Text(errorMessage)
-                                    .foregroundColor(.red)
-                                    .font(.caption)
+                                    .foregroundColor(Theme.error)
+                                    .font(Typography.caption())
                             }
                             
                             Button(action: handleAction) {
                                 Text(isLoginMode ? "Log In" : "Create Account")
-                                    .font(.headline)
+                                    .font(Typography.button())
                                     .foregroundColor(.white)
                                     .frame(maxWidth: .infinity)
                                     .padding()
                                     .background(Theme.gradientPrimary)
-                                    .cornerRadius(12)
+                                    .cornerRadius(Theme.radiusM)
                             }
-                            .padding(.top, 8)
+                            .padding(.top, Theme.spacingS)
                         }
-                        .padding(24)
+                        .padding(Theme.spacingL)
                         .cardStyle()
                         .padding(.horizontal)
                         
                         HStack {
                             VStack { Divider() }
                             Text("OR")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
+                                .font(Typography.caption())
+                                .foregroundColor(Theme.dynamicTextSecondary)
                             VStack { Divider() }
                         }
-                        .padding(.horizontal, 40)
+                        .padding(.horizontal, Theme.spacingXL)
                         
                         Button(action: loginWithGoogleMock) {
                             HStack {
                                 Image(systemName: "envelope.fill")
                                 Text("Continue with Google")
                             }
-                            .font(.headline)
-                            .foregroundColor(.primary)
+                            .font(Typography.button())
+                            .foregroundColor(Theme.dynamicTextPrimary)
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(Color(UIColor.secondarySystemBackground))
-                            .cornerRadius(12)
+                            .background(Theme.dynamicCardBackground)
+                            .cornerRadius(Theme.radiusM)
                             .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
                         }
-                        .padding(.horizontal, 24)
+                        .padding(.horizontal, Theme.spacingL)
                         
                         Spacer()
                     }

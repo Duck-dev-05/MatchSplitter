@@ -48,7 +48,7 @@ struct AddClientView: View {
                 }
             }
             .hideFormBackground()
-            .background(Theme.background.ignoresSafeArea())
+            .background(Theme.dynamicBackground.ignoresSafeArea())
             .navigationTitle("New Client")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

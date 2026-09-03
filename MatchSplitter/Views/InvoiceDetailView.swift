@@ -95,7 +95,7 @@ struct InvoiceDetailView: View {
                                 Text("Subtotal")
                                     .font(.system(.subheadline, design: .rounded))
                                 Spacer()
-                                Text(invoice.subtotal.formatted(.currency(code: "USD")))
+                                Text(invoice.subtotal.formatted(.currency(code: "VND")))
                                     .font(.system(.subheadline, design: .rounded))
                             }
                             
@@ -103,7 +103,7 @@ struct InvoiceDetailView: View {
                                 Text("Tax (\(invoice.taxRate, specifier: "%.1f")%)")
                                     .font(.system(.subheadline, design: .rounded))
                                 Spacer()
-                                Text(invoice.taxAmount.formatted(.currency(code: "USD")))
+                                Text(invoice.taxAmount.formatted(.currency(code: "VND")))
                                     .font(.system(.subheadline, design: .rounded))
                             }
                             
@@ -113,7 +113,7 @@ struct InvoiceDetailView: View {
                                         .font(.system(.subheadline, design: .rounded))
                                         .foregroundColor(.green)
                                     Spacer()
-                                    Text("-\(invoice.discount.formatted(.currency(code: "USD")))")
+                                    Text("-\(invoice.discount.formatted(.currency(code: "VND")))")
                                         .font(.system(.subheadline, design: .rounded))
                                         .foregroundColor(.green)
                                 }
@@ -126,7 +126,7 @@ struct InvoiceDetailView: View {
                                 Text("Total")
                                     .font(.system(.title3, design: .rounded).bold())
                                 Spacer()
-                                Text(invoice.total.formatted(.currency(code: "USD")))
+                                Text(invoice.total.formatted(.currency(code: "VND")))
                                     .font(.system(.title3, design: .rounded).bold())
                                     .foregroundColor(Theme.primary)
                             }

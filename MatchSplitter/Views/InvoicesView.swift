@@ -29,7 +29,7 @@ struct InvoicesView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                Theme.background.ignoresSafeArea()
+                Theme.dynamicBackground.ignoresSafeArea()
                 
                 if invoices.isEmpty {
                     emptyStateView
@@ -42,12 +42,12 @@ struct InvoicesView: View {
                                 }
                                 .listRowSeparator(.hidden)
                                 .listRowBackground(Color.clear)
-                                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                                .listRowInsets(EdgeInsets(top: Theme.spacingS, leading: Theme.spacingM, bottom: Theme.spacingS, trailing: Theme.spacingM))
                         }
                         .onDelete(perform: deleteInvoices)
                     }
                     .listStyle(.plain)
-                    .padding(.top, 8)
+                    .padding(.top, Theme.spacingS)
                 }
             }
             .navigationTitle("Invoices")
@@ -70,27 +70,27 @@ struct InvoicesView: View {
     }
     
     private var emptyStateView: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: Theme.spacingM) {
             Image(systemName: "doc.text.magnifyingglass")
                 .font(.system(size: 48))
                 .foregroundColor(Theme.primary.opacity(0.5))
             Text("No Invoices Yet")
-                .font(.system(.title3, design: .rounded).bold())
+                .font(Typography.subheadline())
             Text("Create an invoice to bill your clients.")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
+                .font(Typography.body())
+                .foregroundColor(Theme.dynamicTextSecondary)
             
             Button(action: { showingAddInvoice = true }) {
                 Text("Create Invoice")
-                    .font(.headline)
+                    .font(Typography.button())
                     .foregroundColor(.white)
                     .padding()
                     .frame(maxWidth: 200)
                     .background(Theme.gradientPrimary)
-                    .cornerRadius(12)
+                    .cornerRadius(Theme.radiusM)
                     .shadow(color: Theme.primary.opacity(0.3), radius: 5, x: 0, y: 3)
             }
-            .padding(.top, 8)
+            .padding(.top, Theme.spacingS)
         }
         .padding()
     }

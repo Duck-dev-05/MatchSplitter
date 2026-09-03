@@ -49,7 +49,7 @@ struct AddInvoiceView: View {
                     HStack {
                         Text("Total Amount")
                         Spacer()
-                        TextField("$", value: $total, format: .currency(code: "USD"))
+                        TextField("₫", value: $total, format: .currency(code: "VND"))
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.trailing)
                     }
@@ -66,7 +66,7 @@ struct AddInvoiceView: View {
                     HStack {
                         Text("Discount")
                         Spacer()
-                        TextField("$", value: $discount, format: .number)
+                        TextField("₫", value: $discount, format: .number)
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.trailing)
                             .frame(width: 80)
@@ -79,7 +79,7 @@ struct AddInvoiceView: View {
                 }
             }
             .hideFormBackground()
-            .background(Theme.background.ignoresSafeArea())
+            .background(Theme.dynamicBackground.ignoresSafeArea())
             .navigationTitle("New Invoice")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
