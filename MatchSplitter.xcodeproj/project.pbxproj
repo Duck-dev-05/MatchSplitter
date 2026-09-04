@@ -25,6 +25,15 @@
 38E3D2C89D9B41AEA659448D /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = F8778C68DF4E4FE8903144B2 /* GoogleSignIn */; };
 		A76069826F0F4A98BB1C2D1B /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 771578BF873B44A7A6FA3065 /* GoogleSignInSwift */; };
 DFBDFB15E156474AA35C455A /* EFQRCode in Frameworks */ = {isa = PBXBuildFile; productRef = 4276A80363C94C3186CD48C6 /* EFQRCode */; };
+		AA7074047FF9407990C5F684 /* QRCodeScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BD2771A439D4478974BF1E9 /* QRCodeScannerView.swift */; };
+		48E728A4FA134ADBA47B72D2 /* TeamQRInviteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AA56688FC1E4B8DABFE1B45 /* TeamQRInviteView.swift */; };
+		541B9E2A1E734563872FA064 /* MyQRProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FE62C9A412948CAA8A6457C /* MyQRProfileView.swift */; };
+		95E2769F0D5742E3833B132C /* ClientLedgerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10BE91F961454C15951C71ED /* ClientLedgerView.swift */; };
+		A4ACB1C456304757B5D6D7AE /* InvoiceReceiptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E5B6641BF03412E93AEFB41 /* InvoiceReceiptView.swift */; };
+		26E6F276CDCF4D7397F3179C /* LeaderboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44968A8E64C3407C88E42D48 /* LeaderboardView.swift */; };
+		E3A57AF2CFCE4719938CF686 /* CSVExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07E6AFE24E124AAD8F549A27 /* CSVExporter.swift */; };
+		E9AB0C98343749FBB9D068AA /* Client+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 724B574B722B4AF98C1ED5DA /* Client+Extensions.swift */; };
+		3819A5E11D01498FAA50B963 /* QRGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A42A64B205554785AD651D2D /* QRGenerator.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -47,6 +56,15 @@ DFBDFB15E156474AA35C455A /* EFQRCode in Frameworks */ = {isa = PBXBuildFile; pro
 		A100000000000000000000022 /* CoreDataModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataModels.swift; sourceTree = "<group>"; };
 		A100000000000000000000099 /* Models.xcdatamodeld */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Models.xcdatamodeld; sourceTree = "<group>"; };
 		A100000000000000000000030 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		2BD2771A439D4478974BF1E9 /* QRCodeScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "QRCodeScannerView.swift"; sourceTree = "<group>"; };
+		4AA56688FC1E4B8DABFE1B45 /* TeamQRInviteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TeamQRInviteView.swift"; sourceTree = "<group>"; };
+		9FE62C9A412948CAA8A6457C /* MyQRProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MyQRProfileView.swift"; sourceTree = "<group>"; };
+		10BE91F961454C15951C71ED /* ClientLedgerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ClientLedgerView.swift"; sourceTree = "<group>"; };
+		1E5B6641BF03412E93AEFB41 /* InvoiceReceiptView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "InvoiceReceiptView.swift"; sourceTree = "<group>"; };
+		44968A8E64C3407C88E42D48 /* LeaderboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "LeaderboardView.swift"; sourceTree = "<group>"; };
+		07E6AFE24E124AAD8F549A27 /* CSVExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CSVExporter.swift"; sourceTree = "<group>"; };
+		724B574B722B4AF98C1ED5DA /* Client+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Client+Extensions.swift"; sourceTree = "<group>"; };
+		A42A64B205554785AD651D2D /* QRGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "QRGenerator.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -88,6 +106,9 @@ DFBDFB15E156474AA35C455A /* EFQRCode in Frameworks */ = {isa = PBXBuildFile; pro
 		A100000000000000000000034 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				07E6AFE24E124AAD8F549A27 /* CSVExporter.swift */,
+				724B574B722B4AF98C1ED5DA /* Client+Extensions.swift */,
+				A42A64B205554785AD651D2D /* QRGenerator.swift */,
 				A100000000000000000000099 /* Models.xcdatamodeld */,
 			);
 			path = Models;
@@ -96,6 +117,12 @@ DFBDFB15E156474AA35C455A /* EFQRCode in Frameworks */ = {isa = PBXBuildFile; pro
 		A100000000000000000000035 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				2BD2771A439D4478974BF1E9 /* QRCodeScannerView.swift */,
+				4AA56688FC1E4B8DABFE1B45 /* TeamQRInviteView.swift */,
+				9FE62C9A412948CAA8A6457C /* MyQRProfileView.swift */,
+				10BE91F961454C15951C71ED /* ClientLedgerView.swift */,
+				1E5B6641BF03412E93AEFB41 /* InvoiceReceiptView.swift */,
+				44968A8E64C3407C88E42D48 /* LeaderboardView.swift */,
 				A100000000000000000001001 /* LoginView.swift */,
 				A100000000000000000001002 /* GroupSelectionView.swift */,
 				A100000000000000000000006 /* DashboardView.swift */,
@@ -187,6 +214,15 @@ DFBDFB15E156474AA35C455A /* EFQRCode in Frameworks */ = {isa = PBXBuildFile; pro
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AA7074047FF9407990C5F684 /* QRCodeScannerView.swift in Sources */,
+				48E728A4FA134ADBA47B72D2 /* TeamQRInviteView.swift in Sources */,
+				541B9E2A1E734563872FA064 /* MyQRProfileView.swift in Sources */,
+				95E2769F0D5742E3833B132C /* ClientLedgerView.swift in Sources */,
+				A4ACB1C456304757B5D6D7AE /* InvoiceReceiptView.swift in Sources */,
+				26E6F276CDCF4D7397F3179C /* LeaderboardView.swift in Sources */,
+				E3A57AF2CFCE4719938CF686 /* CSVExporter.swift in Sources */,
+				E9AB0C98343749FBB9D068AA /* Client+Extensions.swift in Sources */,
+				3819A5E11D01498FAA50B963 /* QRGenerator.swift in Sources */,
 				A100000000000000000002000 /* SessionManager.swift in Sources */,
 				A100000000000000000002001 /* LoginView.swift in Sources */,
 				A100000000000000000002002 /* GroupSelectionView.swift in Sources */,

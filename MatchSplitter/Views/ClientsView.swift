@@ -73,7 +73,7 @@ struct ClientsView: View {
                         print("Scanning failed: \(error.localizedDescription)")
                     }
                 }
-                .edgesIgnoringSafeArea(.all)
+                .ignoresSafeArea()
             }
             .sheet(item: $selectedClient) { client in
                 ClientDetailView(client: client)

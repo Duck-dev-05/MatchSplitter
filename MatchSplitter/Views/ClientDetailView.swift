@@ -40,7 +40,7 @@ struct ClientDetailView: View {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text("View Ledger")
                                         .font(.system(.headline, design: .rounded).bold())
-                                        .foregroundColor(Theme.dynamicText)
+                                        .foregroundColor(Theme.dynamicTextPrimary)
                                     Text("Running balances & transaction history")
                                         .font(.system(.caption, design: .rounded))
                                         .foregroundColor(Theme.dynamicTextSecondary)
