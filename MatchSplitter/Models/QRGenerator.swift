@@ -15,3 +15,18 @@ struct QRGenerator {
         return nil
     }
 }
+
+struct TeamInviteData: Codable {
+    let type: String
+    let groupID: UUID
+    let groupName: String
+    let expiresAt: Date
+}
+
+struct QRProfileData: Codable {
+    let type: String
+    let clientID: UUID
+    let name: String
+    let email: String
+    let phone: String
+}
