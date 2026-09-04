@@ -29,7 +29,7 @@ struct InvoiceReceiptView: View {
                         .foregroundColor(.secondary)
                     Spacer()
                     Text(clientName)
-                        .fontWeight(.bold)
+                        .font(Typography.bodyBold())
                 }
                 
                 HStack {
@@ -37,7 +37,7 @@ struct InvoiceReceiptView: View {
                         .foregroundColor(.secondary)
                     Spacer()
                     Text(invoice.issueDate.formatted(date: .abbreviated, time: .omitted))
-                        .fontWeight(.semibold)
+                        .font(Typography.bodyBold())
                 }
                 
                 HStack {
@@ -45,7 +45,7 @@ struct InvoiceReceiptView: View {
                         .foregroundColor(.secondary)
                     Spacer()
                     Text(invoice.invoiceNumber)
-                        .fontWeight(.semibold)
+                        .font(Typography.bodyBold())
                 }
                 
                 Divider()

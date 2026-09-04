@@ -100,11 +100,10 @@ struct ClientLedgerView: View {
 
             // Balance pill
             VStack(spacing: 2) {
-                Text("Running Balance")
+                Text("RUNNING BALANCE")
+                    .tracking(0.5)
                     .font(.system(size: 11, weight: .semibold, design: .rounded))
                     .foregroundColor(isPositive ? Theme.error.opacity(0.8) : Theme.success.opacity(0.8))
-                    .textCase(.uppercase)
-                    .tracking(0.5)
                 Text(runningBalance, format: .currency(code: "VND"))
                     .font(.system(size: 30, weight: .black, design: .rounded))
                     .foregroundColor(isPositive ? Theme.error : Theme.success)
@@ -201,9 +200,9 @@ struct LedgerRowView: View {
                 .foregroundColor(accentColor)
 
                 Text(isPayment ? "PAID" : "BILLED")
+                    .tracking(0.5)
                     .font(.system(size: 9, weight: .bold, design: .rounded))
                     .foregroundColor(accentColor.opacity(0.7))
-                    .tracking(0.5)
             }
         }
         .padding(.vertical, Theme.spacingS + 2)

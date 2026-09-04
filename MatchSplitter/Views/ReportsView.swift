@@ -565,11 +565,10 @@ private func statHero(label: String, value: String, icon: String, color: Color) 
                 .foregroundColor(color)
         }
         VStack(alignment: .leading, spacing: 4) {
-            Text(label)
+            Text(label.uppercased())
+                .tracking(0.5)
                 .font(.system(size: 12, weight: .semibold, design: .rounded))
                 .foregroundColor(Theme.dynamicTextSecondary)
-                .textCase(.uppercase)
-                .tracking(0.5)
             Text(value)
                 .font(.system(size: 24, weight: .black, design: .rounded))
                 .foregroundColor(Theme.dynamicTextPrimary)

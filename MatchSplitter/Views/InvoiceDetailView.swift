@@ -145,9 +145,9 @@ struct InvoiceDetailView: View {
         VStack(spacing: Theme.spacingM) {
             // Invoice number pill
             Text(invoice.invoiceNumber.uppercased())
+                .tracking(1.5)
                 .font(.system(size: 11, weight: .bold, design: .rounded))
                 .foregroundColor(Theme.dynamicTextSecondary)
-                .tracking(1.5)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 5)
                 .background(Theme.dynamicCardBackground)
@@ -155,11 +155,10 @@ struct InvoiceDetailView: View {
 
             // Amount
             VStack(spacing: 4) {
-                Text(balanceDue > 0 ? "Balance Due" : "Fully Paid")
+                Text((balanceDue > 0 ? "Balance Due" : "Fully Paid").uppercased())
+                    .tracking(0.5)
                     .font(.system(size: 12, weight: .semibold, design: .rounded))
                     .foregroundColor(balanceDue > 0 ? Theme.dynamicTextSecondary : Theme.success)
-                    .textCase(.uppercase)
-                    .tracking(0.5)
                 Text(balanceDue.formatted(.currency(code: "VND")))
                     .font(.system(size: 38, weight: .black, design: .rounded))
                     .foregroundColor(balanceDue > 0 ? Theme.dynamicTextPrimary : Theme.success)
@@ -218,11 +217,10 @@ struct InvoiceDetailView: View {
             }
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("Player")
+                Text("PLAYER")
+                    .tracking(0.5)
                     .font(.system(size: 11, weight: .semibold, design: .rounded))
                     .foregroundColor(Theme.dynamicTextSecondary)
-                    .textCase(.uppercase)
-                    .tracking(0.5)
                 Text(client.name)
                     .font(Typography.bodyBold())
                 if !client.email.isEmpty {
@@ -253,11 +251,10 @@ struct InvoiceDetailView: View {
 
     private func dateBlock(label: String, date: Date, isOverdue: Bool) -> some View {
         VStack(spacing: 4) {
-            Text(label)
+            Text(label.uppercased())
+                .tracking(0.4)
                 .font(.system(size: 11, weight: .semibold, design: .rounded))
                 .foregroundColor(Theme.dynamicTextSecondary)
-                .textCase(.uppercase)
-                .tracking(0.4)
             Text(date.formatted(date: .abbreviated, time: .omitted))
                 .font(Typography.bodyBold())
                 .foregroundColor(isOverdue ? Theme.error : Theme.dynamicTextPrimary)
@@ -618,9 +615,9 @@ struct InvoiceQRView: View {
                                 .font(Typography.bodyBold())
                                 .foregroundColor(.white.opacity(0.9))
                             Text(accName.uppercased())
+                                .tracking(1.2)
                                 .font(.system(size: 11, weight: .bold, design: .rounded))
                                 .foregroundColor(.white.opacity(0.65))
-                                .tracking(1.2)
 
                             Divider().background(Color.white.opacity(0.25)).padding(.vertical, 6)
 

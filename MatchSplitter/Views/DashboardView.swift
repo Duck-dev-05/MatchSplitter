@@ -214,9 +214,9 @@ struct DashboardView: View {
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(group.name.uppercased())
+                                .tracking(1.5)
                                 .font(.system(size: 11, weight: .bold, design: .rounded))
                                 .foregroundColor(.white.opacity(0.75))
-                                .tracking(1.5)
                             Text("\(clients.count) Player\(clients.count == 1 ? "" : "s")")
                                 .font(Typography.caption())
                                 .foregroundColor(.white.opacity(0.65))
@@ -231,9 +231,9 @@ struct DashboardView: View {
                 // Outstanding amount
                 VStack(spacing: 4) {
                     Text("Outstanding")
+                        .tracking(0.5)
                         .font(.system(size: 12, weight: .semibold, design: .rounded))
                         .foregroundColor(.white.opacity(0.75))
-                        .tracking(0.5)
                     Text(outstandingAmount.formatted(.currency(code: "VND")))
                         .font(.system(size: 40, weight: .black, design: .rounded))
                         .foregroundColor(.white)
@@ -672,9 +672,9 @@ struct PaymentQRSheetView: View {
                                     .font(Typography.bodyBold())
                                     .foregroundColor(.white.opacity(0.9))
                                 Text(accName.uppercased())
+                                    .tracking(1.2)
                                     .font(.system(size: 11, weight: .bold, design: .rounded))
                                     .foregroundColor(.white.opacity(0.65))
-                                    .tracking(1.2)
                             }
                             .padding(.bottom, Theme.spacingL)
                         }

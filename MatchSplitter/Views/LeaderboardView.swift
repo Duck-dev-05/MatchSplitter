@@ -229,11 +229,10 @@ struct LeaderboardCard: View {
             }
 
             VStack(alignment: .leading, spacing: 3) {
-                Text(title)
+                Text(title.uppercased())
+                    .tracking(0.5)
                     .font(.system(size: 11, weight: .semibold, design: .rounded))
                     .foregroundColor(Theme.dynamicTextSecondary)
-                    .textCase(.uppercase)
-                    .tracking(0.5)
                 Text(clientName)
                     .font(.system(size: 20, weight: .bold, design: .rounded))
                     .foregroundColor(Theme.dynamicTextPrimary)

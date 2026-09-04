@@ -121,7 +121,6 @@ struct TeamQRInviteView: View {
             }
             .navigationTitle("Invite Players")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") { dismiss() }
