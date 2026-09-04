@@ -311,7 +311,7 @@ struct InvoiceDetailView: View {
             summaryRow(label: "Subtotal", value: invoice.subtotal.formatted(.currency(code: "VND")), isTotal: false)
 
             if invoice.taxRate > 0 {
-                summaryRow(label: "Tax (\(invoice.taxRate, specifier: "%.1f")%)", value: invoice.taxAmount.formatted(.currency(code: "VND")), isTotal: false)
+                summaryRow(label: "Tax (\(String(format: "%.1f", invoice.taxRate))%)", value: invoice.taxAmount.formatted(.currency(code: "VND")), isTotal: false)
             }
 
             if invoice.discount > 0 {
