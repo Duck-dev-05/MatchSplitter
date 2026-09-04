@@ -128,8 +128,6 @@ DFBDFB15E156474AA35C455A /* EFQRCode in Frameworks */ = {isa = PBXBuildFile; pro
 			name = MatchSplitter;
 			packageProductDependencies = (
 				4276A80363C94C3186CD48C6 /* EFQRCode */,
-			);
-			packageProductDependencies = (
 				F8778C68DF4E4FE8903144B2 /* GoogleSignIn */,
 				771578BF873B44A7A6FA3065 /* GoogleSignInSwift */,
 			);
@@ -163,8 +161,6 @@ DFBDFB15E156474AA35C455A /* EFQRCode in Frameworks */ = {isa = PBXBuildFile; pro
 			mainGroup = A100000000000000000000032 /* */;
 			packageReferences = (
 				4EFEEB4987194572B3C82918 /* XCRemoteSwiftPackageReference "EFQRCode" */,
-			);
-			packageReferences = (
 				F7D0474657114E9CB599E203 /* XCRemoteSwiftPackageReference "GoogleSignIn" */,
 			);
 			productRefGroup = A100000000000000000000032 /* */;
