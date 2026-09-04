@@ -141,7 +141,7 @@ struct LeaderboardCard: View {
                     .foregroundColor(Theme.dynamicTextSecondary)
                 Text(clientName)
                     .font(.system(size: 20, weight: .bold, design: .rounded))
-                    .foregroundColor(Theme.dynamicText)
+                    .foregroundColor(Theme.dynamicTextPrimary)
             }
             
             Spacer()
