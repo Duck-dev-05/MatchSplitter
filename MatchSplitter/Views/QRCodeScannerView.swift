@@ -1,5 +1,6 @@
 import SwiftUI
 import AVFoundation
+import AudioToolbox
 
 struct QRCodeScannerView: UIViewControllerRepresentable {
     var completion: (Result<String, Error>) -> Void
