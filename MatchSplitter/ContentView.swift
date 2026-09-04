@@ -2,62 +2,107 @@ import SwiftUI
 import CoreData
 import CoreImage.CIFilterBuiltins
 
+// MARK: - Design System
+
 struct Theme {
     // Brand Colors
-    static let primary = Color(red: 0.0, green: 0.82, blue: 0.33) // Emerald Green
-    static let secondary = Color(red: 0.0, green: 0.5, blue: 0.3) // Dark Green
-    
-    // Dynamic System Colors
-    static let background = Color(UIColor.systemBackground)
-    static let cardBackground = Color(UIColor.secondarySystemBackground)
+    static let primary       = Color(red: 0.0,  green: 0.82, blue: 0.33)  // Emerald Green
+    static let secondary     = Color(red: 0.0,  green: 0.50, blue: 0.30)  // Forest Green
+    static let accent        = Color(red: 0.10, green: 0.95, blue: 0.55)  // Neon Mint
+
+    // Semantic Status Colors (curated, not plain system colors)
+    static let success       = Color(red: 0.18, green: 0.80, blue: 0.44)
+    static let warning       = Color(red: 1.00, green: 0.62, blue: 0.00)
+    static let error         = Color(red: 0.95, green: 0.27, blue: 0.27)
+
+    // Dynamic System Colors (light/dark adaptive)
+    static let background        = Color(UIColor.systemBackground)
+    static let cardBackground    = Color(UIColor.secondarySystemBackground)
     static let groupedBackground = Color(UIColor.systemGroupedBackground)
-    static let textPrimary = Color(UIColor.label)
-    static let textSecondary = Color(UIColor.secondaryLabel)
-    static let border = Color(UIColor.separator)
-    
-    static let success = Color.green
-    static let warning = Color.orange
-    static let error = Color.red
-    
-    @Environment(\.colorScheme) static var colorScheme
-    
-    // For backwards compatibility in existing views
-    static var dynamicBackground: Color { background }
+    static let textPrimary       = Color(UIColor.label)
+    static let textSecondary     = Color(UIColor.secondaryLabel)
+    static let border            = Color(UIColor.separator)
+
+    // Backwards-compatible aliases
+    static var dynamicBackground:     Color { background }
     static var dynamicCardBackground: Color { cardBackground }
-    static var dynamicTextPrimary: Color { textPrimary }
-    static var dynamicTextSecondary: Color { textSecondary }
-    static var dynamicBorder: Color { border }
-    
-    static let gradientPrimary = LinearGradient(colors: [primary, primary.opacity(0.8)], startPoint: .topLeading, endPoint: .bottomTrailing)
-    static let gradientDark = LinearGradient(colors: [primary.opacity(0.8), primary.opacity(0.5)], startPoint: .topLeading, endPoint: .bottomTrailing)
-    
+    static var dynamicTextPrimary:    Color { textPrimary }
+    static var dynamicTextSecondary:  Color { textSecondary }
+    static var dynamicBorder:         Color { border }
+
+    // Gradients
+    static let gradientPrimary = LinearGradient(
+        colors: [Color(red: 0.0, green: 0.85, blue: 0.38), Color(red: 0.0, green: 0.52, blue: 0.35)],
+        startPoint: .topLeading, endPoint: .bottomTrailing
+    )
+    static let gradientDark = LinearGradient(
+        colors: [Color(red: 0.05, green: 0.18, blue: 0.12), Color(red: 0.02, green: 0.10, blue: 0.07)],
+        startPoint: .topLeading, endPoint: .bottomTrailing
+    )
+    static let gradientAccent = LinearGradient(
+        colors: [Color(red: 0.10, green: 0.95, blue: 0.55), Color(red: 0.0, green: 0.82, blue: 0.33)],
+        startPoint: .topLeading, endPoint: .bottomTrailing
+    )
+    static let gradientSunrise = LinearGradient(
+        colors: [Color(red: 0.0, green: 0.82, blue: 0.33).opacity(0.9), Color(red: 0.0, green: 0.40, blue: 0.55)],
+        startPoint: .topLeading, endPoint: .bottomTrailing
+    )
+
     // Spacing System
-    static let spacingXS: CGFloat = 4
-    static let spacingS: CGFloat = 8
-    static let spacingM: CGFloat = 16
-    static let spacingL: CGFloat = 24
-    static let spacingXL: CGFloat = 32
+    static let spacingXS:  CGFloat = 4
+    static let spacingS:   CGFloat = 8
+    static let spacingM:   CGFloat = 16
+    static let spacingL:   CGFloat = 24
+    static let spacingXL:  CGFloat = 32
     static let spacingXXL: CGFloat = 48
-    
+
     // Corner Radius
-    static let radiusS: CGFloat = 8
-    static let radiusM: CGFloat = 12
-    static let radiusL: CGFloat = 16
-    static let radiusXL: CGFloat = 24
+    static let radiusS:   CGFloat = 8
+    static let radiusM:   CGFloat = 12
+    static let radiusL:   CGFloat = 16
+    static let radiusXL:  CGFloat = 24
+    static let radiusXXL: CGFloat = 36
 }
+
+// MARK: - Card Modifiers
 
 struct CardModifier: ViewModifier {
     @Environment(\.colorScheme) var colorScheme
-    
+
     func body(content: Content) -> some View {
         content
             .background(Theme.dynamicCardBackground)
-            .cornerRadius(Theme.radiusM)
+            .cornerRadius(Theme.radiusL)
             .overlay(
-                RoundedRectangle(cornerRadius: Theme.radiusM)
-                    .stroke(Theme.border.opacity(0.3), lineWidth: 0.5)
+                RoundedRectangle(cornerRadius: Theme.radiusL)
+                    .stroke(Theme.border.opacity(colorScheme == .dark ? 0.18 : 0.07), lineWidth: 0.5)
             )
-            .shadow(color: Color.black.opacity(colorScheme == .dark ? 0 : 0.03), radius: 5, x: 0, y: 2)
+            .shadow(
+                color: Color.black.opacity(colorScheme == .dark ? 0.28 : 0.07),
+                radius: 10, x: 0, y: 4
+            )
+    }
+}
+
+struct GlassCardModifier: ViewModifier {
+    @Environment(\.colorScheme) var colorScheme
+    var cornerRadius: CGFloat = Theme.radiusL
+
+    func body(content: Content) -> some View {
+        content
+            .background(.ultraThinMaterial)
+            .cornerRadius(cornerRadius)
+            .overlay(
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .stroke(
+                        Color.white.opacity(colorScheme == .dark ? 0.12 : 0.55),
+                        lineWidth: 0.75
+                    )
+            )
+            .shadow(
+                color: Color.black.opacity(colorScheme == .dark ? 0.35 : 0.10),
+                radius: 14, x: 0, y: 6
+            )
     }
 }
 
@@ -65,7 +110,11 @@ extension View {
     func cardStyle() -> some View {
         self.modifier(CardModifier())
     }
-    
+
+    func glassCard(cornerRadius: CGFloat = Theme.radiusL) -> some View {
+        self.modifier(GlassCardModifier(cornerRadius: cornerRadius))
+    }
+
     @ViewBuilder
     func hideFormBackground() -> some View {
         if #available(iOS 16.0, *) {
@@ -78,54 +127,50 @@ extension View {
     }
 }
 
-// Typography System
+// MARK: - Typography System
+
 struct Typography {
-    // Font Styles
+    static func largeTitle() -> Font {
+        .system(.largeTitle, design: .rounded).weight(.heavy)
+    }
     static func headline() -> Font {
-        .system(.title3, design: .default).weight(.semibold)
+        .system(.title3, design: .rounded).weight(.semibold)
     }
-    
     static func subheadline() -> Font {
-        .system(.headline, design: .default).weight(.medium)
+        .system(.headline, design: .rounded).weight(.medium)
     }
-    
     static func subheadlineBold() -> Font {
-        .system(.headline, design: .default).weight(.bold)
+        .system(.headline, design: .rounded).weight(.bold)
     }
-    
     static func body() -> Font {
-        .system(.body, design: .default)
+        .system(.body, design: .rounded)
     }
-    
     static func bodyBold() -> Font {
-        .system(.body, design: .default).weight(.semibold)
+        .system(.body, design: .rounded).weight(.semibold)
     }
-    
     static func caption() -> Font {
-        .system(.subheadline, design: .default)
+        .system(.subheadline, design: .rounded)
     }
-    
     static func captionBold() -> Font {
-        .system(.subheadline, design: .default).weight(.semibold)
+        .system(.subheadline, design: .rounded).weight(.semibold)
     }
-    
     static func button() -> Font {
-        .system(.headline, design: .default).weight(.semibold)
+        .system(.headline, design: .rounded).weight(.semibold)
     }
-    
     static func amountLarge() -> Font {
-        .system(size: 44, weight: .bold, design: .rounded)
+        .system(size: 46, weight: .black, design: .rounded)
     }
-    
     static func amount() -> Font {
-        .system(size: 24, weight: .semibold, design: .rounded)
+        .system(size: 26, weight: .bold, design: .rounded)
     }
 }
+
+// MARK: - ContentView
 
 struct ContentView: View {
     @EnvironmentObject private var session: SessionManager
     @State private var selectedTab: Int = 0
-    
+
     var body: some View {
         if !session.isAuthenticated {
             LoginView()
@@ -134,39 +179,32 @@ struct ContentView: View {
         } else if let group = session.currentGroup {
             TabView(selection: $selectedTab) {
                 DashboardView(groupID: group.id)
-                    .tabItem {
-                        Label("Home", systemImage: "house.fill")
-                    }
+                    .tabItem { Label("Home",     systemImage: "house.fill") }
                     .tag(0)
-                
+
                 InvoicesView(groupID: group.id)
-                    .tabItem {
-                        Label("Splits", systemImage: "doc.text.fill")
-                    }
+                    .tabItem { Label("Splits",   systemImage: "doc.text.fill") }
                     .tag(1)
-                
+
                 ClientsView(groupID: group.id)
-                    .tabItem {
-                        Label("Players", systemImage: "person.3.fill")
-                    }
+                    .tabItem { Label("Players",  systemImage: "person.3.fill") }
                     .tag(2)
-                
+
                 ReportsView(groupID: group.id)
-                    .tabItem {
-                        Label("Activity", systemImage: "sparkles")
-                    }
+                    .tabItem { Label("Activity", systemImage: "chart.bar.fill") }
                     .tag(3)
-                
+
                 ProfileView()
-                    .tabItem {
-                        Label("Me", systemImage: "person.crop.circle")
-                    }
+                    .tabItem { Label("Me",       systemImage: "person.crop.circle.fill") }
                     .tag(4)
             }
             .accentColor(Theme.primary)
             .onAppear {
                 let appearance = UITabBarAppearance()
                 appearance.configureWithOpaqueBackground()
+                appearance.backgroundColor = UIColor.systemBackground
+                appearance.shadowColor = UIColor.black.withAlphaComponent(0.08)
+                UITabBar.appearance().standardAppearance = appearance
                 if #available(iOS 15.0, *) {
                     UITabBar.appearance().scrollEdgeAppearance = appearance
                 }
@@ -175,108 +213,132 @@ struct ContentView: View {
     }
 }
 
+// MARK: - ProfileView
+
 struct ProfileView: View {
     @EnvironmentObject private var session: SessionManager
     @State private var showingEditBank = false
-    
-    @AppStorage("isDarkModeEnabled") private var isDarkModeEnabled = false
+    @State private var showingLogoutConfirm = false
+    @State private var showingMyQR = false
+
+    @AppStorage("isDarkModeEnabled")   private var isDarkModeEnabled   = false
     @AppStorage("notificationsEnabled") private var notificationsEnabled = true
-    
+
+    var initials: String {
+        String(session.currentUser?.username.prefix(1).uppercased() ?? "U")
+    }
+
     var body: some View {
         NavigationView {
             ZStack {
                 Theme.dynamicBackground.ignoresSafeArea()
-                
-                ScrollView {
+
+                ScrollView(showsIndicators: false) {
                     VStack(spacing: Theme.spacingL) {
-                        
-                        // Profile Header
+
+                        // ── Avatar Header ──
                         VStack(spacing: Theme.spacingM) {
                             ZStack {
+                                // Glow ring
                                 Circle()
-                                    .fill(Theme.primary.opacity(0.1))
-                                    .frame(width: 100, height: 100)
-                                
-                                Text(session.currentUser?.username.prefix(1).uppercased() ?? "U")
-                                    .font(.system(size: 40, weight: .bold, design: .rounded))
+                                    .fill(Theme.gradientPrimary)
+                                    .frame(width: 108, height: 108)
+                                    .shadow(color: Theme.primary.opacity(0.45), radius: 18, x: 0, y: 8)
+
+                                Circle()
+                                    .fill(Theme.dynamicBackground)
+                                    .frame(width: 98, height: 98)
+
+                                Text(initials)
+                                    .font(.system(size: 38, weight: .black, design: .rounded))
                                     .foregroundColor(Theme.primary)
                             }
-                            
-                            VStack(spacing: Theme.spacingXS) {
+
+                            VStack(spacing: 4) {
                                 Text(session.currentUser?.username ?? "Unknown User")
                                     .font(Typography.headline())
-                                
+                                    .foregroundColor(Theme.dynamicTextPrimary)
+
                                 if let email = session.currentUser?.email {
                                     Text(email)
-                                        .font(Typography.body())
+                                        .font(Typography.caption())
                                         .foregroundColor(Theme.dynamicTextSecondary)
                                 }
                             }
-                        }
-                        .padding(.top, Theme.spacingL)
-                        
-                        // App Settings Section
-                        VStack(alignment: .leading, spacing: Theme.spacingS) {
-                            Text("App Settings")
+
+                            // My QR Profile Button
+                            Button {
+                                showingMyQR = true
+                            } label: {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "qrcode.viewfinder")
+                                    Text("My Player QR")
+                                }
                                 .font(Typography.captionBold())
-                                .foregroundColor(Theme.dynamicTextSecondary)
-                                .padding(.horizontal)
-                            
+                                .foregroundColor(Theme.primary)
+                                .padding(.horizontal, 18)
+                                .padding(.vertical, 8)
+                                .background(Theme.primary.opacity(0.12))
+                                .cornerRadius(Theme.radiusXL)
+                            }
+                        }
+                        .padding(.top, Theme.spacingXL)
+
+                        // ── App Settings ──
+                        settingSection(title: "App Settings") {
                             VStack(spacing: 0) {
                                 Toggle("Dark Mode", isOn: $isDarkModeEnabled)
-                                    .font(Typography.bodyBold())
+                                    .font(Typography.body())
                                     .padding(Theme.spacingM)
                                     .tint(Theme.primary)
-                                
+
                                 Divider().padding(.leading, Theme.spacingM)
-                                
+
                                 Toggle("Notifications", isOn: $notificationsEnabled)
-                                    .font(Typography.bodyBold())
+                                    .font(Typography.body())
                                     .padding(Theme.spacingM)
                                     .tint(Theme.primary)
-                                
+
                                 Divider().padding(.leading, Theme.spacingM)
-                                
+
                                 Button {
                                     // Export data action placeholder
                                 } label: {
                                     HStack {
-                                        Text("Export Data (CSV)")
-                                            .font(Typography.bodyBold())
+                                        Label("Export Data (CSV)", systemImage: "square.and.arrow.up")
+                                            .font(Typography.body())
                                             .foregroundColor(Theme.dynamicTextPrimary)
                                         Spacer()
-                                        Image(systemName: "square.and.arrow.up")
-                                            .foregroundColor(Theme.dynamicTextSecondary)
+                                        Image(systemName: "chevron.right")
+                                            .font(.caption.weight(.semibold))
+                                            .foregroundColor(Theme.dynamicTextSecondary.opacity(0.6))
                                     }
                                 }
                                 .padding(Theme.spacingM)
                             }
-                            .cardStyle()
-                            .padding(.horizontal)
                         }
-                        
-                        // Payment QR Section (Digital Business Card)
+
+                        // ── Payment Card ──
                         VStack(alignment: .leading, spacing: Theme.spacingS) {
                             HStack {
                                 Text("Payment Card")
                                     .font(Typography.captionBold())
                                     .foregroundColor(Theme.dynamicTextSecondary)
+                                    .textCase(.uppercase)
                                 Spacer()
-                                Button("Edit") {
-                                    showingEditBank = true
-                                }
-                                .font(Typography.captionBold())
-                                .foregroundColor(Theme.primary)
+                                Button("Edit") { showingEditBank = true }
+                                    .font(Typography.captionBold())
+                                    .foregroundColor(Theme.primary)
                             }
                             .padding(.horizontal)
-                            
+
                             if let bank = session.currentGroup?.bankName,
                                let accName = session.currentGroup?.accountName,
-                               let accNum = session.currentGroup?.accountNumber,
+                               let accNum  = session.currentGroup?.accountNumber,
                                !bank.isEmpty, !accName.isEmpty, !accNum.isEmpty {
-                                
+
                                 let qrString = "Bank: \(bank)\nAccount: \(accNum)\nName: \(accName)"
-                                
+
                                 VStack(spacing: Theme.spacingM) {
                                     Image(uiImage: QRCodeGenerator().generateQRCode(from: qrString))
                                         .interpolation(.none)
@@ -285,8 +347,8 @@ struct ProfileView: View {
                                         .frame(width: 180, height: 180)
                                         .padding(12)
                                         .background(Color.white)
-                                        .cornerRadius(12)
-                                    
+                                        .cornerRadius(Theme.radiusM)
+
                                     VStack(spacing: 4) {
                                         Text(bank)
                                             .font(Typography.headline())
@@ -303,61 +365,64 @@ struct ProfileView: View {
                                 .frame(maxWidth: .infinity)
                                 .padding(.top, Theme.spacingL)
                                 .background(Theme.gradientPrimary)
-                                .cornerRadius(24)
-                                .shadow(color: Theme.primary.opacity(0.3), radius: 15, x: 0, y: 10)
+                                .cornerRadius(Theme.radiusXL)
+                                .shadow(color: Theme.primary.opacity(0.35), radius: 18, x: 0, y: 10)
                                 .padding(.horizontal)
-                                
+
                             } else {
-                                VStack(spacing: Theme.spacingM) {
-                                    Image(systemName: "creditcard.and.123")
-                                        .font(.system(size: 40))
-                                        .foregroundColor(Theme.primary.opacity(0.5))
-                                    Text("Create your Digital Payment Card so clients can easily scan and pay you.")
-                                        .font(Typography.subheadline())
-                                        .foregroundColor(Theme.dynamicTextSecondary)
-                                        .multilineTextAlignment(.center)
-                                    Button("Set Up Payment Card") {
-                                        showingEditBank = true
+                                HStack(spacing: Theme.spacingM) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(Theme.primary.opacity(0.12))
+                                            .frame(width: 56, height: 56)
+                                        Image(systemName: "creditcard.and.123")
+                                            .font(.title2)
+                                            .foregroundColor(Theme.primary)
                                     }
-                                    .font(Typography.subheadlineBold())
-                                    .padding(.horizontal, Theme.spacingL)
-                                    .padding(.vertical, Theme.spacingS)
-                                    .background(Theme.primary)
-                                    .foregroundColor(.white)
-                                    .cornerRadius(8)
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("No Payment Card")
+                                            .font(Typography.bodyBold())
+                                        Text("Set up your bank details for QR payments")
+                                            .font(Typography.caption())
+                                            .foregroundColor(Theme.dynamicTextSecondary)
+                                    }
+                                    Spacer()
+                                    Button {
+                                        showingEditBank = true
+                                    } label: {
+                                        Text("Set Up")
+                                            .font(Typography.captionBold())
+                                            .foregroundColor(.white)
+                                            .padding(.horizontal, 14)
+                                            .padding(.vertical, 8)
+                                            .background(Theme.primary)
+                                            .cornerRadius(Theme.radiusM)
+                                    }
                                 }
-                                .padding(Theme.spacingL)
-                                .frame(maxWidth: .infinity)
+                                .padding(Theme.spacingM)
                                 .cardStyle()
                                 .padding(.horizontal)
                             }
                         }
-                        
-                        // Settings Zone
-                        VStack(alignment: .leading, spacing: Theme.spacingS) {
-                            Text("Settings")
-                                .font(Typography.captionBold())
-                                .foregroundColor(Theme.dynamicTextSecondary)
-                                .padding(.horizontal)
-                            
+
+                        // ── Danger Zone ──
+                        settingSection(title: "Account") {
                             Button {
-                                withAnimation {
-                                    session.logout()
-                                }
+                                showingLogoutConfirm = true
                             } label: {
                                 HStack {
                                     Image(systemName: "rectangle.portrait.and.arrow.right")
+                                        .foregroundColor(Theme.error)
                                     Text("Log Out")
+                                        .foregroundColor(Theme.error)
+                                        .font(Typography.bodyBold())
                                     Spacer()
                                 }
-                                .foregroundColor(Theme.error)
                                 .padding(Theme.spacingM)
-                                .cardStyle()
                             }
-                            .padding(.horizontal)
                         }
-                        
-                        Spacer()
+
+                        Spacer(minLength: Theme.spacingXXL)
                     }
                 }
             }
@@ -367,58 +432,89 @@ struct ProfileView: View {
                     EditBankDetailsView(group: group)
                 }
             }
+            .sheet(isPresented: $showingMyQR) {
+                MyQRProfileView()
+            }
+            .confirmationDialog("Log out of MatchSplitter?", isPresented: $showingLogoutConfirm, titleVisibility: .visible) {
+                Button("Log Out", role: .destructive) {
+                    withAnimation { session.logout() }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func settingSection<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: Theme.spacingS) {
+            Text(title)
+                .font(Typography.captionBold())
+                .foregroundColor(Theme.dynamicTextSecondary)
+                .textCase(.uppercase)
+                .padding(.horizontal)
+
+            content()
+                .cardStyle()
+                .padding(.horizontal)
         }
     }
 }
 
+// MARK: - QR Code Generator
+
 struct QRCodeGenerator {
     let context = CIContext()
-    let filter = CIFilter.qrCodeGenerator()
-    
+    let filter  = CIFilter.qrCodeGenerator()
+
     func generateQRCode(from string: String) -> UIImage {
         filter.message = Data(string.utf8)
-        
-        if let outputImage = filter.outputImage {
-            if let cgImage = context.createCGImage(outputImage, from: outputImage.extent) {
-                return UIImage(cgImage: cgImage)
-            }
+        if let outputImage = filter.outputImage,
+           let cgImage = context.createCGImage(outputImage, from: outputImage.extent) {
+            return UIImage(cgImage: cgImage)
         }
-        
         return UIImage(systemName: "xmark.circle") ?? UIImage()
     }
 }
 
+// MARK: - EditBankDetailsView
+
 struct EditBankDetailsView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.dismiss) private var dismiss
-    
+
     let group: BusinessGroup
-    
-    @State private var bankName: String
-    @State private var accountName: String
+
+    @State private var bankName:      String
+    @State private var accountName:   String
     @State private var accountNumber: String
-    
+
     init(group: BusinessGroup) {
         self.group = group
-        _bankName = State(initialValue: group.bankName ?? "")
-        _accountName = State(initialValue: group.accountName ?? "")
+        _bankName      = State(initialValue: group.bankName      ?? "")
+        _accountName   = State(initialValue: group.accountName   ?? "")
         _accountNumber = State(initialValue: group.accountNumber ?? "")
     }
-    
+
     var body: some View {
         NavigationView {
             Form {
-                Section("Bank Information") {
+                Section(header: Text("Bank Information").font(Typography.captionBold())) {
                     TextField("Bank Name (e.g. Vietcombank)", text: $bankName)
+                        .font(Typography.body())
                     TextField("Account Name", text: $accountName)
+                        .font(Typography.body())
                     TextField("Account Number", text: $accountNumber)
+                        .font(Typography.body())
                         .keyboardType(.numberPad)
                 }
-                
+
                 Section {
-                    Text("This information will be used to generate your Payment QR code.")
-                        .font(Typography.caption())
-                        .foregroundColor(Theme.dynamicTextSecondary)
+                    HStack(spacing: Theme.spacingS) {
+                        Image(systemName: "info.circle")
+                            .foregroundColor(Theme.primary)
+                        Text("This information generates your Payment QR code.")
+                            .font(Typography.caption())
+                            .foregroundColor(Theme.dynamicTextSecondary)
+                    }
                 }
             }
             .hideFormBackground()
@@ -428,21 +524,21 @@ struct EditBankDetailsView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") { dismiss() }
+                        .foregroundColor(Theme.dynamicTextSecondary)
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Save") {
-                        save()
-                    }
+                    Button("Save") { save() }
+                        .font(Typography.bodyBold())
+                        .foregroundColor(Theme.primary)
                 }
             }
         }
     }
-    
+
     private func save() {
-        group.bankName = bankName.isEmpty ? nil : bankName
-        group.accountName = accountName.isEmpty ? nil : accountName
+        group.bankName      = bankName.isEmpty      ? nil : bankName
+        group.accountName   = accountName.isEmpty   ? nil : accountName
         group.accountNumber = accountNumber.isEmpty ? nil : accountNumber
-        
         try? viewContext.save()
         dismiss()
     }

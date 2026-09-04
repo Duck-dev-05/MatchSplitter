@@ -2,8 +2,8 @@ import SwiftUI
 import CoreData
 
 struct TeamInviteData: Codable {
-    var type: String = "teamInvite"
-    var groupID: String
+    var type:      String = "teamInvite"
+    var groupID:   String
     var groupName: String
     var expiresAt: TimeInterval
 }
@@ -11,76 +11,125 @@ struct TeamInviteData: Codable {
 struct TeamQRInviteView: View {
     @Environment(\.dismiss) private var dismiss
     let group: BusinessGroup
-    
+
     @State private var timeRemaining = 300
     @State private var qrString: String = ""
-    
+
     let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
-    
+
     var body: some View {
         NavigationView {
             ZStack {
-                Theme.dynamicBackground.ignoresSafeArea()
-                
-                VStack(spacing: Theme.spacingL) {
-                    Text("Team Invite QR")
-                        .font(.system(.title, design: .rounded).bold())
-                        .foregroundColor(Theme.dynamicTextPrimary)
-                    
-                    Text("Have players scan this code to instantly join **\(group.name)**. For security, this code changes every 5 minutes.")
-                        .font(Typography.body())
-                        .foregroundColor(Theme.dynamicTextSecondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, Theme.spacingXL)
-                    
-                    VStack(spacing: Theme.spacingM) {
+                // Dark gradient background
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.04, green: 0.12, blue: 0.08),
+                        Color(red: 0.02, green: 0.07, blue: 0.05)
+                    ],
+                    startPoint: .topLeading, endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
+
+                // Subtle glow orb
+                Circle()
+                    .fill(Theme.primary.opacity(0.25))
+                    .frame(width: 350, height: 350)
+                    .blur(radius: 60)
+                    .offset(x: 0, y: -80)
+
+                VStack(spacing: Theme.spacingXL) {
+
+                    // ── Title ──
+                    VStack(spacing: Theme.spacingS) {
+                        Image(systemName: "qrcode")
+                            .font(.system(size: 28, weight: .bold))
+                            .foregroundColor(Theme.accent)
+
+                        Text("Team Invite")
+                            .font(.system(size: 28, weight: .black, design: .rounded))
+                            .foregroundColor(.white)
+
+                        Text("Have players scan to join **\(group.name)**.\nRefreshes every 5 minutes for security.")
+                            .font(Typography.caption())
+                            .foregroundColor(.white.opacity(0.60))
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, Theme.spacingXL)
+                    }
+
+                    // ── QR Glass Card ──
+                    VStack(spacing: Theme.spacingL) {
                         if !qrString.isEmpty, let qrImage = QRGenerator.generateQRCode(from: qrString) {
                             Image(uiImage: qrImage)
                                 .interpolation(.none)
                                 .resizable()
                                 .scaledToFit()
-                                .frame(width: 250, height: 250)
-                                .padding(16)
+                                .frame(width: 220, height: 220)
+                                .padding(20)
                                 .background(Color.white)
-                                .cornerRadius(16)
-                                .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
+                                .cornerRadius(Theme.radiusXL)
+                                .shadow(color: Theme.primary.opacity(0.3), radius: 20, x: 0, y: 8)
                         } else {
-                            Rectangle()
-                                .fill(Color.gray.opacity(0.2))
-                                .frame(width: 250, height: 250)
-                                .cornerRadius(16)
-                                .overlay(ProgressView())
+                            RoundedRectangle(cornerRadius: Theme.radiusXL)
+                                .fill(Color.white.opacity(0.08))
+                                .frame(width: 260, height: 260)
+                                .overlay(ProgressView().tint(Theme.accent))
                         }
-                        
-                        // Timer Display
-                        HStack(spacing: 8) {
-                            Image(systemName: "clock.fill")
-                                .foregroundColor(timeRemaining < 60 ? Theme.error : Theme.primary)
+
+                        // ── Countdown ──
+                        HStack(spacing: 10) {
+                            // Animated ring
+                            ZStack {
+                                Circle()
+                                    .stroke(Color.white.opacity(0.15), lineWidth: 3)
+                                    .frame(width: 28, height: 28)
+                                Circle()
+                                    .trim(from: 0, to: CGFloat(timeRemaining) / 300)
+                                    .stroke(
+                                        timeRemaining < 60 ? Theme.error : Theme.accent,
+                                        style: StrokeStyle(lineWidth: 3, lineCap: .round)
+                                    )
+                                    .frame(width: 28, height: 28)
+                                    .rotationEffect(.degrees(-90))
+                                    .animation(.linear(duration: 1), value: timeRemaining)
+                            }
+
                             Text("Refreshes in \(timeString(time: timeRemaining))")
-                                .font(Typography.bodyBold())
-                                .foregroundColor(timeRemaining < 60 ? Theme.error : Theme.primary)
+                                .font(Typography.captionBold())
+                                .foregroundColor(timeRemaining < 60 ? Theme.error : Theme.accent)
                         }
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 16)
-                        .background(timeRemaining < 60 ? Theme.error.opacity(0.1) : Theme.primary.opacity(0.1))
-                        .cornerRadius(20)
+                        .padding(.horizontal, Theme.spacingL)
+                        .padding(.vertical, Theme.spacingS)
+                        .background(Color.white.opacity(0.08))
+                        .cornerRadius(Theme.radiusXL)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: Theme.radiusXL)
+                                .stroke(Color.white.opacity(0.12), lineWidth: 0.75)
+                        )
                     }
-                    .padding(.top, Theme.spacingL)
-                    
+                    .padding(Theme.spacingXL)
+                    .background(Color.white.opacity(0.06))
+                    .cornerRadius(Theme.radiusXXL)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Theme.radiusXXL)
+                            .stroke(Color.white.opacity(0.12), lineWidth: 0.75)
+                    )
+                    .padding(.horizontal)
+
                     Spacer()
                 }
                 .padding(.top, Theme.spacingL)
             }
             .navigationTitle("Invite Players")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") { dismiss() }
+                        .foregroundColor(Theme.accent)
+                        .font(Typography.bodyBold())
                 }
             }
-            .onAppear {
-                generateNewInviteCode()
-            }
+            .onAppear { generateNewInviteCode() }
             .onReceive(timer) { _ in
                 if timeRemaining > 0 {
                     timeRemaining -= 1
@@ -89,23 +138,23 @@ struct TeamQRInviteView: View {
                 }
             }
         }
+        .preferredColorScheme(.dark)
     }
-    
+
     private func generateNewInviteCode() {
-        let expirationDate = Date().addingTimeInterval(300) // 5 minutes from now
+        let expirationDate = Date().addingTimeInterval(300)
         let inviteData = TeamInviteData(
-            groupID: group.id.uuidString,
+            groupID:   group.id.uuidString,
             groupName: group.name,
             expiresAt: expirationDate.timeIntervalSince1970
         )
-        
-        if let data = try? JSONEncoder().encode(inviteData),
+        if let data       = try? JSONEncoder().encode(inviteData),
            let stringData = String(data: data, encoding: .utf8) {
-            self.qrString = stringData
+            self.qrString     = stringData
             self.timeRemaining = 300
         }
     }
-    
+
     private func timeString(time: Int) -> String {
         let minutes = time / 60
         let seconds = time % 60

@@ -6,107 +6,116 @@ import GoogleSignInSwift
 struct LoginView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @EnvironmentObject private var session: SessionManager
-    
+
     @State private var isLoginMode = true
-    
-    // Form State
-    @State private var email = ""
+    @State private var email    = ""
     @State private var password = ""
-    @State private var name = ""
-    
+    @State private var name     = ""
     @State private var errorMessage = ""
-    
+
+    // Animated blob offsets
+    @State private var blob1Offset: CGSize = CGSize(width: -80, height: -180)
+    @State private var blob2Offset: CGSize = CGSize(width: 130,  height: 280)
+    @State private var blob3Offset: CGSize = CGSize(width: 80,   height: -80)
+
     var body: some View {
         NavigationView {
             ZStack {
-                // Dynamic background gradient
-                LinearGradient(
-                    colors: [Theme.primary.opacity(0.7), Theme.secondary.opacity(0.5), Theme.dynamicBackground],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
-                
-                // Floating shapes
+                // ── Aurora Background ──
+                Color(UIColor.systemBackground).ignoresSafeArea()
+
+                // Blob 1 — primary
                 Circle()
-                    .fill(Theme.primary.opacity(0.3))
+                    .fill(
+                        RadialGradient(
+                            colors: [Theme.primary.opacity(0.65), Theme.primary.opacity(0)],
+                            center: .center, startRadius: 10, endRadius: 220
+                        )
+                    )
+                    .frame(width: 420, height: 420)
+                    .offset(blob1Offset)
+                    .blur(radius: 30)
+
+                // Blob 2 — accent
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [Theme.accent.opacity(0.45), Theme.accent.opacity(0)],
+                            center: .center, startRadius: 10, endRadius: 180
+                        )
+                    )
+                    .frame(width: 340, height: 340)
+                    .offset(blob2Offset)
+                    .blur(radius: 30)
+
+                // Blob 3 — secondary
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [Theme.secondary.opacity(0.40), Theme.secondary.opacity(0)],
+                            center: .center, startRadius: 10, endRadius: 160
+                        )
+                    )
                     .frame(width: 300, height: 300)
-                    .blur(radius: 50)
-                    .offset(x: -100, y: -200)
-                    
-                Circle()
-                    .fill(Theme.secondary.opacity(0.3))
-                    .frame(width: 250, height: 250)
-                    .blur(radius: 40)
-                    .offset(x: 150, y: 300)
-                
+                    .offset(blob3Offset)
+                    .blur(radius: 28)
+
+                // ── Content ──
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: Theme.spacingL) {
-                        
-                        // Header
+
+                        // Brand Header
                         VStack(spacing: Theme.spacingS) {
-                            Image(systemName: "flame.fill")
-                                .font(.system(size: 56, weight: .bold))
-                                .foregroundColor(.white)
-                                .shadow(radius: 10)
-                            
+                            ZStack {
+                                Circle()
+                                    .fill(Theme.gradientPrimary)
+                                    .frame(width: 90, height: 90)
+                                    .shadow(color: Theme.primary.opacity(0.5), radius: 20, x: 0, y: 8)
+                                Image(systemName: "sportscourt.fill")
+                                    .font(.system(size: 38, weight: .bold))
+                                    .foregroundColor(.white)
+                            }
+
                             Text("MatchSplitter")
-                                .font(.system(size: 38, weight: .heavy, design: .rounded))
-                                .foregroundColor(.white)
-                                .shadow(radius: 5)
-                            
+                                .font(.system(size: 36, weight: .black, design: .rounded))
+                                .foregroundColor(Theme.dynamicTextPrimary)
+
                             Text("Your team. Your expenses. Sorted.")
-                                .font(Typography.body())
-                                .foregroundColor(.white.opacity(0.9))
+                                .font(Typography.caption())
+                                .foregroundColor(Theme.dynamicTextSecondary)
                         }
-                        .padding(.top, Theme.spacingXL)
+                        .padding(.top, Theme.spacingXXL)
                         .padding(.bottom, Theme.spacingM)
-                        
-                        // Custom Segmented Picker
+
+                        // ── Segmented Picker ──
                         HStack(spacing: 0) {
-                            Button(action: { withAnimation(.spring()) { isLoginMode = true } }) {
-                                Text("Log In")
-                                    .font(Typography.button())
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 12)
-                                    .background(isLoginMode ? Color.white : Color.clear)
-                                    .foregroundColor(isLoginMode ? Theme.primary : .white)
-                                    .cornerRadius(20)
-                            }
-                            
-                            Button(action: { withAnimation(.spring()) { isLoginMode = false } }) {
-                                Text("Register")
-                                    .font(Typography.button())
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 12)
-                                    .background(!isLoginMode ? Color.white : Color.clear)
-                                    .foregroundColor(!isLoginMode ? Theme.primary : .white)
-                                    .cornerRadius(20)
-                            }
+                            tabButton("Log In",   isActive: isLoginMode)   { withAnimation(.spring(response: 0.35)) { isLoginMode = true } }
+                            tabButton("Register", isActive: !isLoginMode)  { withAnimation(.spring(response: 0.35)) { isLoginMode = false } }
                         }
                         .padding(4)
-                        .background(Color.black.opacity(0.2))
-                        .cornerRadius(24)
+                        .background(Theme.dynamicCardBackground)
+                        .cornerRadius(Theme.radiusXL)
                         .padding(.horizontal, Theme.spacingL)
-                        
-                        // Main Form Card
+
+                        // ── Form Card ──
                         VStack(spacing: Theme.spacingM) {
                             if !isLoginMode {
                                 CustomTextField(icon: "person.fill", placeholder: "Full Name", text: $name)
                             }
-                            
                             CustomTextField(icon: "envelope.fill", placeholder: "Email", text: $email, keyboardType: .emailAddress)
-                            
                             CustomSecureField(icon: "lock.fill", placeholder: "Password", text: $password)
-                            
+
                             if !errorMessage.isEmpty {
-                                Text(errorMessage)
-                                    .foregroundColor(Theme.error)
-                                    .font(Typography.captionBold())
-                                    .multilineTextAlignment(.center)
-                                    .padding(.top, 4)
+                                HStack(spacing: 6) {
+                                    Image(systemName: "exclamationmark.triangle.fill")
+                                    Text(errorMessage)
+                                }
+                                .font(Typography.caption())
+                                .foregroundColor(Theme.error)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal)
                             }
-                            
+
                             Button(action: handleAction) {
                                 Text(isLoginMode ? "Sign In" : "Create Account")
                                     .font(Typography.button())
@@ -114,165 +123,176 @@ struct LoginView: View {
                                     .frame(maxWidth: .infinity)
                                     .padding()
                                     .background(Theme.gradientPrimary)
-                                    .cornerRadius(Theme.radiusM)
-                                    .shadow(color: Theme.primary.opacity(0.3), radius: 10, x: 0, y: 5)
+                                    .cornerRadius(Theme.radiusXL)
+                                    .shadow(color: Theme.primary.opacity(0.35), radius: 12, x: 0, y: 5)
                             }
-                            .padding(.top, Theme.spacingS)
+                            .padding(.top, 4)
                         }
                         .padding(Theme.spacingL)
-                        .background(.ultraThinMaterial)
-                        .cornerRadius(Theme.radiusL)
-                        .shadow(color: Color.black.opacity(0.15), radius: 15, x: 0, y: 10)
+                        .glassCard()
                         .padding(.horizontal, Theme.spacingL)
-                        
-                        // Divider
+
+                        // ── Divider ──
                         HStack {
-                            VStack { Divider().background(Color.white.opacity(0.4)) }
+                            Rectangle()
+                                .fill(Theme.border.opacity(0.5))
+                                .frame(height: 0.5)
                             Text("OR")
                                 .font(Typography.captionBold())
-                                .foregroundColor(.white.opacity(0.8))
-                            VStack { Divider().background(Color.white.opacity(0.4)) }
+                                .foregroundColor(Theme.dynamicTextSecondary)
+                                .padding(.horizontal, 8)
+                            Rectangle()
+                                .fill(Theme.border.opacity(0.5))
+                                .frame(height: 0.5)
                         }
                         .padding(.horizontal, Theme.spacingXL)
-                        
-                        // Google Button
+
+                        // ── Google Sign In ──
                         Button(action: loginWithGoogle) {
                             HStack(spacing: 12) {
                                 Image(systemName: "globe")
-                                    .font(.system(size: 20))
+                                    .font(.system(size: 18, weight: .medium))
+                                    .foregroundColor(Theme.primary)
                                 Text("Continue with Google")
+                                    .font(Typography.button())
+                                    .foregroundColor(Theme.dynamicTextPrimary)
                             }
-                            .font(Typography.button())
-                            .foregroundColor(.primary)
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(Color(UIColor.systemBackground))
-                            .cornerRadius(Theme.radiusM)
-                            .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
+                            .background(Theme.dynamicCardBackground)
+                            .cornerRadius(Theme.radiusXL)
+                            .shadow(color: Color.black.opacity(0.07), radius: 10, x: 0, y: 4)
                         }
                         .padding(.horizontal, Theme.spacingL)
-                        
-                        Spacer(minLength: 40)
+
+                        Spacer(minLength: 50)
                     }
                 }
             }
             .navigationBarHidden(true)
+            .onAppear { animateBlobs() }
         }
     }
-    
+
+    // MARK: - Helpers
+
+    @ViewBuilder
+    private func tabButton(_ label: String, isActive: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(label)
+                .font(Typography.button())
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(isActive ? Theme.primary : Color.clear)
+                .foregroundColor(isActive ? .white : Theme.dynamicTextSecondary)
+                .cornerRadius(Theme.radiusXL - 4)
+        }
+    }
+
+    private func animateBlobs() {
+        withAnimation(
+            .easeInOut(duration: 7).repeatForever(autoreverses: true)
+        ) {
+            blob1Offset = CGSize(width: 100, height: -120)
+        }
+        withAnimation(
+            .easeInOut(duration: 9).repeatForever(autoreverses: true)
+        ) {
+            blob2Offset = CGSize(width: -110, height: 200)
+        }
+        withAnimation(
+            .easeInOut(duration: 6).repeatForever(autoreverses: true)
+        ) {
+            blob3Offset = CGSize(width: -60, height: 100)
+        }
+    }
+
+    // MARK: - Auth Logic (unchanged)
+
     private func handleAction() {
         errorMessage = ""
-        
+
         if isLoginMode {
-            // Login Logic
             guard !email.isEmpty, !password.isEmpty else {
                 errorMessage = "Please enter email and password."
                 return
             }
-            
             let req: NSFetchRequest<User> = User.fetchRequest()
             req.predicate = NSPredicate(format: "email == %@ AND password == %@", email.lowercased(), password)
-            
             if let user = try? viewContext.fetch(req).first {
-                withAnimation {
-                    session.login(user: user, context: viewContext)
-                }
+                withAnimation { session.login(user: user, context: viewContext) }
             } else {
                 errorMessage = "Invalid email or password."
             }
-            
         } else {
-            // Register Logic
             guard !email.isEmpty, !password.isEmpty, !name.isEmpty else {
                 errorMessage = "Please fill in all fields."
                 return
             }
-            
-            // Check if email already exists
             let req: NSFetchRequest<User> = User.fetchRequest()
             req.predicate = NSPredicate(format: "email == %@", email.lowercased())
-            if let _ = try? viewContext.fetch(req).first {
+            if (try? viewContext.fetch(req).first) != nil {
                 errorMessage = "An account with this email already exists."
                 return
             }
-            
             let newUser = User(context: viewContext)
             newUser.id = UUID()
             newUser.username = name
             newUser.email = email.lowercased()
             newUser.password = password
             newUser.createdAt = Date()
-            
-            // Auto-create default team
+
             let defaultGroup = BusinessGroup(context: viewContext)
             defaultGroup.id = UUID()
             defaultGroup.name = "My Team"
             defaultGroup.ownerID = newUser.id
             defaultGroup.createdAt = Date()
-            
+
             do {
                 try viewContext.save()
-                withAnimation {
-                    session.login(user: newUser, context: viewContext)
-                }
+                withAnimation { session.login(user: newUser, context: viewContext) }
             } catch {
                 errorMessage = "Error creating account. Please try again."
             }
         }
     }
-    
+
     private func loginWithGoogle() {
         errorMessage = ""
-        
         let rootVC = ApplicationUtility.rootViewController
-        
         GIDSignIn.sharedInstance.signIn(withPresenting: rootVC) { signInResult, error in
             if let error = error {
-                print("Error signing in: \(error.localizedDescription)")
+                print("Google Sign-In error: \(error.localizedDescription)")
                 self.errorMessage = "Failed to sign in with Google."
                 return
             }
-            
-            guard let user = signInResult?.user,
-                  let profile = user.profile else {
+            guard let user = signInResult?.user, let profile = user.profile else {
                 self.errorMessage = "Could not fetch Google profile."
                 return
             }
-            
             let email = profile.email
-            let name = profile.name
-            
-            // Check if user already exists
+            let name  = profile.name
             let req: NSFetchRequest<User> = User.fetchRequest()
             req.predicate = NSPredicate(format: "email == %@", email.lowercased())
-            
-            if let existingUser = try? viewContext.fetch(req).first {
-                // Log in existing user
-                withAnimation {
-                    session.login(user: existingUser, context: viewContext)
-                }
+            if let existing = try? viewContext.fetch(req).first {
+                withAnimation { session.login(user: existing, context: viewContext) }
             } else {
-                // Register new user
                 let newUser = User(context: viewContext)
                 newUser.id = UUID()
                 newUser.username = name
                 newUser.email = email.lowercased()
-                // No password needed for Google users, but we can set a dummy one or leave it empty if your model allows
                 newUser.password = "GOOGLE_OAUTH_PLACEHOLDER"
                 newUser.createdAt = Date()
-                
-                // Auto-create default team
+
                 let defaultGroup = BusinessGroup(context: viewContext)
                 defaultGroup.id = UUID()
                 defaultGroup.name = "My Team"
                 defaultGroup.ownerID = newUser.id
                 defaultGroup.createdAt = Date()
-                
+
                 do {
                     try viewContext.save()
-                    withAnimation {
-                        session.login(user: newUser, context: viewContext)
-                    }
+                    withAnimation { session.login(user: newUser, context: viewContext) }
                 } catch {
                     self.errorMessage = "Error creating account with Google."
                 }
@@ -281,60 +301,70 @@ struct LoginView: View {
     }
 }
 
-// Utility to get the root view controller for presenting Google Sign-In
+// MARK: - ApplicationUtility
+
 struct ApplicationUtility {
     static var rootViewController: UIViewController {
-        guard let screen = UIApplication.shared.connectedScenes.first as? UIWindowScene else {
-            return .init()
-        }
-        guard let root = screen.windows.first?.rootViewController else {
-            return .init()
-        }
+        guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let root  = scene.windows.first?.rootViewController else { return .init() }
         return root
     }
 }
 
-// Custom View Components for Premium UI
+// MARK: - Custom Field Components
+
 struct CustomTextField: View {
-    let icon: String
+    let icon:        String
     let placeholder: String
     @Binding var text: String
     var keyboardType: UIKeyboardType = .default
-    
+
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
-                .foregroundColor(Theme.primary.opacity(0.8))
-                .frame(width: 24)
-            
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(Theme.primary)
+                .frame(width: 22)
+
             TextField(placeholder, text: $text)
                 .keyboardType(keyboardType)
                 .autocapitalization(.none)
                 .disableAutocorrection(true)
+                .font(Typography.body())
                 .foregroundColor(Theme.dynamicTextPrimary)
         }
-        .padding()
-        .background(Color(UIColor.systemBackground).opacity(0.7))
+        .padding(Theme.spacingM)
+        .background(Theme.dynamicBackground.opacity(0.85))
         .cornerRadius(Theme.radiusM)
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.radiusM)
+                .stroke(Theme.border.opacity(0.25), lineWidth: 0.75)
+        )
     }
 }
 
 struct CustomSecureField: View {
-    let icon: String
+    let icon:        String
     let placeholder: String
     @Binding var text: String
-    
+
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
-                .foregroundColor(Theme.primary.opacity(0.8))
-                .frame(width: 24)
-            
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(Theme.primary)
+                .frame(width: 22)
+
             SecureField(placeholder, text: $text)
+                .font(Typography.body())
                 .foregroundColor(Theme.dynamicTextPrimary)
         }
-        .padding()
-        .background(Color(UIColor.systemBackground).opacity(0.7))
+        .padding(Theme.spacingM)
+        .background(Theme.dynamicBackground.opacity(0.85))
         .cornerRadius(Theme.radiusM)
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.radiusM)
+                .stroke(Theme.border.opacity(0.25), lineWidth: 0.75)
+        )
     }
 }

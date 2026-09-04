@@ -1,228 +1,135 @@
 import SwiftUI
 import CoreData
 
+// MARK: - DashboardView
+
 struct DashboardView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @EnvironmentObject private var session: SessionManager
     @AppStorage private var hasSeenClientOnboarding: Bool
     @State private var showingClientOnboarding = false
-    @State private var showingPaymentQR = false
-    @State private var showingTeamInviteQR = false
-    
-    @FetchRequest private var invoices: FetchedResults<Invoice>
-    @FetchRequest private var payments: FetchedResults<Payment>
-    @FetchRequest private var clients: FetchedResults<Client>
+    @State private var showingPaymentQR        = false
+    @State private var showingTeamInviteQR     = false
+
+    @FetchRequest private var invoices:  FetchedResults<Invoice>
+    @FetchRequest private var payments:  FetchedResults<Payment>
+    @FetchRequest private var clients:   FetchedResults<Client>
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \BusinessGroup.name, ascending: true)],
         animation: .default
     ) private var allGroups: FetchedResults<BusinessGroup>
-    
+
     var myGroups: [BusinessGroup] {
         guard let userID = session.currentUser?.id else { return [] }
         return allGroups.filter { $0.ownerID == userID }
     }
-    
+
     let groupID: UUID
-    
+
     init(groupID: UUID) {
         self.groupID = groupID
         let predicate = NSPredicate(format: "groupID == %@", groupID as CVarArg)
-        
         _invoices = FetchRequest(
             sortDescriptors: [NSSortDescriptor(keyPath: \Invoice.createdAt, ascending: false)],
-            predicate: predicate,
-            animation: .default)
-            
+            predicate: predicate, animation: .default)
         _payments = FetchRequest(
             sortDescriptors: [NSSortDescriptor(keyPath: \Payment.paymentDate, ascending: false)],
-            predicate: predicate,
-            animation: .default)
-            
+            predicate: predicate, animation: .default)
         _clients = FetchRequest(
             sortDescriptors: [NSSortDescriptor(keyPath: \Client.name, ascending: true)],
-            predicate: predicate,
-            animation: .default)
-            
+            predicate: predicate, animation: .default)
         self._hasSeenClientOnboarding = AppStorage(wrappedValue: false, "hasSeenClientOnboarding_\(groupID.uuidString)")
     }
-    
+
     var body: some View {
         NavigationView {
             ZStack {
                 Theme.dynamicBackground.ignoresSafeArea()
-                
+
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: Theme.spacingL) {
-                        
-                        // Team Details Context Header
-                        if let group = session.currentGroup {
-                            HStack {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(group.name)
-                                        .font(Typography.headline())
-                                        .foregroundColor(Theme.dynamicTextPrimary)
-                                    Text("\(clients.count) Player\(clients.count == 1 ? "" : "s")")
-                                        .font(Typography.caption())
-                                        .foregroundColor(Theme.dynamicTextSecondary)
-                                }
-                                Spacer()
-                                Text("Since \(group.createdAt.formatted(date: .abbreviated, time: .omitted))")
-                                    .font(Typography.caption())
-                                    .foregroundColor(Theme.dynamicTextSecondary)
-                            }
-                            .padding(.horizontal, Theme.spacingL)
+
+                        // ── Hero Balance Card ──
+                        heroBalanceSection
+
+                        // ── Quick Stats Row ──
+                        HStack(spacing: Theme.spacingM) {
+                            SummaryCard(
+                                title: "Collected",
+                                amount: totalRevenue,
+                                icon: "checkmark.circle.fill",
+                                color: Theme.success
+                            )
+                            SummaryCard(
+                                title: "Pending",
+                                amount: Double(pendingInvoicesCount),
+                                icon: "clock.fill",
+                                color: Theme.warning,
+                                isCurrency: false
+                            )
                         }
-                        
-                        // Premium Fintech Balance Display
-                        VStack(spacing: Theme.spacingS) {
-                            Text("Total Outstanding")
-                                .font(Typography.subheadlineBold())
-                                .foregroundColor(Theme.dynamicTextSecondary)
-                                .textCase(.uppercase)
-                            
-                            Text(outstandingAmount.formatted(.currency(code: "VND")))
-                                .font(Typography.amountLarge())
-                                .foregroundColor(outstandingAmount > 0 ? Theme.primary : Theme.dynamicTextPrimary)
-                            
-                            HStack(spacing: Theme.spacingM) {
-                                HStack {
-                                    Circle()
-                                        .fill(Theme.success)
-                                        .frame(width: 8, height: 8)
-                                    Text("Collected: \(totalRevenue.formatted(.currency(code: "VND")))")
-                                        .font(Typography.caption())
-                                        .foregroundColor(Theme.dynamicTextSecondary)
-                                }
-                            }
-                            .padding(.top, Theme.spacingXS)
-                            
-                            // Action Buttons
-                            if clients.isEmpty {
-                                Button {
-                                    showingClientOnboarding = true
-                                } label: {
-                                    HStack {
-                                        Image(systemName: "person.badge.plus")
-                                        Text("Add First Player")
-                                    }
-                                    .font(Typography.button())
-                                    .foregroundColor(.white)
-                                    .frame(maxWidth: .infinity)
-                                    .padding()
-                                    .background(Theme.primary)
-                                    .cornerRadius(Theme.radiusXL)
-                                    .shadow(color: Theme.primary.opacity(0.3), radius: 8, x: 0, y: 4)
-                                }
-                                .padding(.top, Theme.spacingM)
-                                .padding(.horizontal, Theme.spacingL)
-                            } else {
-                                HStack(spacing: Theme.spacingM) {
-                                    Button {
-                                        showingTeamInviteQR = true
-                                    } label: {
-                                        HStack {
-                                            Image(systemName: "person.badge.plus")
-                                            Text("Invite Players")
-                                        }
-                                        .font(Typography.button())
-                                        .foregroundColor(.white)
-                                        .frame(maxWidth: .infinity)
-                                        .padding()
-                                        .background(Theme.primary)
-                                        .cornerRadius(Theme.radiusXL)
-                                        .shadow(color: Theme.primary.opacity(0.3), radius: 8, x: 0, y: 4)
-                                    }
-                                    
-                                    if let bank = session.currentGroup?.bankName, !bank.isEmpty {
-                                        Button {
-                                            showingPaymentQR = true
-                                        } label: {
-                                            HStack {
-                                                Image(systemName: "qrcode")
-                                                Text("Receive")
-                                            }
-                                            .font(Typography.button())
-                                            .foregroundColor(.white)
-                                            .frame(maxWidth: .infinity)
-                                            .padding()
-                                            .background(Theme.success)
-                                            .cornerRadius(Theme.radiusXL)
-                                            .shadow(color: Theme.success.opacity(0.3), radius: 8, x: 0, y: 4)
-                                        }
-                                    }
-                                }
-                                .padding(.top, Theme.spacingM)
-                                .padding(.horizontal, Theme.spacingL)
-                            }
-                        }
-                        .padding(.vertical, Theme.spacingXL)
-                        .frame(maxWidth: .infinity)
-                        .background(Theme.dynamicBackground)
-                        
-                        // Leaderboard Link
+                        .padding(.horizontal)
+
+                        // ── Leaderboard Link ──
                         if !clients.isEmpty {
                             NavigationLink(destination: LeaderboardView(groupID: groupID)) {
-                                HStack {
-                                    Image(systemName: "trophy.fill")
-                                        .font(.title2)
-                                        .foregroundColor(.yellow)
+                                HStack(spacing: Theme.spacingM) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(Color.yellow.opacity(0.18))
+                                            .frame(width: 48, height: 48)
+                                        Image(systemName: "trophy.fill")
+                                            .font(.title3)
+                                            .foregroundColor(.yellow)
+                                    }
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text("Team Leaderboard")
                                             .font(Typography.bodyBold())
                                             .foregroundColor(Theme.dynamicTextPrimary)
-                                        Text("View MVP, biggest spenders & more")
+                                        Text("MVP · biggest spender · best payer")
                                             .font(Typography.caption())
                                             .foregroundColor(Theme.dynamicTextSecondary)
                                     }
                                     Spacer()
                                     Image(systemName: "chevron.right")
-                                        .foregroundColor(Theme.dynamicTextSecondary)
+                                        .font(.system(size: 13, weight: .semibold))
+                                        .foregroundColor(Theme.primary.opacity(0.6))
                                 }
                                 .padding(Theme.spacingM)
-                                .background(Theme.dynamicCardBackground)
-                                .cornerRadius(Theme.radiusM)
-                                .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-                                .padding(.horizontal)
+                                .cardStyle()
                             }
+                            .padding(.horizontal)
                         }
-                        
-                        // Recent Splits
-                        VStack(alignment: .leading, spacing: Theme.spacingM) {
-                            Text("Recent Splits")
-                                .font(Typography.subheadline())
-                                .padding(.horizontal)
-                            
-                            if recentInvoices.isEmpty {
-                                emptyStateView(message: "No matches yet. Add a split!", icon: "sportscourt")
-                            } else {
-                                VStack(spacing: Theme.spacingM) {
-                                    ForEach(recentInvoices.prefix(5)) { invoice in
-                                        InvoiceRowView(invoice: invoice, clients: clients)
-                                    }
+
+                        // ── Recent Splits ──
+                        sectionHeader("Recent Splits", icon: "doc.text.fill")
+
+                        if recentInvoices.isEmpty {
+                            dashEmptyState(message: "No splits yet — add the first one!", icon: "sportscourt")
+                        } else {
+                            VStack(spacing: Theme.spacingS) {
+                                ForEach(recentInvoices.prefix(5)) { invoice in
+                                    InvoiceRowView(invoice: invoice, clients: clients)
                                 }
-                                .padding(.horizontal)
                             }
+                            .padding(.horizontal)
                         }
-                        
-                        // Recent Activity
-                        VStack(alignment: .leading, spacing: Theme.spacingM) {
-                            Text("Recent Activity")
-                                .font(Typography.subheadline())
-                                .padding(.horizontal)
-                            
-                            if recentPayments.isEmpty {
-                                emptyStateView(message: "No payments yet", icon: "clock.arrow.circlepath")
-                            } else {
-                                VStack(spacing: Theme.spacingM) {
-                                    ForEach(recentPayments.prefix(5)) { payment in
-                                        PaymentRowView(payment: payment, invoices: invoices)
-                                    }
+
+                        // ── Recent Activity ──
+                        sectionHeader("Recent Activity", icon: "arrow.down.left.circle.fill")
+
+                        if recentPayments.isEmpty {
+                            dashEmptyState(message: "No payments yet", icon: "clock.arrow.circlepath")
+                        } else {
+                            VStack(spacing: Theme.spacingS) {
+                                ForEach(recentPayments.prefix(5)) { payment in
+                                    PaymentRowView(payment: payment, invoices: invoices)
                                 }
-                                .padding(.horizontal)
                             }
+                            .padding(.horizontal)
                         }
-                        
-                        Spacer(minLength: Theme.spacingXL)
+
+                        Spacer(minLength: Theme.spacingXXL)
                     }
                     .padding(.vertical)
                 }
@@ -234,9 +141,7 @@ struct DashboardView: View {
                     Menu {
                         ForEach(myGroups) { group in
                             Button {
-                                withAnimation {
-                                    session.selectGroup(group: group)
-                                }
+                                withAnimation { session.selectGroup(group: group) }
                             } label: {
                                 HStack {
                                     Text(group.name)
@@ -248,9 +153,7 @@ struct DashboardView: View {
                         }
                         Divider()
                         Button {
-                            withAnimation {
-                                session.clearGroup()
-                            }
+                            withAnimation { session.clearGroup() }
                         } label: {
                             Label("Manage Teams...", systemImage: "building.2.crop.circle")
                         }
@@ -260,7 +163,7 @@ struct DashboardView: View {
                                 .font(Typography.headline())
                                 .foregroundColor(Theme.primary)
                             Image(systemName: "chevron.up.chevron.down")
-                                .font(.caption)
+                                .font(.caption.weight(.semibold))
                                 .foregroundColor(Theme.primary)
                         }
                     }
@@ -269,9 +172,7 @@ struct DashboardView: View {
         }
         .fullScreenCover(isPresented: $showingClientOnboarding) {
             FirstClientOnboardingView(groupID: groupID, isPresented: $showingClientOnboarding)
-                .onDisappear {
-                    hasSeenClientOnboarding = true
-                }
+                .onDisappear { hasSeenClientOnboarding = true }
         }
         .sheet(isPresented: $showingPaymentQR) {
             if let group = session.currentGroup {
@@ -283,16 +184,144 @@ struct DashboardView: View {
                 TeamQRInviteView(group: group)
             }
         }
-        // Removed forced onAppear onboarding to allow users to navigate freely
     }
-    
-    private func emptyStateView(message: String, icon: String) -> some View {
+
+    // MARK: - Hero Balance
+
+    private var heroBalanceSection: some View {
+        ZStack {
+            // Background gradient card
+            RoundedRectangle(cornerRadius: Theme.radiusXXL)
+                .fill(Theme.gradientPrimary)
+                .shadow(color: Theme.primary.opacity(0.4), radius: 20, x: 0, y: 10)
+
+            // Subtle pattern overlay
+            RoundedRectangle(cornerRadius: Theme.radiusXXL)
+                .fill(
+                    LinearGradient(
+                        colors: [Color.white.opacity(0.12), Color.clear],
+                        startPoint: .topLeading, endPoint: .bottomTrailing
+                    )
+                )
+
+            VStack(spacing: Theme.spacingM) {
+                // Team name + player count
+                if let group = session.currentGroup {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(group.name.uppercased())
+                                .font(.system(size: 11, weight: .bold, design: .rounded))
+                                .foregroundColor(.white.opacity(0.75))
+                                .tracking(1.5)
+                            Text("\(clients.count) Player\(clients.count == 1 ? "" : "s")")
+                                .font(Typography.caption())
+                                .foregroundColor(.white.opacity(0.65))
+                        }
+                        Spacer()
+                        Text("Since \(group.createdAt.formatted(date: .abbreviated, time: .omitted))")
+                            .font(.system(size: 11, design: .rounded))
+                            .foregroundColor(.white.opacity(0.55))
+                    }
+                }
+
+                // Outstanding amount
+                VStack(spacing: 4) {
+                    Text("Outstanding")
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .foregroundColor(.white.opacity(0.75))
+                        .tracking(0.5)
+                    Text(outstandingAmount.formatted(.currency(code: "VND")))
+                        .font(.system(size: 40, weight: .black, design: .rounded))
+                        .foregroundColor(.white)
+                        .minimumScaleFactor(0.7)
+                        .lineLimit(1)
+
+                    HStack(spacing: 6) {
+                        Circle().fill(.white.opacity(0.6)).frame(width: 6, height: 6)
+                        Text("Collected: \(totalRevenue.formatted(.currency(code: "VND")))")
+                            .font(.system(size: 12, design: .rounded))
+                            .foregroundColor(.white.opacity(0.75))
+                    }
+                }
+
+                // Action Buttons
+                if clients.isEmpty {
+                    Button {
+                        showingClientOnboarding = true
+                    } label: {
+                        Label("Add First Player", systemImage: "person.badge.plus")
+                            .font(Typography.button())
+                            .foregroundColor(Theme.primary)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.white)
+                            .cornerRadius(Theme.radiusXL)
+                    }
+                    .padding(.top, Theme.spacingXS)
+                } else {
+                    HStack(spacing: Theme.spacingM) {
+                        Button {
+                            showingTeamInviteQR = true
+                        } label: {
+                            Label("Invite", systemImage: "person.badge.plus")
+                                .font(Typography.button())
+                                .foregroundColor(Theme.primary)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color.white)
+                                .cornerRadius(Theme.radiusXL)
+                        }
+
+                        if let bank = session.currentGroup?.bankName, !bank.isEmpty {
+                            Button {
+                                showingPaymentQR = true
+                            } label: {
+                                Label("Receive", systemImage: "qrcode")
+                                    .font(Typography.button())
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                                    .background(Color.white.opacity(0.2))
+                                    .cornerRadius(Theme.radiusXL)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: Theme.radiusXL)
+                                            .stroke(Color.white.opacity(0.5), lineWidth: 1)
+                                    )
+                            }
+                        }
+                    }
+                    .padding(.top, Theme.spacingXS)
+                }
+            }
+            .padding(Theme.spacingL)
+        }
+        .padding(.horizontal)
+        .padding(.top, Theme.spacingS)
+    }
+
+    // MARK: - Subviews
+
+    private func sectionHeader(_ title: String, icon: String) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(Theme.primary)
+            Text(title)
+                .font(Typography.subheadlineBold())
+                .foregroundColor(Theme.dynamicTextPrimary)
+            Spacer()
+        }
+        .padding(.horizontal)
+        .padding(.top, 4)
+    }
+
+    private func dashEmptyState(message: String, icon: String) -> some View {
         VStack(spacing: Theme.spacingM) {
             Image(systemName: icon)
-                .font(.system(size: 32))
-                .foregroundColor(Theme.dynamicTextSecondary.opacity(0.5))
+                .font(.system(size: 30))
+                .foregroundColor(Theme.dynamicTextSecondary.opacity(0.4))
             Text(message)
-                .font(Typography.body())
+                .font(Typography.caption())
                 .foregroundColor(Theme.dynamicTextSecondary)
         }
         .frame(maxWidth: .infinity)
@@ -300,73 +329,74 @@ struct DashboardView: View {
         .cardStyle()
         .padding(.horizontal)
     }
-    
+
+    // MARK: - Computed Properties
+
     var totalRevenue: Double {
         payments.reduce(0.0) { $0 + $1.amount }
     }
-    
+
     var outstandingAmount: Double {
         invoices.filter { !$0.isPaid }.reduce(0.0) { result, invoice in
-            let invoicePayments = payments.filter { $0.invoiceID == invoice.id }
-            let paidAmount = invoicePayments.reduce(0.0) { $0 + $1.amount }
-            let remaining = invoice.total - paidAmount
-            return result + remaining
+            let paidAmount = payments.filter { $0.invoiceID == invoice.id }.reduce(0.0) { $0 + $1.amount }
+            return result + (invoice.total - paidAmount)
         }
     }
-    
+
     var pendingInvoicesCount: Int {
         invoices.filter { invoice in
             let status = invoice.statusEnum
             return status == .sent || status == .viewed || status == .partial
         }.count
     }
-    
+
     var thisMonthRevenue: Double {
         let calendar = Calendar.current
         let now = Date()
-        return payments.filter { payment in
-            calendar.isDate(payment.paymentDate, equalTo: now, toGranularity: .month)
-        }.reduce(0.0) { $0 + $1.amount }
+        return payments.filter { calendar.isDate($0.paymentDate, equalTo: now, toGranularity: .month) }
+                       .reduce(0.0) { $0 + $1.amount }
     }
-    
+
     var recentInvoices: [Invoice] {
         Array(invoices).sorted { $0.createdAt > $1.createdAt }
     }
-    
+
     var recentPayments: [Payment] {
         Array(payments).sorted { $0.paymentDate > $1.paymentDate }
     }
 }
 
+// MARK: - SummaryCard
+
 struct SummaryCard: View {
-    let title: String
-    let amount: Double
-    let icon: String
-    var color: Color = Theme.primary
-    var isCurrency: Bool = true
-    var isPrimary: Bool = false
-    
+    let title:   String
+    let amount:  Double
+    let icon:    String
+    var color:       Color = Theme.primary
+    var isCurrency:  Bool  = true
+    var isPrimary:   Bool  = false
+
     @Environment(\.colorScheme) var colorScheme
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.spacingM) {
             HStack {
-                Image(systemName: icon)
-                    .font(.title2)
-                    .foregroundColor(isPrimary ? .white : color)
-                    .padding(Theme.spacingS)
-                    .background(
-                        Circle().fill(isPrimary ? Color.white.opacity(0.2) : color.opacity(0.15))
-                    )
+                ZStack {
+                    RoundedRectangle(cornerRadius: Theme.radiusS)
+                        .fill(isPrimary ? Color.white.opacity(0.2) : color.opacity(0.15))
+                        .frame(width: 40, height: 40)
+                    Image(systemName: icon)
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(isPrimary ? .white : color)
+                }
                 Spacer()
             }
-            
-            VStack(alignment: .leading, spacing: Theme.spacingXS) {
+
+            VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(Typography.caption())
-                    .fontWeight(.medium)
-                    .foregroundColor(isPrimary ? .white.opacity(0.8) : Theme.dynamicTextSecondary)
-                
+                    .font(.system(size: 12, weight: .medium, design: .rounded))
+                    .foregroundColor(isPrimary ? .white.opacity(0.75) : Theme.dynamicTextSecondary)
+
                 Group {
                     if isCurrency {
                         Text(amount.formatted(.currency(code: "VND")))
@@ -377,195 +407,207 @@ struct SummaryCard: View {
                 .font(.system(.title3, design: .rounded).bold())
                 .foregroundColor(isPrimary ? .white : Theme.dynamicTextPrimary)
                 .lineLimit(1)
-                .minimumScaleFactor(0.8)
+                .minimumScaleFactor(0.75)
             }
         }
         .padding(Theme.spacingM)
         .background(
             Group {
-                if isPrimary {
-                    Theme.gradientPrimary
-                } else {
-                    Theme.dynamicCardBackground
-                }
+                if isPrimary { AnyView(Theme.gradientPrimary) }
+                else { AnyView(Theme.dynamicCardBackground) }
             }
         )
         .cornerRadius(Theme.radiusXL)
-        .shadow(color: isPrimary ? Theme.primary.opacity(0.3) : Color.black.opacity(colorScheme == .dark ? 0.3 : 0.05), radius: 10, x: 0, y: 5)
+        .shadow(
+            color: isPrimary ? Theme.primary.opacity(0.3) : Color.black.opacity(colorScheme == .dark ? 0.28 : 0.06),
+            radius: 10, x: 0, y: 5
+        )
     }
 }
+
+// MARK: - InvoiceRowView
 
 struct InvoiceRowView: View {
     let invoice: Invoice
     let clients: FetchedResults<Client>
-    
+
     var clientName: String {
-        clients.first(where: { $0.id == invoice.clientID })?.name ?? "No Player"
+        clients.first(where: { $0.id == invoice.clientID })?.name ?? "Unknown Player"
     }
-    
+
+    var statusColor: Color {
+        switch invoice.statusEnum {
+        case .paid:         return Theme.success
+        case .partial:      return Theme.warning
+        case .overdue:      return Theme.error
+        case .sent, .viewed: return Theme.primary
+        default:            return Theme.dynamicTextSecondary
+        }
+    }
+
     var body: some View {
-        HStack {
+        HStack(spacing: Theme.spacingM) {
+            // Left status accent bar
+            RoundedRectangle(cornerRadius: 2)
+                .fill(statusColor)
+                .frame(width: 3, height: 40)
+
+            // Avatar
             ZStack {
                 Circle()
-                    .fill(Theme.primary.opacity(0.1))
-                    .frame(width: 44, height: 44)
-                
-                Image(systemName: "doc.text.fill")
+                    .fill(Theme.primary.opacity(0.12))
+                    .frame(width: 42, height: 42)
+                Text(String(clientName.prefix(1)).uppercased())
+                    .font(.system(size: 16, weight: .bold, design: .rounded))
                     .foregroundColor(Theme.primary)
-                    .font(.system(size: 20))
             }
-            
-            VStack(alignment: .leading, spacing: Theme.spacingXS) {
+
+            VStack(alignment: .leading, spacing: 2) {
                 Text(clientName)
                     .font(Typography.bodyBold())
                     .foregroundColor(Theme.dynamicTextPrimary)
                 Text(invoice.invoiceNumber)
-                    .font(Typography.caption())
+                    .font(.system(size: 12, design: .rounded))
                     .foregroundColor(Theme.dynamicTextSecondary)
             }
-            
+
             Spacer()
-            
-            VStack(alignment: .trailing, spacing: Theme.spacingXS) {
+
+            VStack(alignment: .trailing, spacing: 4) {
                 Text(invoice.total.formatted(.currency(code: "VND")))
                     .font(Typography.bodyBold())
                     .foregroundColor(Theme.dynamicTextPrimary)
-                
-                Text(invoice.status)
-                    .font(.system(size: 11, weight: .bold, design: .rounded))
+
+                // Status pill
+                Text(invoice.status.uppercased())
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
                     .foregroundColor(statusColor)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(statusColor.opacity(0.12))
+                    .cornerRadius(20)
             }
         }
         .padding(.vertical, Theme.spacingS)
         .padding(.horizontal, Theme.spacingM)
         .background(Theme.dynamicCardBackground)
-        .cornerRadius(Theme.radiusM)
-    }
-    
-    var statusColor: Color {
-        switch invoice.statusEnum {
-        case .paid: return Theme.success
-        case .partial: return Theme.warning
-        case .overdue: return Theme.error
-        case .sent, .viewed: return Theme.primary
-        default: return Theme.dynamicTextSecondary
-        }
+        .cornerRadius(Theme.radiusL)
+        .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 2)
     }
 }
 
+// MARK: - PaymentRowView
+
 struct PaymentRowView: View {
-    let payment: Payment
+    let payment:  Payment
     let invoices: FetchedResults<Invoice>
-    
+
     var invoiceNumber: String {
         invoices.first(where: { $0.id == payment.invoiceID })?.invoiceNumber ?? "Unknown Split"
     }
-    
+
     var body: some View {
-        HStack {
+        HStack(spacing: Theme.spacingM) {
             ZStack {
                 Circle()
-                    .fill(Theme.success.opacity(0.1))
-                    .frame(width: 44, height: 44)
-                
+                    .fill(Theme.success.opacity(0.12))
+                    .frame(width: 42, height: 42)
                 Image(systemName: "arrow.down.left")
+                    .font(.system(size: 16, weight: .bold))
                     .foregroundColor(Theme.success)
-                    .font(.system(size: 20, weight: .bold))
             }
-            
-            VStack(alignment: .leading, spacing: Theme.spacingXS) {
+
+            VStack(alignment: .leading, spacing: 2) {
                 Text(invoiceNumber)
                     .font(Typography.bodyBold())
                     .foregroundColor(Theme.dynamicTextPrimary)
                 Text(payment.paymentMethod)
-                    .font(Typography.caption())
+                    .font(.system(size: 12, design: .rounded))
                     .foregroundColor(Theme.dynamicTextSecondary)
             }
-            
+
             Spacer()
-            
-            VStack(alignment: .trailing, spacing: Theme.spacingXS) {
+
+            VStack(alignment: .trailing, spacing: 2) {
                 Text("+\(payment.amount.formatted(.currency(code: "VND")))")
                     .font(Typography.bodyBold())
                     .foregroundColor(Theme.success)
                 Text(payment.paymentDate.formatted(date: .abbreviated, time: .omitted))
-                    .font(Typography.caption())
+                    .font(.system(size: 12, design: .rounded))
                     .foregroundColor(Theme.dynamicTextSecondary)
             }
         }
         .padding(.vertical, Theme.spacingS)
         .padding(.horizontal, Theme.spacingM)
         .background(Theme.dynamicCardBackground)
-        .cornerRadius(Theme.radiusM)
+        .cornerRadius(Theme.radiusL)
+        .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 2)
     }
 }
+
+// MARK: - FirstClientOnboardingView
 
 struct FirstClientOnboardingView: View {
     let groupID: UUID
     @Binding var isPresented: Bool
-    
     @FetchRequest private var clients: FetchedResults<Client>
-    
     @State private var showingAddClient = false
-    
+
     init(groupID: UUID, isPresented: Binding<Bool>) {
-        self.groupID = groupID
+        self.groupID    = groupID
         self._isPresented = isPresented
-        
         let predicate = NSPredicate(format: "groupID == %@", groupID as CVarArg)
-        _clients = FetchRequest(
-            sortDescriptors: [],
-            predicate: predicate,
-            animation: .default)
+        _clients = FetchRequest(sortDescriptors: [], predicate: predicate, animation: .default)
     }
-    
+
     var body: some View {
         ZStack {
-            Theme.dynamicBackground.ignoresSafeArea()
-            
+            LinearGradient(
+                colors: [Theme.primary.opacity(0.12), Theme.dynamicBackground],
+                startPoint: .top, endPoint: .center
+            )
+            .ignoresSafeArea()
+
             VStack(spacing: Theme.spacingXL) {
                 Spacer()
-                
+
                 ZStack {
                     Circle()
-                        .fill(Theme.primary.opacity(0.1))
-                        .frame(width: 140, height: 140)
-                    
+                        .fill(Theme.gradientPrimary)
+                        .frame(width: 130, height: 130)
+                        .shadow(color: Theme.primary.opacity(0.4), radius: 20, x: 0, y: 10)
                     Image(systemName: "person.2.badge.plus")
-                        .font(.system(size: 60))
-                        .foregroundColor(Theme.primary)
+                        .font(.system(size: 54, weight: .bold))
+                        .foregroundColor(.white)
                 }
-                
+
                 VStack(spacing: Theme.spacingM) {
                     Text("Add Your First Player")
-                        .font(.system(.title, design: .rounded).bold())
-                    
-                    Text("Great job creating your team! Now, let's add your teammates so you can start splitting matches.")
+                        .font(Typography.largeTitle())
+                        .multilineTextAlignment(.center)
+                    Text("Great job creating your team! Add teammates to start splitting matches.")
                         .font(Typography.body())
                         .foregroundColor(Theme.dynamicTextSecondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, Theme.spacingXL)
                 }
-                
+
                 Spacer()
-                
-                VStack(spacing: Theme.spacingL) {
+
+                VStack(spacing: Theme.spacingM) {
                     Button {
                         showingAddClient = true
                     } label: {
-                        HStack {
-                            Image(systemName: "plus.circle.fill")
-                            Text("Add Player Now")
-                        }
-                        .font(Typography.button())
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Theme.gradientPrimary)
-                        .cornerRadius(Theme.radiusM)
-                        .shadow(color: Theme.primary.opacity(0.3), radius: 8, x: 0, y: 4)
+                        Label("Add Player Now", systemImage: "plus.circle.fill")
+                            .font(Typography.button())
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Theme.gradientPrimary)
+                            .cornerRadius(Theme.radiusXL)
+                            .shadow(color: Theme.primary.opacity(0.35), radius: 12, x: 0, y: 5)
                     }
-                    
+
                     Button {
                         isPresented = false
                     } label: {
@@ -582,30 +624,29 @@ struct FirstClientOnboardingView: View {
             AddClientView(groupID: groupID)
         }
         .onChange(of: clients.count) { count in
-            if count > 0 {
-                // If a client was successfully added, auto-dismiss the onboarding
-                isPresented = false
-            }
+            if count > 0 { isPresented = false }
         }
     }
 }
 
+// MARK: - PaymentQRSheetView
+
 struct PaymentQRSheetView: View {
     let group: BusinessGroup
     @Environment(\.dismiss) private var dismiss
-    
+
     var body: some View {
         NavigationView {
             ZStack {
                 Theme.dynamicBackground.ignoresSafeArea()
-                
+
                 VStack(spacing: Theme.spacingL) {
-                    if let bank = group.bankName,
+                    if let bank   = group.bankName,
                        let accName = group.accountName,
-                       let accNum = group.accountNumber {
-                        
+                       let accNum  = group.accountNumber {
+
                         let qrString = "Bank: \(bank)\nAccount: \(accNum)\nName: \(accName)"
-                        
+
                         VStack(spacing: Theme.spacingM) {
                             if let qrImage = QRGenerator.generateQRCode(from: qrString) {
                                 Image(uiImage: qrImage)
@@ -615,10 +656,11 @@ struct PaymentQRSheetView: View {
                                     .frame(width: 220, height: 220)
                                     .padding(16)
                                     .background(Color.white)
-                                    .cornerRadius(16)
+                                    .cornerRadius(Theme.radiusL)
+                                    .shadow(color: Color.black.opacity(0.08), radius: 10, x: 0, y: 4)
                             }
-                            
-                            VStack(spacing: Theme.spacingXS) {
+
+                            VStack(spacing: 4) {
                                 Text(bank)
                                     .font(Typography.headline())
                                     .foregroundColor(.white)
@@ -626,30 +668,30 @@ struct PaymentQRSheetView: View {
                                     .font(Typography.bodyBold())
                                     .foregroundColor(.white.opacity(0.9))
                                 Text(accName.uppercased())
-                                    .font(Typography.caption())
-                                    .foregroundColor(.white.opacity(0.7))
+                                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                                    .foregroundColor(.white.opacity(0.65))
+                                    .tracking(1.2)
                             }
                             .padding(.bottom, Theme.spacingL)
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.top, Theme.spacingXL)
                         .background(Theme.gradientPrimary)
-                        .cornerRadius(24)
-                        .shadow(color: Theme.primary.opacity(0.3), radius: 15, x: 0, y: 10)
+                        .cornerRadius(Theme.radiusXXL)
+                        .shadow(color: Theme.primary.opacity(0.4), radius: 20, x: 0, y: 10)
                         .padding(.horizontal, Theme.spacingXL)
-                        
-                        Text("Show this QR code to your friends so they can scan and pay you directly.")
-                            .font(Typography.body())
+
+                        Text("Show this QR code so friends can scan and pay you directly.")
+                            .font(Typography.caption())
                             .foregroundColor(Theme.dynamicTextSecondary)
                             .multilineTextAlignment(.center)
                             .padding(.horizontal, Theme.spacingXL)
-                            .padding(.top, Theme.spacingM)
-                        
+                            .padding(.top, Theme.spacingS)
+
                     } else {
                         Text("Payment details not set up.")
                             .foregroundColor(Theme.dynamicTextSecondary)
                     }
-                    
                     Spacer()
                 }
                 .padding(.top, Theme.spacingXL)
@@ -659,8 +701,10 @@ struct PaymentQRSheetView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") { dismiss() }
+                        .font(Typography.bodyBold())
+                        .foregroundColor(Theme.primary)
                 }
             }
         }
     }
-}
+}
