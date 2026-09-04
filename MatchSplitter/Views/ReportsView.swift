@@ -141,7 +141,7 @@ struct ReportsView: View {
 
         var icon: String {
             switch self {
-            case .revenue:     return "chart.line.uptrend.xyaxis"
+            case .revenue:     return "chart.bar.fill"
             case .outstanding: return "exclamationmark.circle.fill"
             case .clients:     return "person.2.fill"
             case .items:       return "list.bullet.rectangle"
@@ -219,7 +219,7 @@ struct RevenueReportView: View {
             statHero(
                 label: "Total Collected",
                 value: totalRevenue.formatted(.currency(code: "VND")),
-                icon: "chart.line.uptrend.xyaxis",
+                icon: "chart.bar.fill",
                 color: Theme.success
             )
 

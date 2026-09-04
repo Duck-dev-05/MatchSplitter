@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import CoreData
 
 // MARK: - InvoiceDetailView
@@ -529,8 +530,6 @@ struct AddPaymentView: View {
 }
 
 // MARK: - ShareSheet
-
-import UIKit
 
 struct ShareSheet: UIViewControllerRepresentable {
     var activityItems:        [Any]
