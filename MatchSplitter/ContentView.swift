@@ -179,6 +179,9 @@ struct ProfileView: View {
     @EnvironmentObject private var session: SessionManager
     @State private var showingEditBank = false
     
+    @AppStorage("isDarkModeEnabled") private var isDarkModeEnabled = false
+    @AppStorage("notificationsEnabled") private var notificationsEnabled = true
+    
     var body: some View {
         NavigationView {
             ZStack {
@@ -212,36 +215,38 @@ struct ProfileView: View {
                         }
                         .padding(.top, Theme.spacingL)
                         
-                        // Workspace Section
+                        // App Settings Section
                         VStack(alignment: .leading, spacing: Theme.spacingS) {
-                            Text("My Team")
+                            Text("App Settings")
                                 .font(Typography.captionBold())
                                 .foregroundColor(Theme.dynamicTextSecondary)
                                 .padding(.horizontal)
                             
                             VStack(spacing: 0) {
-                                HStack {
-                                    VStack(alignment: .leading, spacing: Theme.spacingXS) {
-                                        Text(session.currentGroup?.name ?? "No Group")
+                                Toggle("Dark Mode", isOn: $isDarkModeEnabled)
+                                    .font(Typography.bodyBold())
+                                    .padding(Theme.spacingM)
+                                    .tint(Theme.primary)
+                                
+                                Divider().padding(.leading, Theme.spacingM)
+                                
+                                Toggle("Notifications", isOn: $notificationsEnabled)
+                                    .font(Typography.bodyBold())
+                                    .padding(Theme.spacingM)
+                                    .tint(Theme.primary)
+                                
+                                Divider().padding(.leading, Theme.spacingM)
+                                
+                                Button {
+                                    // Export data action placeholder
+                                } label: {
+                                    HStack {
+                                        Text("Export Data (CSV)")
                                             .font(Typography.bodyBold())
-                                        Text("Active team")
-                                            .font(Typography.caption())
+                                            .foregroundColor(Theme.dynamicTextPrimary)
+                                        Spacer()
+                                        Image(systemName: "square.and.arrow.up")
                                             .foregroundColor(Theme.dynamicTextSecondary)
-                                    }
-                                    Spacer()
-                                    
-                                    Button {
-                                        withAnimation {
-                                            session.clearGroup()
-                                        }
-                                    } label: {
-                                        Text("Switch")
-                                            .font(Typography.captionBold())
-                                            .padding(.horizontal, Theme.spacingM)
-                                            .padding(.vertical, Theme.spacingS)
-                                            .background(Theme.primary.opacity(0.1))
-                                            .foregroundColor(Theme.primary)
-                                            .cornerRadius(Theme.radiusS)
                                     }
                                 }
                                 .padding(Theme.spacingM)

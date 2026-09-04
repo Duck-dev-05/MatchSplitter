@@ -16,6 +16,7 @@ struct ClientsView: View {
     }
     
     @State private var showingAddClient = false
+    @State private var isPresentingScanner = false
     @State private var selectedClient: Client?
     
     var body: some View {
@@ -45,15 +46,34 @@ struct ClientsView: View {
             .navigationTitle("Players")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: { showingAddClient = true }) {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.title2)
-                            .foregroundColor(Theme.primary)
+                    HStack(spacing: 16) {
+                        Button(action: { isPresentingScanner = true }) {
+                            Image(systemName: "qrcode.viewfinder")
+                                .font(.title2)
+                                .foregroundColor(Theme.primary)
+                        }
+                        Button(action: { showingAddClient = true }) {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.title2)
+                                .foregroundColor(Theme.primary)
+                        }
                     }
                 }
             }
             .sheet(isPresented: $showingAddClient) {
                 AddClientView(groupID: groupID)
+            }
+            .sheet(isPresented: $isPresentingScanner) {
+                QRCodeScannerView { result in
+                    isPresentingScanner = false
+                    switch result {
+                    case .success(let code):
+                        handleScannedCode(code)
+                    case .failure(let error):
+                        print("Scanning failed: \(error.localizedDescription)")
+                    }
+                }
+                .edgesIgnoringSafeArea(.all)
             }
             .sheet(item: $selectedClient) { client in
                 ClientDetailView(client: client)
@@ -97,6 +117,58 @@ struct ClientsView: View {
                 let nsError = error as NSError
                 print("Error deleting client: \(nsError), \(nsError.userInfo)")
             }
+        }
+    }
+    
+    private func handleScannedCode(_ code: String) {
+        guard let data = code.data(using: .utf8) else { return }
+        
+        // Try decoding as Team Invite
+        if let teamInvite = try? JSONDecoder().decode(TeamInviteData.self, from: data), teamInvite.type == "teamInvite" {
+            let now = Date().timeIntervalSince1970
+            if teamInvite.expiresAt > now {
+                // Join team locally
+                let newGroup = BusinessGroup(context: viewContext)
+                newGroup.id = UUID(uuidString: teamInvite.groupID) ?? UUID()
+                newGroup.name = teamInvite.groupName
+                // Assuming local ownership for now so it appears in their list
+                if let uid = UserDefaults.standard.string(forKey: "currentUserID") {
+                    newGroup.ownerID = UUID(uuidString: uid) ?? UUID()
+                } else {
+                    newGroup.ownerID = UUID()
+                }
+                newGroup.createdAt = Date()
+                
+                try? viewContext.save()
+            } else {
+                print("Invite code expired")
+            }
+            return
+        }
+        
+        // Otherwise treat as Player Profile QR
+        do {
+            let profile = try JSONDecoder().decode(QRProfileData.self, from: data)
+            
+            let newClient = Client(context: viewContext)
+            newClient.id = UUID()
+            newClient.groupID = groupID
+            newClient.name = profile.name
+            newClient.email = profile.email
+            newClient.phone = ""
+            newClient.address = ""
+            newClient.city = ""
+            newClient.state = ""
+            newClient.zipCode = ""
+            newClient.country = ""
+            newClient.taxID = ""
+            newClient.notes = "Added via QR Code"
+            newClient.createdAt = Date()
+            newClient.updatedAt = Date()
+            
+            try viewContext.save()
+        } catch {
+            print("Failed to decode QR Profile: \(error)")
         }
     }
 }

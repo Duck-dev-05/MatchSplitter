@@ -30,6 +30,33 @@ struct ClientDetailView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .cardStyle()
                         
+                        // Ledger Button
+                        NavigationLink(destination: ClientLedgerView(client: client)) {
+                            HStack {
+                                Image(systemName: "list.clipboard")
+                                    .font(.title3)
+                                    .foregroundColor(Theme.primary)
+                                
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("View Ledger")
+                                        .font(.system(.headline, design: .rounded).bold())
+                                        .foregroundColor(Theme.dynamicText)
+                                    Text("Running balances & transaction history")
+                                        .font(.system(.caption, design: .rounded))
+                                        .foregroundColor(Theme.dynamicTextSecondary)
+                                }
+                                
+                                Spacer()
+                                
+                                Image(systemName: "chevron.right")
+                                    .foregroundColor(Theme.dynamicTextSecondary)
+                            }
+                            .padding(16)
+                            .background(Theme.dynamicCardBackground)
+                            .cornerRadius(12)
+                            .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                        }
+                        
                         // Contact Information
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Contact Information")

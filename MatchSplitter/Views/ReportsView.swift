@@ -8,7 +8,12 @@ struct ReportsView: View {
     @FetchRequest private var clients: FetchedResults<Client>
     @FetchRequest private var invoiceItems: FetchedResults<InvoiceItem>
     
+    let groupID: UUID
+    @State private var csvURL: URL?
+    @State private var showShareSheet = false
+    
     init(groupID: UUID) {
+        self.groupID = groupID
         let predicate = NSPredicate(format: "groupID == %@", groupID as CVarArg)
         
         _invoices = FetchRequest(sortDescriptors: [], predicate: predicate)
@@ -66,6 +71,23 @@ struct ReportsView: View {
                 }
             }
             .navigationTitle("Activity")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        if let url = CSVExporter.exportAllData(context: viewContext, groupID: groupID) {
+                            self.csvURL = url
+                            self.showShareSheet = true
+                        }
+                    }) {
+                        Label("Export", systemImage: "square.and.arrow.up")
+                    }
+                }
+            }
+            .sheet(isPresented: $showShareSheet) {
+                if let url = csvURL {
+                    ShareSheet(activityItems: [url])
+                }
+            }
         }
     }
     

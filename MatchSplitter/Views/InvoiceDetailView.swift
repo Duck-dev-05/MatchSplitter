@@ -15,6 +15,8 @@ struct InvoiceDetailView: View {
     
     @State private var pdfURL: URL?
     @State private var showShareSheet = false
+    @State private var receiptImage: UIImage?
+    @State private var showImageShareSheet = false
     @State private var showingQRCode = false
     
     var totalPayments: Double {
@@ -332,13 +334,28 @@ struct InvoiceDetailView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        // Actually, for simplicity on iOS 15, we can just share self
-                        if let url = self.renderAsPDF(fileName: "Invoice_\(invoice.invoiceNumber).pdf") {
-                            self.pdfURL = url
-                            self.showShareSheet = true
+                    Menu {
+                        Button(action: {
+                            if let url = self.renderAsPDF(fileName: "Invoice_\(invoice.invoiceNumber).pdf") {
+                                self.pdfURL = url
+                                self.showShareSheet = true
+                            }
+                        }) {
+                            Label("Share as PDF", systemImage: "doc.text")
                         }
-                    }) {
+                        
+                        Button(action: {
+                            if let group = session.currentGroup, let client = self.client {
+                                let receiptView = InvoiceReceiptView(invoice: invoice, clientName: client.name, group: group, balanceDue: balanceDue)
+                                if let image = receiptView.renderAsImage() {
+                                    self.receiptImage = image
+                                    self.showImageShareSheet = true
+                                }
+                            }
+                        }) {
+                            Label("Share as Image", systemImage: "photo")
+                        }
+                    } label: {
                         Image(systemName: "square.and.arrow.up")
                     }
                 }
@@ -354,6 +371,11 @@ struct InvoiceDetailView: View {
             .sheet(isPresented: $showShareSheet) {
                 if let url = pdfURL {
                     ShareSheet(activityItems: [url])
+                }
+            }
+            .sheet(isPresented: $showImageShareSheet) {
+                if let image = receiptImage {
+                    ShareSheet(activityItems: [image])
                 }
             }
             .sheet(isPresented: $showingQRCode) {

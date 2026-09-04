@@ -24,7 +24,6 @@
 		A10000000000000000000009A /* Models.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A100000000000000000000099 /* Models.xcdatamodeld */; };
 38E3D2C89D9B41AEA659448D /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = F8778C68DF4E4FE8903144B2 /* GoogleSignIn */; };
 		A76069826F0F4A98BB1C2D1B /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 771578BF873B44A7A6FA3065 /* GoogleSignInSwift */; };
-DFBDFB15E156474AA35C455A /* EFQRCode in Frameworks */ = {isa = PBXBuildFile; productRef = 4276A80363C94C3186CD48C6 /* EFQRCode */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -54,7 +53,6 @@ DFBDFB15E156474AA35C455A /* EFQRCode in Frameworks */ = {isa = PBXBuildFile; pro
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DFBDFB15E156474AA35C455A /* EFQRCode in Frameworks */,
 				38E3D2C89D9B41AEA659448D /* GoogleSignIn in Frameworks */,
 				A76069826F0F4A98BB1C2D1B /* GoogleSignInSwift in Frameworks */,
 			);
@@ -127,9 +125,6 @@ DFBDFB15E156474AA35C455A /* EFQRCode in Frameworks */ = {isa = PBXBuildFile; pro
 			);
 			name = MatchSplitter;
 			packageProductDependencies = (
-				4276A80363C94C3186CD48C6 /* EFQRCode */,
-			);
-			packageProductDependencies = (
 				F8778C68DF4E4FE8903144B2 /* GoogleSignIn */,
 				771578BF873B44A7A6FA3065 /* GoogleSignInSwift */,
 			);
@@ -161,9 +156,6 @@ DFBDFB15E156474AA35C455A /* EFQRCode in Frameworks */ = {isa = PBXBuildFile; pro
 				Base,
 			);
 			mainGroup = A100000000000000000000032 /* */;
-			packageReferences = (
-				4EFEEB4987194572B3C82918 /* XCRemoteSwiftPackageReference "EFQRCode" */,
-			);
 			packageReferences = (
 				F7D0474657114E9CB599E203 /* XCRemoteSwiftPackageReference "GoogleSignIn" */,
 			);
@@ -232,25 +224,6 @@ DFBDFB15E156474AA35C455A /* EFQRCode in Frameworks */ = {isa = PBXBuildFile; pro
 			isa = XCSwiftPackageProductDependency;
 			package = F7D0474657114E9CB599E203 /* XCRemoteSwiftPackageReference "GoogleSignIn" */;
 			productName = GoogleSignInSwift;
-		};
-/* End XCSwiftPackageProductDependency section */
-
-/* Begin XCRemoteSwiftPackageReference section */
-		4EFEEB4987194572B3C82918 /* XCRemoteSwiftPackageReference "EFQRCode" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/EFPrefix/EFQRCode.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 6.2.2;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		4276A80363C94C3186CD48C6 /* EFQRCode */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 4EFEEB4987194572B3C82918 /* XCRemoteSwiftPackageReference "EFQRCode" */;
-			productName = EFQRCode;
 		};
 /* End XCSwiftPackageProductDependency section */
 

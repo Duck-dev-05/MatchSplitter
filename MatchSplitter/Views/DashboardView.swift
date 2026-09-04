@@ -7,6 +7,7 @@ struct DashboardView: View {
     @AppStorage private var hasSeenClientOnboarding: Bool
     @State private var showingClientOnboarding = false
     @State private var showingPaymentQR = false
+    @State private var showingTeamInviteQR = false
     
     @FetchRequest private var invoices: FetchedResults<Invoice>
     @FetchRequest private var payments: FetchedResults<Payment>
@@ -96,13 +97,13 @@ struct DashboardView: View {
                             .padding(.top, Theme.spacingXS)
                             
                             // Action Buttons
-                            if let bank = session.currentGroup?.bankName, !bank.isEmpty {
+                            if clients.isEmpty {
                                 Button {
-                                    showingPaymentQR = true
+                                    showingClientOnboarding = true
                                 } label: {
                                     HStack {
-                                        Image(systemName: "qrcode")
-                                        Text("Receive Payment")
+                                        Image(systemName: "person.badge.plus")
+                                        Text("Add First Player")
                                     }
                                     .font(Typography.button())
                                     .foregroundColor(.white)
@@ -114,11 +115,76 @@ struct DashboardView: View {
                                 }
                                 .padding(.top, Theme.spacingM)
                                 .padding(.horizontal, Theme.spacingL)
+                            } else {
+                                HStack(spacing: Theme.spacingM) {
+                                    Button {
+                                        showingTeamInviteQR = true
+                                    } label: {
+                                        HStack {
+                                            Image(systemName: "person.badge.plus")
+                                            Text("Invite Players")
+                                        }
+                                        .font(Typography.button())
+                                        .foregroundColor(.white)
+                                        .frame(maxWidth: .infinity)
+                                        .padding()
+                                        .background(Theme.primary)
+                                        .cornerRadius(Theme.radiusXL)
+                                        .shadow(color: Theme.primary.opacity(0.3), radius: 8, x: 0, y: 4)
+                                    }
+                                    
+                                    if let bank = session.currentGroup?.bankName, !bank.isEmpty {
+                                        Button {
+                                            showingPaymentQR = true
+                                        } label: {
+                                            HStack {
+                                                Image(systemName: "qrcode")
+                                                Text("Receive")
+                                            }
+                                            .font(Typography.button())
+                                            .foregroundColor(.white)
+                                            .frame(maxWidth: .infinity)
+                                            .padding()
+                                            .background(Theme.success)
+                                            .cornerRadius(Theme.radiusXL)
+                                            .shadow(color: Theme.success.opacity(0.3), radius: 8, x: 0, y: 4)
+                                        }
+                                    }
+                                }
+                                .padding(.top, Theme.spacingM)
+                                .padding(.horizontal, Theme.spacingL)
                             }
                         }
                         .padding(.vertical, Theme.spacingXL)
                         .frame(maxWidth: .infinity)
                         .background(Theme.dynamicBackground)
+                        
+                        // Leaderboard Link
+                        if !clients.isEmpty {
+                            NavigationLink(destination: LeaderboardView(groupID: groupID)) {
+                                HStack {
+                                    Image(systemName: "trophy.fill")
+                                        .font(.title2)
+                                        .foregroundColor(.yellow)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("Team Leaderboard")
+                                            .font(Typography.bodyBold())
+                                            .foregroundColor(Theme.dynamicTextPrimary)
+                                        Text("View MVP, biggest spenders & more")
+                                            .font(Typography.caption())
+                                            .foregroundColor(Theme.dynamicTextSecondary)
+                                    }
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                        .foregroundColor(Theme.dynamicTextSecondary)
+                                }
+                                .padding(Theme.spacingM)
+                                .background(Theme.dynamicCardBackground)
+                                .cornerRadius(Theme.radiusM)
+                                .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                                .padding(.horizontal)
+                            }
+                        }
                         
                         // Recent Splits
                         VStack(alignment: .leading, spacing: Theme.spacingM) {
@@ -212,11 +278,12 @@ struct DashboardView: View {
                 PaymentQRSheetView(group: group)
             }
         }
-        .onAppear {
-            if clients.isEmpty && !hasSeenClientOnboarding {
-                showingClientOnboarding = true
+        .sheet(isPresented: $showingTeamInviteQR) {
+            if let group = session.currentGroup {
+                TeamQRInviteView(group: group)
             }
         }
+        // Removed forced onAppear onboarding to allow users to navigate freely
     }
     
     private func emptyStateView(message: String, icon: String) -> some View {
@@ -540,14 +607,16 @@ struct PaymentQRSheetView: View {
                         let qrString = "Bank: \(bank)\nAccount: \(accNum)\nName: \(accName)"
                         
                         VStack(spacing: Theme.spacingM) {
-                            Image(uiImage: QRCodeGenerator().generateQRCode(from: qrString))
-                                .interpolation(.none)
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 220, height: 220)
-                                .padding(16)
-                                .background(Color.white)
-                                .cornerRadius(16)
+                            if let qrImage = QRGenerator.generateQRCode(from: qrString) {
+                                Image(uiImage: qrImage)
+                                    .interpolation(.none)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 220, height: 220)
+                                    .padding(16)
+                                    .background(Color.white)
+                                    .cornerRadius(16)
+                            }
                             
                             VStack(spacing: Theme.spacingXS) {
                                 Text(bank)
