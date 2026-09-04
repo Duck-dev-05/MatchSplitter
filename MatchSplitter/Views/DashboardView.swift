@@ -177,11 +177,15 @@ struct DashboardView: View {
         .sheet(isPresented: $showingPaymentQR) {
             if let group = session.currentGroup {
                 PaymentQRSheetView(group: group)
+            } else {
+                EmptyView()
             }
         }
         .sheet(isPresented: $showingTeamInviteQR) {
             if let group = session.currentGroup {
                 TeamQRInviteView(group: group)
+            } else {
+                EmptyView()
             }
         }
     }

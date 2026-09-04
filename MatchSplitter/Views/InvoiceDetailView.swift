@@ -123,13 +123,17 @@ struct InvoiceDetailView: View {
             }
             .sheet(isPresented: $showShareSheet) {
                 if let url = pdfURL { ShareSheet(activityItems: [url]) }
+                else { EmptyView() }
             }
             .sheet(isPresented: $showImageShareSheet) {
                 if let img = receiptImage { ShareSheet(activityItems: [img]) }
+                else { EmptyView() }
             }
             .sheet(isPresented: $showingQRCode) {
                 if let group = session.currentGroup {
                     InvoiceQRView(group: group, invoice: invoice, balanceDue: balanceDue)
+                } else {
+                    EmptyView()
                 }
             }
         }

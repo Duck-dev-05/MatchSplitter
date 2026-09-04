@@ -118,7 +118,11 @@ struct ReportsView: View {
                 }
             }
             .sheet(isPresented: $showShareSheet) {
-                if let url = csvURL { ShareSheet(activityItems: [url]) }
+                if let url = csvURL {
+                    ShareSheet(activityItems: [url])
+                } else {
+                    EmptyView()
+                }
             }
         }
     }

@@ -430,6 +430,8 @@ struct ProfileView: View {
             .sheet(isPresented: $showingEditBank) {
                 if let group = session.currentGroup {
                     EditBankDetailsView(group: group)
+                } else {
+                    EmptyView()
                 }
             }
             .sheet(isPresented: $showingMyQR) {
