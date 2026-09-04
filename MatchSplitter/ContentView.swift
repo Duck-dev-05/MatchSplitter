@@ -2,6 +2,19 @@ import SwiftUI
 import CoreData
 import CoreImage.CIFilterBuiltins
 
+// MARK: - Environment Keys
+
+struct IsMemberKey: EnvironmentKey {
+    static let defaultValue: Bool = false
+}
+
+extension EnvironmentValues {
+    var isMember: Bool {
+        get { self[IsMemberKey.self] }
+        set { self[IsMemberKey.self] = newValue }
+    }
+}
+
 // MARK: - Design System
 
 struct Theme {
@@ -177,6 +190,9 @@ struct ContentView: View {
         } else if !session.hasActiveGroup, let user = session.currentUser {
             GroupSelectionView(userID: user.id)
         } else if let group = session.currentGroup {
+            let joinedIDs = UserDefaults.standard.stringArray(forKey: "JoinedTeamIDs") ?? []
+            let isMember = joinedIDs.contains(group.id.uuidString)
+            
             TabView(selection: $selectedTab) {
                 DashboardView(groupID: group.id)
                     .tabItem { Label("Home",     systemImage: "house.fill") }
@@ -199,6 +215,7 @@ struct ContentView: View {
                     .tag(4)
             }
             .accentColor(Theme.primary)
+            .environment(\.isMember, isMember)
             .onAppear {
                 let appearance = UITabBarAppearance()
                 appearance.configureWithOpaqueBackground()

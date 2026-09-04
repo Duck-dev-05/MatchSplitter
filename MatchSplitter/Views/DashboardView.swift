@@ -6,6 +6,7 @@ import CoreData
 struct DashboardView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @EnvironmentObject private var session: SessionManager
+    @Environment(\.isMember) private var isMember
     @AppStorage private var hasSeenClientOnboarding: Bool
     @State private var showingClientOnboarding = false
     @State private var showingPaymentQR        = false
@@ -249,7 +250,8 @@ struct DashboardView: View {
                 }
 
                 // Action Buttons
-                if clients.isEmpty {
+                if !isMember {
+                    if clients.isEmpty {
                     Button {
                         showingClientOnboarding = true
                     } label: {
@@ -295,6 +297,7 @@ struct DashboardView: View {
                         }
                     }
                     .padding(.top, Theme.spacingXS)
+                }
                 }
             }
             .padding(Theme.spacingL)

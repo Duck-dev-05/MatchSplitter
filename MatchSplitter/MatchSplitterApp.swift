@@ -5,16 +5,19 @@ import GoogleSignIn
 @main
 struct MatchSplitterApp: App {
     let persistenceController = PersistenceController.shared
-    @StateObject private var session = SessionManager()
+    @StateObject private var session: SessionManager
+    
+    init() {
+        let session = SessionManager()
+        session.autoLogin(context: PersistenceController.shared.container.viewContext)
+        _session = StateObject(wrappedValue: session)
+    }
     
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environment(\.managedObjectContext, persistenceController.container.viewContext)
                 .environmentObject(session)
-                .onAppear {
-                    session.autoLogin(context: persistenceController.container.viewContext)
-                }
                 .onOpenURL { url in
                     GIDSignIn.sharedInstance.handle(url)
                 }

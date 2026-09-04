@@ -8,6 +8,7 @@ struct InvoiceDetailView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var session: SessionManager
+    @Environment(\.isMember) private var isMember
     @ObservedObject var invoice: Invoice
 
     @State private var selectedStatus: Invoice.InvoiceStatus
@@ -179,6 +180,7 @@ struct InvoiceDetailView: View {
                 }
                 .pickerStyle(.menu)
                 .tint(Theme.primary)
+                .disabled(isMember)
                 .onChange(of: selectedStatus) { newValue in
                     invoice.statusEnum = newValue
                     invoice.updatedAt  = Date()
@@ -406,17 +408,19 @@ struct InvoiceDetailView: View {
 
     private var actionsSection: some View {
         VStack(spacing: Theme.spacingM) {
-            Button {
-                showingAddPayment = true
-            } label: {
-                Label("Mark as Paid", systemImage: "checkmark.circle.fill")
-                    .font(Typography.button())
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Theme.gradientPrimary)
-                    .cornerRadius(Theme.radiusXL)
-                    .shadow(color: Theme.primary.opacity(0.35), radius: 12, x: 0, y: 5)
+            if !isMember {
+                Button {
+                    showingAddPayment = true
+                } label: {
+                    Label("Mark as Paid", systemImage: "checkmark.circle.fill")
+                        .font(Typography.button())
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Theme.gradientPrimary)
+                        .cornerRadius(Theme.radiusXL)
+                        .shadow(color: Theme.primary.opacity(0.35), radius: 12, x: 0, y: 5)
+                }
             }
 
             if let bank = session.currentGroup?.bankName, !bank.isEmpty,

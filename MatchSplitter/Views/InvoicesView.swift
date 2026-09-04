@@ -3,6 +3,7 @@ import CoreData
 
 struct InvoicesView: View {
     @Environment(\.managedObjectContext) private var viewContext
+    @Environment(\.isMember) private var isMember
     @FetchRequest private var invoices: FetchedResults<Invoice>
     @FetchRequest private var clients:  FetchedResults<Client>
 
@@ -31,17 +32,30 @@ struct InvoicesView: View {
                     emptyStateView
                 } else {
                     List {
-                        ForEach(invoices) { invoice in
-                            InvoiceRowView(invoice: invoice, clients: clients)
-                                .onTapGesture { selectedInvoice = invoice }
-                                .listRowSeparator(.hidden)
-                                .listRowBackground(Color.clear)
-                                .listRowInsets(EdgeInsets(
-                                    top: Theme.spacingS, leading: Theme.spacingM,
-                                    bottom: Theme.spacingS, trailing: Theme.spacingM
-                                ))
+                        if isMember {
+                            ForEach(invoices) { invoice in
+                                InvoiceRowView(invoice: invoice, clients: clients)
+                                    .onTapGesture { selectedInvoice = invoice }
+                                    .listRowSeparator(.hidden)
+                                    .listRowBackground(Color.clear)
+                                    .listRowInsets(EdgeInsets(
+                                        top: Theme.spacingS, leading: Theme.spacingM,
+                                        bottom: Theme.spacingS, trailing: Theme.spacingM
+                                    ))
+                            }
+                        } else {
+                            ForEach(invoices) { invoice in
+                                InvoiceRowView(invoice: invoice, clients: clients)
+                                    .onTapGesture { selectedInvoice = invoice }
+                                    .listRowSeparator(.hidden)
+                                    .listRowBackground(Color.clear)
+                                    .listRowInsets(EdgeInsets(
+                                        top: Theme.spacingS, leading: Theme.spacingM,
+                                        bottom: Theme.spacingS, trailing: Theme.spacingM
+                                    ))
+                            }
+                            .onDelete(perform: deleteInvoices)
                         }
-                        .onDelete(perform: deleteInvoices)
                     }
                     .listStyle(.plain)
                     .padding(.top, Theme.spacingS)
@@ -50,10 +64,12 @@ struct InvoicesView: View {
             .navigationTitle("Splits")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: { showingAddInvoice = true }) {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.title2)
-                            .foregroundColor(Theme.primary)
+                    if !isMember {
+                        Button(action: { showingAddInvoice = true }) {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.title2)
+                                .foregroundColor(Theme.primary)
+                        }
                     }
                 }
             }

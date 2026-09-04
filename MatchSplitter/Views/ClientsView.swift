@@ -3,6 +3,7 @@ import CoreData
 
 struct ClientsView: View {
     @Environment(\.managedObjectContext) private var viewContext
+    @Environment(\.isMember) private var isMember
     @FetchRequest private var clients: FetchedResults<Client>
 
     let groupID: UUID
@@ -28,17 +29,30 @@ struct ClientsView: View {
                     emptyStateView
                 } else {
                     List {
-                        ForEach(clients) { client in
-                            ClientRowView(client: client)
-                                .onTapGesture { selectedClient = client }
-                                .listRowSeparator(.hidden)
-                                .listRowBackground(Color.clear)
-                                .listRowInsets(EdgeInsets(
-                                    top: Theme.spacingS, leading: Theme.spacingM,
-                                    bottom: Theme.spacingS, trailing: Theme.spacingM
-                                ))
+                        if isMember {
+                            ForEach(clients) { client in
+                                ClientRowView(client: client)
+                                    .onTapGesture { selectedClient = client }
+                                    .listRowSeparator(.hidden)
+                                    .listRowBackground(Color.clear)
+                                    .listRowInsets(EdgeInsets(
+                                        top: Theme.spacingS, leading: Theme.spacingM,
+                                        bottom: Theme.spacingS, trailing: Theme.spacingM
+                                    ))
+                            }
+                        } else {
+                            ForEach(clients) { client in
+                                ClientRowView(client: client)
+                                    .onTapGesture { selectedClient = client }
+                                    .listRowSeparator(.hidden)
+                                    .listRowBackground(Color.clear)
+                                    .listRowInsets(EdgeInsets(
+                                        top: Theme.spacingS, leading: Theme.spacingM,
+                                        bottom: Theme.spacingS, trailing: Theme.spacingM
+                                    ))
+                            }
+                            .onDelete(perform: deleteClients)
                         }
-                        .onDelete(perform: deleteClients)
                     }
                     .listStyle(.plain)
                     .padding(.top, Theme.spacingS)
@@ -47,16 +61,18 @@ struct ClientsView: View {
             .navigationTitle("Players")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    HStack(spacing: 16) {
-                        Button(action: { isPresentingScanner = true }) {
-                            Image(systemName: "qrcode.viewfinder")
-                                .font(.title2)
-                                .foregroundColor(Theme.primary)
-                        }
-                        Button(action: { showingAddClient = true }) {
-                            Image(systemName: "plus.circle.fill")
-                                .font(.title2)
-                                .foregroundColor(Theme.primary)
+                    if !isMember {
+                        HStack(spacing: 16) {
+                            Button(action: { isPresentingScanner = true }) {
+                                Image(systemName: "qrcode.viewfinder")
+                                    .font(.title2)
+                                    .foregroundColor(Theme.primary)
+                            }
+                            Button(action: { showingAddClient = true }) {
+                                Image(systemName: "plus.circle.fill")
+                                    .font(.title2)
+                                    .foregroundColor(Theme.primary)
+                            }
                         }
                     }
                 }
@@ -136,12 +152,20 @@ struct ClientsView: View {
                 let newGroup = BusinessGroup(context: viewContext)
                 newGroup.id = UUID(uuidString: teamInvite.groupID) ?? UUID()
                 newGroup.name = teamInvite.groupName
-                if let uid = UserDefaults.standard.string(forKey: "currentUserID") {
+                if let uid = UserDefaults.standard.string(forKey: "lastUserID") {
                     newGroup.ownerID = UUID(uuidString: uid) ?? UUID()
                 } else {
                     newGroup.ownerID = UUID()
                 }
                 newGroup.createdAt = Date()
+                
+                // Track as joined group
+                var joinedIDs = UserDefaults.standard.stringArray(forKey: "JoinedTeamIDs") ?? []
+                if !joinedIDs.contains(newGroup.id.uuidString) {
+                    joinedIDs.append(newGroup.id.uuidString)
+                    UserDefaults.standard.set(joinedIDs, forKey: "JoinedTeamIDs")
+                }
+                
                 try? viewContext.save()
             } else {
                 print("Invite code expired")
