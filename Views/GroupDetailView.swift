@@ -85,7 +85,7 @@ struct GroupDetailView: View {
         .toolbar {
             Button(action: { showingAddExpense = true }) {
                 Image(systemName: "plus")
-                    .fontWeight(.bold)
+                    .font(.headline)
             }
         }
         .sheet(isPresented: $showingAddExpense) {
