@@ -33,13 +33,12 @@ jobs:
           
     - name: Package .ipa
       run: |
-        cd build
-        mkdir Payload
-        mv MatchSplitter.app Payload/
+        mkdir -p Payload
+        find . -name "MatchSplitter.app" -type d -exec cp -R {} Payload/ \;
         zip -r MatchSplitter.ipa Payload
         
     - name: Upload IPA Artifact
       uses: actions/upload-artifact@v4
       with:
         name: MatchSplitter-IPA
-        path: build/MatchSplitter.ipa
+        path: MatchSplitter.ipa
