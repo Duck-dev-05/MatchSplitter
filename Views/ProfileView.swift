@@ -23,9 +23,8 @@ struct ProfileView: View {
                 
                 Section {
                     Button("Reset App Data", role: .destructive) {
-                        viewModel.hasOnboarded = false
-                        viewModel.currentUser = nil
                         viewModel.groups = []
+                        viewModel.setupMockData()
                     }
                 }
             }

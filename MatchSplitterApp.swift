@@ -6,13 +6,8 @@ struct MatchSplitterApp: App {
     
     var body: some Scene {
         WindowGroup {
-            if groupViewModel.hasOnboarded {
-                MainTabView()
-                    .environmentObject(groupViewModel)
-            } else {
-                OnboardingView()
-                    .environmentObject(groupViewModel)
-            }
+            MainTabView()
+                .environmentObject(groupViewModel)
         }
     }
 }

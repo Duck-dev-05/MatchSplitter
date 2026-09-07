@@ -3,30 +3,24 @@ import SwiftUI
 
 class GroupViewModel: ObservableObject {
     @Published var groups: [Group] = []
-    @Published var currentUser: User?
-    @AppStorage("hasOnboarded") var hasOnboarded: Bool = false
+    @Published var currentUser: User? = User(name: "You", paymentID: "0800000000")
     
     init() {
         setupMockData()
     }
     
     func setupMockData() {
-        if hasOnboarded {
-            currentUser = User(name: "You", paymentID: "0800000000")
-        }
-        
         let alice = User(name: "Alice", paymentID: "0812345678")
         let bob = User(name: "Bob", paymentID: "0823456789")
         let charlie = User(name: "Charlie", paymentID: "0834567890")
         
-        let g1 = Group(name: "Weekend Trip", members: [alice, bob, charlie])
+        let g1 = Group(name: "Weekend Trip", members: [currentUser!, alice, bob, charlie])
         groups.append(g1)
     }
     
     func completeOnboarding(name: String, paymentID: String) {
         let newUser = User(name: name, paymentID: paymentID)
         currentUser = newUser
-        hasOnboarded = true
         
         // Add the current user to the mock group for demonstration
         if !groups.isEmpty {
