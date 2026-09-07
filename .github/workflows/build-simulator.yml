@@ -1,0 +1,41 @@
+name: Build for Appetize.io
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install XcodeGen
+      run: brew install xcodegen
+      
+    - name: Generate Xcode Project
+      run: xcodegen generate
+      
+    - name: Build for iOS Simulator
+      run: |
+        xcodebuild \
+          -project MatchSplitter.xcodeproj \
+          -scheme MatchSplitter \
+          -sdk iphonesimulator \
+          -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' \
+          -configuration Debug \
+          CONFIGURATION_BUILD_DIR="$(pwd)/build" \
+          clean build
+          
+    - name: Zip the .app for Appetize
+      run: |
+        cd build
+        zip -r MatchSplitter.zip MatchSplitter.app
+        
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: Appetize-Build
+        path: build/MatchSplitter.zip

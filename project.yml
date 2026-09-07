@@ -1,0 +1,17 @@
+name: MatchSplitter
+options:
+  bundleIdPrefix: com.matchsplitter
+targets:
+  MatchSplitter:
+    type: application
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: MatchSplitterApp.swift
+      - path: Models
+      - path: Views
+      - path: ViewModels
+      - path: Services
+    info:
+      properties:
+        UILaunchScreen: {}
