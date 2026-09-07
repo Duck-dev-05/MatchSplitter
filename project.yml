@@ -7,11 +7,12 @@ targets:
     platform: iOS
     deploymentTarget: "15.0"
     sources:
-      - path: MatchSplitterApp.swift
-      - path: Models
-      - path: Views
-      - path: ViewModels
-      - path: Services
+      - MatchSplitterApp.swift
+      - Models
+      - Views
+      - ViewModels
+      - Services
     info:
+      path: Info.plist
       properties:
         UILaunchScreen: {}
