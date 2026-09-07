@@ -1,4 +1,4 @@
-name: Build for Appetize.io
+name: Build for Sideloadly (Real iPhone)
 
 on:
   push:
@@ -18,24 +18,28 @@ jobs:
     - name: Generate Xcode Project
       run: xcodegen generate
       
-    - name: Build for iOS Simulator
+    - name: Build for iOS Device (Unsigned)
       run: |
         xcodebuild \
           -project MatchSplitter.xcodeproj \
           -scheme MatchSplitter \
-          -sdk iphonesimulator \
-          -destination 'platform=iOS Simulator,name=iPhone 17,OS=latest' \
-          -configuration Debug \
+          -sdk iphoneos \
+          -configuration Release \
+          CODE_SIGN_IDENTITY="" \
+          CODE_SIGNING_REQUIRED=NO \
+          CODE_SIGNING_ALLOWED=NO \
           CONFIGURATION_BUILD_DIR="$(pwd)/build" \
           clean build
           
-    - name: Zip the .app for Appetize
+    - name: Package .ipa
       run: |
         cd build
-        zip -r MatchSplitter.zip MatchSplitter.app
+        mkdir Payload
+        mv MatchSplitter.app Payload/
+        zip -r MatchSplitter.ipa Payload
         
-    - name: Upload Artifact
+    - name: Upload IPA Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: Appetize-Build
-        path: build/MatchSplitter.zip
+        name: MatchSplitter-IPA
+        path: build/MatchSplitter.ipa
