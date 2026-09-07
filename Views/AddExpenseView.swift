@@ -65,7 +65,7 @@ struct AddExpenseView: View {
                             Text("AMOUNT")
                                 .font(.caption2)
                                 .foregroundColor(.white.opacity(0.4))
-                                .tracking(1.5)
+                                .kerning(1.5)
 
                             HStack(alignment: .firstTextBaseline, spacing: 4) {
                                 Text("฿")

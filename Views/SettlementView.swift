@@ -197,7 +197,7 @@ struct QRCodePaymentView: View {
                         .font(.caption)
                         .foregroundColor(.white.opacity(0.45))
                         .textCase(.uppercase)
-                        .tracking(1.2)
+                        .kerning(1.2)
 
                     Text(settlement.toUser.name)
                         .font(.system(size: 28, weight: .heavy, design: .rounded))

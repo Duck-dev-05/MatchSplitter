@@ -33,7 +33,7 @@ struct GroupDetailView: View {
                         .font(.caption)
                         .foregroundColor(.white.opacity(0.5))
                         .textCase(.uppercase)
-                        .tracking(1.2)
+                        .kerning(1.2)
 
                     Text(String(format: "฿%.2f", totalSpent))
                         .font(.system(size: 46, weight: .heavy, design: .rounded))
