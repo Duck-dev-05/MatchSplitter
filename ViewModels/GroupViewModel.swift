@@ -1,14 +1,20 @@
 import Foundation
+import SwiftUI
 
 class GroupViewModel: ObservableObject {
     @Published var groups: [Group] = []
+    @Published var currentUser: User?
+    @AppStorage("hasOnboarded") var hasOnboarded: Bool = false
     
-    // Create a default group for testing
     init() {
         setupMockData()
     }
     
     func setupMockData() {
+        if hasOnboarded {
+            currentUser = User(name: "You", paymentID: "0800000000")
+        }
+        
         let alice = User(name: "Alice", paymentID: "0812345678")
         let bob = User(name: "Bob", paymentID: "0823456789")
         let charlie = User(name: "Charlie", paymentID: "0834567890")
@@ -17,8 +23,29 @@ class GroupViewModel: ObservableObject {
         groups.append(g1)
     }
     
+    func completeOnboarding(name: String, paymentID: String) {
+        let newUser = User(name: name, paymentID: paymentID)
+        currentUser = newUser
+        hasOnboarded = true
+        
+        // Add the current user to the mock group for demonstration
+        if !groups.isEmpty {
+            groups[0].members.append(newUser)
+        }
+    }
+    
     func addGroup(name: String) {
-        groups.append(Group(name: name))
+        var newGroup = Group(name: name)
+        if let current = currentUser {
+            newGroup.members.append(current)
+        }
+        groups.append(newGroup)
+    }
+    
+    func addMember(to group: Group, name: String, paymentID: String) {
+        if let index = groups.firstIndex(where: { $0.id == group.id }) {
+            groups[index].members.append(User(name: name, paymentID: paymentID.isEmpty ? nil : paymentID))
+        }
     }
     
     func addExpense(to group: Group, title: String, amount: Double, paidBy: User, splitAmong: [User]) {
@@ -31,12 +58,10 @@ class GroupViewModel: ObservableObject {
     func calculateSettlements(for group: Group) -> [Settlement] {
         var balances: [UUID: Double] = [:]
         
-        // Initialize balances
         for member in group.members {
             balances[member.id] = 0.0
         }
         
-        // Calculate net balance for each person
         for expense in group.expenses {
             balances[expense.paidBy.id, default: 0.0] += expense.amount
             
@@ -46,12 +71,10 @@ class GroupViewModel: ObservableObject {
             }
         }
         
-        // Separate debtors and creditors
-        var debtors = balances.filter { $0.value < -0.01 }.sorted(by: { $0.value < $1.value }) // most negative first
-        var creditors = balances.filter { $0.value > 0.01 }.sorted(by: { $0.value > $1.value }) // most positive first
+        var debtors = balances.filter { $0.value < -0.01 }.sorted(by: { $0.value < $1.value })
+        var creditors = balances.filter { $0.value > 0.01 }.sorted(by: { $0.value > $1.value })
         
         var settlements: [Settlement] = []
-        
         var i = 0
         var j = 0
         

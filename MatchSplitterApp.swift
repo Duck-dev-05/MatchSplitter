@@ -6,8 +6,30 @@ struct MatchSplitterApp: App {
     
     var body: some Scene {
         WindowGroup {
-            DashboardView()
-                .environmentObject(groupViewModel)
+            if groupViewModel.hasOnboarded {
+                MainTabView()
+                    .environmentObject(groupViewModel)
+            } else {
+                OnboardingView()
+                    .environmentObject(groupViewModel)
+            }
         }
+    }
+}
+
+struct MainTabView: View {
+    var body: some View {
+        TabView {
+            DashboardView()
+                .tabItem {
+                    Label("Groups", systemImage: "person.3.fill")
+                }
+            
+            ProfileView()
+                .tabItem {
+                    Label("Profile", systemImage: "person.crop.circle")
+                }
+        }
+        .accentColor(.indigo)
     }
 }

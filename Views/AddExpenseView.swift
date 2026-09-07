@@ -11,23 +11,66 @@ struct AddExpenseView: View {
     
     var body: some View {
         NavigationView {
-            Form {
-                Section(header: Text("Expense Details")) {
-                    TextField("Title (e.g. Dinner)", text: $title)
-                    TextField("Amount", text: $amountString)
-                        .keyboardType(.decimalPad)
-                }
+            ZStack {
+                Color(UIColor.systemGroupedBackground).ignoresSafeArea()
                 
-                Section(header: Text("Paid By")) {
-                    Picker("Payer", selection: $selectedPayer) {
-                        Text("Select Payer").tag(UUID?.none)
-                        ForEach(group.members) { member in
-                            Text(member.name).tag(UUID?.some(member.id))
+                ScrollView {
+                    VStack(spacing: 20) {
+                        // Amount Card
+                        VStack {
+                            Text("Amount")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                            
+                            HStack(alignment: .firstTextBaseline, spacing: 2) {
+                                Text("$")
+                                    .font(.title)
+                                    .foregroundColor(.secondary)
+                                TextField("0.00", text: $amountString)
+                                    .keyboardType(.decimalPad)
+                                    .font(.system(size: 50, weight: .bold, design: .rounded))
+                                    .multilineTextAlignment(.center)
+                            }
                         }
+                        .padding(30)
+                        .background(Color(.systemBackground))
+                        .cornerRadius(20)
+                        
+                        // Details Card
+                        VStack(spacing: 0) {
+                            HStack {
+                                Image(systemName: "tag.fill")
+                                    .foregroundColor(.indigo)
+                                    .frame(width: 30)
+                                TextField("Title (e.g. Dinner)", text: $title)
+                            }
+                            .padding()
+                            
+                            Divider()
+                            
+                            HStack {
+                                Image(systemName: "person.fill")
+                                    .foregroundColor(.indigo)
+                                    .frame(width: 30)
+                                Picker("Paid By", selection: $selectedPayer) {
+                                    Text("Select Payer").tag(UUID?.none)
+                                    ForEach(group.members) { member in
+                                        Text(member.name).tag(UUID?.some(member.id))
+                                    }
+                                }
+                                .pickerStyle(MenuPickerStyle())
+                                Spacer()
+                            }
+                            .padding()
+                        }
+                        .background(Color(.systemBackground))
+                        .cornerRadius(20)
                     }
+                    .padding()
                 }
             }
-            .navigationTitle("Add Expense")
+            .navigationTitle("New Expense")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
