@@ -24,7 +24,7 @@ jobs:
           -project MatchSplitter.xcodeproj \
           -scheme MatchSplitter \
           -sdk iphonesimulator \
-          -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' \
+          -destination 'platform=iOS Simulator,name=iPhone 17,OS=latest' \
           -configuration Debug \
           CONFIGURATION_BUILD_DIR="$(pwd)/build" \
           clean build
