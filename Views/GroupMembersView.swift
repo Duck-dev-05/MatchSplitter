@@ -33,7 +33,7 @@ struct GroupMembersView: View {
 
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 12) {
-                    ForEach(Array(currentGroup.members.enumerated()), id: \.element.id) { index, member in
+                    ForEach(Array(currentGroup.members.enumerated()), id: \.element.id) { (index, member) in
                         MemberRowView(
                             member: member,
                             color: avatarColors[index % avatarColors.count]
