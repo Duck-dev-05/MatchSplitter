@@ -12,7 +12,7 @@ struct GroupMembersView: View {
     }
 
     let avatarColors: [Color] = [
-        Color(red: 0.43, green: 0.26, blue: 0.98),
+        Theme.primaryAccent,
         Color(red: 0.13, green: 0.67, blue: 0.89),
         Color(red: 0.95, green: 0.37, blue: 0.54),
         Color(red: 0.20, green: 0.80, blue: 0.60),
@@ -21,18 +21,10 @@ struct GroupMembersView: View {
 
     var body: some View {
         ZStack {
-            LinearGradient(
-                gradient: Gradient(colors: [
-                    Color(red: 0.06, green: 0.06, blue: 0.14),
-                    Color(red: 0.10, green: 0.08, blue: 0.22)
-                ]),
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .ignoresSafeArea()
+            Theme.backgroundGradient.ignoresSafeArea()
 
             ScrollView(showsIndicators: false) {
-                VStack(spacing: 12) {
+                VStack(spacing: 16) {
                     ForEach(Array(currentGroup.members.enumerated()), id: \.element.id) { (index, member) in
                         MemberRowView(
                             member: member,
@@ -40,7 +32,7 @@ struct GroupMembersView: View {
                         )
                     }
                 }
-                .padding(20)
+                .padding(24)
             }
         }
         .navigationTitle("Members")
@@ -53,7 +45,7 @@ struct GroupMembersView: View {
                             .fill(Color.white.opacity(0.12))
                             .frame(width: 32, height: 32)
                         Image(systemName: "person.badge.plus")
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.system(size: 14, weight: .bold))
                             .foregroundColor(.white)
                     }
                 }
@@ -81,53 +73,49 @@ struct MemberRowView: View {
     var color: Color
 
     var body: some View {
-        HStack(spacing: 14) {
-            ZStack {
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [color, color.opacity(0.6)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 48, height: 48)
-                    .shadow(color: color.opacity(0.4), radius: 8, x: 0, y: 4)
-                Text(member.name.prefix(1).uppercased())
-                    .font(.system(size: 18, weight: .bold, design: .rounded))
-                    .foregroundColor(.white)
-            }
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(member.name)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.white)
-                if let pid = member.paymentID, !pid.isEmpty {
-                    HStack(spacing: 4) {
-                        Image(systemName: "creditcard.fill")
-                            .font(.system(size: 10))
-                        Text(pid)
-                            .font(.caption)
+        Theme.applyGlassCard(
+            to: AnyView(
+                HStack(spacing: 16) {
+                    ZStack {
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [color, color.opacity(0.6)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 50, height: 50)
+                            .shadow(color: color.opacity(0.4), radius: 10, x: 0, y: 5)
+                        Text(member.name.prefix(1).uppercased())
+                            .font(.system(size: 20, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
                     }
-                    .foregroundColor(.white.opacity(0.4))
-                } else {
-                    Text("No payment ID")
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.25))
-                }
-            }
 
-            Spacer()
-        }
-        .padding(14)
-        .background(
-            RoundedRectangle(cornerRadius: 18)
-                .fill(Color(red: 0.14, green: 0.13, blue: 0.24))
-                .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 18)
-                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(member.name)
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(.white)
+                        if let pid = member.paymentID, !pid.isEmpty {
+                            HStack(spacing: 6) {
+                                Image(systemName: "creditcard.fill")
+                                    .font(.system(size: 12))
+                                Text(pid)
+                                    .font(.subheadline)
+                            }
+                            .foregroundColor(.white.opacity(0.5))
+                        } else {
+                            Text("No payment ID")
+                                .font(.subheadline)
+                                .foregroundColor(.white.opacity(0.3))
+                        }
+                    }
+
+                    Spacer()
+                }
+                .padding(16)
+            ),
+            cornerRadius: 20
         )
     }
 }

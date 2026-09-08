@@ -8,28 +8,32 @@ struct AddExpenseView: View {
     @State private var title = ""
     @State private var amountString = ""
     @State private var selectedPayer: UUID?
+    @State private var selectedCategory: ExpenseCategory = .general
+    
+    // Split logic
+    @State private var showingAdvancedSplit = false
+    @State private var splitType: SplitType = .equal
+    @State private var customShares: [SplitShare] = []
+    @State private var selectedSplitUsers: Set<UUID> = []
 
     var isFormValid: Bool {
         !title.isEmpty && !amountString.isEmpty && selectedPayer != nil
     }
+    
+    init(group: Group) {
+        self.group = group
+        self._selectedSplitUsers = State(initialValue: Set(group.members.map { $0.id }))
+    }
 
     var body: some View {
         ZStack {
-            LinearGradient(
-                gradient: Gradient(colors: [
-                    Color(red: 0.06, green: 0.06, blue: 0.14),
-                    Color(red: 0.10, green: 0.08, blue: 0.22)
-                ]),
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .ignoresSafeArea()
+            Theme.backgroundGradient.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 // Drag Handle
                 RoundedRectangle(cornerRadius: 3)
                     .fill(Color.white.opacity(0.2))
-                    .frame(width: 36, height: 5)
+                    .frame(width: 40, height: 5)
                     .padding(.top, 14)
                     .padding(.bottom, 10)
 
@@ -39,11 +43,12 @@ struct AddExpenseView: View {
                         presentationMode.wrappedValue.dismiss()
                     }
                     .foregroundColor(.white.opacity(0.6))
+                    .font(.system(size: 16, weight: .medium))
 
                     Spacer()
 
                     Text("New Expense")
-                        .font(.system(size: 17, weight: .bold))
+                        .font(.system(size: 18, weight: .bold))
                         .foregroundColor(.white)
 
                     Spacer()
@@ -51,29 +56,28 @@ struct AddExpenseView: View {
                     Button("Save") {
                         saveExpense()
                     }
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundColor(isFormValid ? Color(red: 0.63, green: 0.46, blue: 0.98) : Color.white.opacity(0.2))
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(isFormValid ? Theme.primaryAccent : Color.white.opacity(0.2))
                     .disabled(!isFormValid)
                 }
-                .padding(.horizontal, 20)
+                .padding(.horizontal, 24)
                 .padding(.vertical, 14)
 
                 ScrollView(showsIndicators: false) {
-                    VStack(spacing: 20) {
+                    VStack(spacing: 24) {
                         // Amount Hero Card
                         VStack(spacing: 8) {
                             Text("AMOUNT")
-                                .font(.caption2)
+                                .font(.caption2.weight(.bold))
                                 .foregroundColor(.white.opacity(0.4))
-
 
                             HStack(alignment: .firstTextBaseline, spacing: 4) {
                                 Text("฿")
-                                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                                    .font(.system(size: 32, weight: .bold, design: .rounded))
                                     .foregroundColor(.white.opacity(0.4))
                                 TextField("0.00", text: $amountString)
                                     .keyboardType(.decimalPad)
-                                    .font(.system(size: 56, weight: .heavy, design: .rounded))
+                                    .font(.system(size: 64, weight: .heavy, design: .rounded))
                                     .foregroundColor(.white)
                                     .multilineTextAlignment(.center)
                             }
@@ -81,76 +85,129 @@ struct AddExpenseView: View {
                         .padding(.vertical, 32)
                         .frame(maxWidth: .infinity)
                         .background(
-                            RoundedRectangle(cornerRadius: 24)
-                                .fill(Color(red: 0.14, green: 0.13, blue: 0.24))
-                                .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 6)
+                            RoundedRectangle(cornerRadius: 32)
+                                .fill(Theme.cardBackground)
+                                .shadow(color: Color.black.opacity(0.25), radius: 20, x: 0, y: 10)
                         )
                         .overlay(
-                            RoundedRectangle(cornerRadius: 24)
-                                .stroke(Color.white.opacity(0.07), lineWidth: 1)
+                            RoundedRectangle(cornerRadius: 32)
+                                .stroke(Color.white.opacity(0.05), lineWidth: 1)
                         )
 
                         // Details Card
-                        VStack(spacing: 0) {
-                            // Title Row
-                            HStack(spacing: 12) {
-                                ZStack {
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .fill(Color(red: 0.43, green: 0.26, blue: 0.98).opacity(0.2))
-                                        .frame(width: 32, height: 32)
-                                    Image(systemName: "tag.fill")
-                                        .font(.system(size: 13))
-                                        .foregroundColor(Color(red: 0.63, green: 0.46, blue: 0.98))
-                                }
-                                TextField("Description (e.g. Dinner)", text: $title)
-                                    .font(.system(size: 15))
-                                    .foregroundColor(.white)
-                            }
-                            .padding(16)
-
-                            Divider().background(Color.white.opacity(0.07))
-
-                            // Payer Row
-                            HStack(spacing: 12) {
-                                ZStack {
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .fill(Color(red: 0.43, green: 0.26, blue: 0.98).opacity(0.2))
-                                        .frame(width: 32, height: 32)
-                                    Image(systemName: "person.fill")
-                                        .font(.system(size: 13))
-                                        .foregroundColor(Color(red: 0.63, green: 0.46, blue: 0.98))
-                                }
-                                Picker("Paid By", selection: $selectedPayer) {
-                                    Text("Who paid?").tag(UUID?.none)
-                                    ForEach(group.members) { member in
-                                        Text(member.name).tag(UUID?.some(member.id))
+                        Theme.applyGlassCard(
+                            to: AnyView(
+                                VStack(spacing: 0) {
+                                    // Title Row
+                                    HStack(spacing: 16) {
+                                        ZStack {
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .fill(Theme.primaryAccent.opacity(0.2))
+                                                .frame(width: 40, height: 40)
+                                            Image(systemName: "pencil")
+                                                .font(.system(size: 16, weight: .bold))
+                                                .foregroundColor(Theme.secondaryAccent)
+                                        }
+                                        TextField("What was this for?", text: $title)
+                                            .font(.system(size: 16, weight: .medium))
+                                            .foregroundColor(.white)
                                     }
+                                    .padding(20)
+
+                                    Divider().background(Color.white.opacity(0.08))
+
+                                    // Category Row
+                                    HStack(spacing: 16) {
+                                        ZStack {
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .fill(Theme.primaryAccent.opacity(0.2))
+                                                .frame(width: 40, height: 40)
+                                            Image(systemName: selectedCategory.iconName)
+                                                .font(.system(size: 16, weight: .bold))
+                                                .foregroundColor(Theme.secondaryAccent)
+                                        }
+                                        Picker("Category", selection: $selectedCategory) {
+                                            ForEach(ExpenseCategory.allCases, id: \.self) { category in
+                                                Text(category.rawValue).tag(category)
+                                            }
+                                        }
+                                        .pickerStyle(MenuPickerStyle())
+                                        .accentColor(.white)
+                                        Spacer()
+                                    }
+                                    .padding(20)
+
+                                    Divider().background(Color.white.opacity(0.08))
+
+                                    // Payer Row
+                                    HStack(spacing: 16) {
+                                        ZStack {
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .fill(Theme.primaryAccent.opacity(0.2))
+                                                .frame(width: 40, height: 40)
+                                            Image(systemName: "person.fill")
+                                                .font(.system(size: 16, weight: .bold))
+                                                .foregroundColor(Theme.secondaryAccent)
+                                        }
+                                        Picker("Paid By", selection: $selectedPayer) {
+                                            Text("Who paid?").tag(UUID?.none)
+                                            ForEach(group.members) { member in
+                                                Text(member.name).tag(UUID?.some(member.id))
+                                            }
+                                        }
+                                        .pickerStyle(MenuPickerStyle())
+                                        .accentColor(.white)
+                                        Spacer()
+                                    }
+                                    .padding(20)
                                 }
-                                .pickerStyle(MenuPickerStyle())
-                                .foregroundColor(.white)
-                                Spacer()
-                            }
-                            .padding(16)
-                        }
-                        .background(
-                            RoundedRectangle(cornerRadius: 20)
-                                .fill(Color(red: 0.14, green: 0.13, blue: 0.24))
-                                .shadow(color: Color.black.opacity(0.2), radius: 10, x: 0, y: 5)
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 20)
-                                .stroke(Color.white.opacity(0.07), lineWidth: 1)
+                            ),
+                            cornerRadius: 24
                         )
 
-                        // Note about split
-                        Label("Split equally among all members", systemImage: "person.2.fill")
-                            .font(.caption)
-                            .foregroundColor(.white.opacity(0.35))
-                            .padding(.top, 4)
+                        // Split Action
+                        Button(action: { showingAdvancedSplit = true }) {
+                            Theme.applyGlassCard(
+                                to: AnyView(
+                                    HStack(spacing: 16) {
+                                        ZStack {
+                                            Circle()
+                                                .fill(Color.white.opacity(0.1))
+                                                .frame(width: 40, height: 40)
+                                            Image(systemName: "arrow.triangle.branch")
+                                                .foregroundColor(.white)
+                                        }
+                                        
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text(splitType == .equal ? "Split Equally" : "Custom Split")
+                                                .font(.system(size: 16, weight: .bold))
+                                                .foregroundColor(.white)
+                                            Text(splitType == .equal ? "Among \(selectedSplitUsers.count) people" : "Exact amounts")
+                                                .font(.caption)
+                                                .foregroundColor(.white.opacity(0.5))
+                                        }
+                                        Spacer()
+                                        Image(systemName: "chevron.right")
+                                            .foregroundColor(.white.opacity(0.3))
+                                    }
+                                    .padding(20)
+                                ),
+                                cornerRadius: 20
+                            )
+                        }
                     }
-                    .padding(20)
+                    .padding(24)
                 }
             }
+        }
+        .sheet(isPresented: $showingAdvancedSplit) {
+            AdvancedSplitView(
+                group: group,
+                amount: Double(amountString) ?? 0.0,
+                splitType: $splitType,
+                selectedSplitUsers: $selectedSplitUsers,
+                customShares: $customShares
+            )
         }
     }
 
@@ -160,7 +217,19 @@ struct AddExpenseView: View {
               let payer = group.members.first(where: { $0.id == payerId }) else {
             return
         }
-        viewModel.addExpense(to: group, title: title, amount: amount, paidBy: payer, splitAmong: group.members)
+        
+        let splitUsers = group.members.filter { selectedSplitUsers.contains($0.id) }
+        
+        viewModel.addExpense(
+            to: group,
+            title: title,
+            amount: amount,
+            category: selectedCategory,
+            paidBy: payer,
+            splitType: splitType,
+            splitAmong: splitUsers,
+            customShares: splitType == .exact ? customShares : nil
+        )
         presentationMode.wrappedValue.dismiss()
     }
 }

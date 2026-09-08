@@ -42,9 +42,9 @@ class GroupViewModel: ObservableObject {
         }
     }
     
-    func addExpense(to group: Group, title: String, amount: Double, paidBy: User, splitAmong: [User]) {
+    func addExpense(to group: Group, title: String, amount: Double, category: ExpenseCategory = .general, paidBy: User, splitType: SplitType = .equal, splitAmong: [User], customShares: [SplitShare]? = nil) {
         if let index = groups.firstIndex(where: { $0.id == group.id }) {
-            let expense = Expense(title: title, amount: amount, date: Date(), paidBy: paidBy, splitAmong: splitAmong)
+            let expense = Expense(title: title, amount: amount, date: Date(), category: category, paidBy: paidBy, splitType: splitType, splitAmong: splitAmong, customShares: customShares)
             groups[index].expenses.append(expense)
         }
     }
@@ -59,9 +59,15 @@ class GroupViewModel: ObservableObject {
         for expense in group.expenses {
             balances[expense.paidBy.id, default: 0.0] += expense.amount
             
-            let splitAmount = expense.amount / Double(expense.splitAmong.count)
-            for person in expense.splitAmong {
-                balances[person.id, default: 0.0] -= splitAmount
+            if expense.splitType == .equal {
+                let splitAmount = expense.amount / Double(expense.splitAmong.count)
+                for person in expense.splitAmong {
+                    balances[person.id, default: 0.0] -= splitAmount
+                }
+            } else if expense.splitType == .exact, let customShares = expense.customShares {
+                for share in customShares {
+                    balances[share.user.id, default: 0.0] -= share.exactAmount
+                }
             }
         }
         

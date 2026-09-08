@@ -20,6 +20,11 @@ struct MainTabView: View {
                 .tabItem {
                     Label("Groups", systemImage: "person.3.fill")
                 }
+                
+            ActivityFeedView()
+                .tabItem {
+                    Label("Activity", systemImage: "bell.fill")
+                }
 
             ProfileView()
                 .navigationViewStyle(StackNavigationViewStyle())
@@ -27,6 +32,6 @@ struct MainTabView: View {
                     Label("Profile", systemImage: "person.crop.circle.fill")
                 }
         }
-        .accentColor(Color(red: 0.63, green: 0.46, blue: 0.98))
+        .accentColor(Theme.primaryAccent)
     }
 }
