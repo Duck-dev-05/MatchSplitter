@@ -114,7 +114,7 @@ struct ActivityRow: View {
                     
                     Spacer()
                     
-                    Text(String(format: "฿%.0f", expense.amount))
+                    Text("\(group.currency.symbol)\(String(format: "%.0f", expense.amount))")
                         .font(.system(size: 16, weight: .bold, design: .rounded))
                         .foregroundColor(Theme.secondaryAccent)
                 }

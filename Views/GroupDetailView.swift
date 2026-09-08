@@ -5,6 +5,7 @@ struct GroupDetailView: View {
     @EnvironmentObject var viewModel: GroupViewModel
     @State private var showingAddExpense = false
     @State private var showingSettlements = false
+    @State private var showingSettings = false
 
     var currentGroup: Group {
         viewModel.groups.first(where: { $0.id == group.id }) ?? group
@@ -26,7 +27,7 @@ struct GroupDetailView: View {
                         .foregroundColor(.white.opacity(0.5))
                         .textCase(.uppercase)
 
-                    Text(String(format: "฿%.2f", totalSpent))
+                    Text("\(currentGroup.currency.symbol)\(String(format: "%.2f", totalSpent))")
                         .font(.system(size: 48, weight: .heavy, design: .rounded))
                         .foregroundColor(.white)
 
@@ -72,7 +73,7 @@ struct GroupDetailView: View {
                         } else {
                             ForEach(currentGroup.expenses) { expense in
                                 NavigationLink(destination: ExpenseDetailView(expense: expense, group: currentGroup)) {
-                                    ExpenseRowView(expense: expense)
+                                    ExpenseRowView(expense: expense, groupCurrency: currentGroup.currency)
                                 }
                                 .buttonStyle(PlainButtonStyle())
                             }
@@ -87,12 +88,19 @@ struct GroupDetailView: View {
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: { showingAddExpense = true }) {
-                    ZStack {
-                        Circle()
-                            .fill(Color.white.opacity(0.12))
-                            .frame(width: 32, height: 32)
-                        Image(systemName: "plus")
-                            .font(.system(size: 13, weight: .bold))
+                HStack(spacing: 16) {
+                    Button(action: { showingAddExpense = true }) {
+                        ZStack {
+                            Circle()
+                                .fill(Color.white.opacity(0.12))
+                                .frame(width: 32, height: 32)
+                            Image(systemName: "plus")
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundColor(.white)
+                        }
+                    }
+                    Button(action: { showingSettings = true }) {
+                        Image(systemName: "gearshape.fill")
                             .foregroundColor(.white)
                     }
                 }
@@ -103,6 +111,9 @@ struct GroupDetailView: View {
         }
         .sheet(isPresented: $showingSettlements) {
             SettlementView(group: currentGroup)
+        }
+        .sheet(isPresented: $showingSettings) {
+            GroupSettingsView(group: currentGroup)
         }
     }
 }
@@ -139,6 +150,8 @@ struct ActionPillButton: View {
 struct ExpenseRowView: View {
     var expense: Expense
 
+    var groupCurrency: Currency
+
     var body: some View {
         Theme.applyGlassCard(
             to: AnyView(
@@ -164,7 +177,7 @@ struct ExpenseRowView: View {
                     Spacer()
 
                     VStack(alignment: .trailing, spacing: 4) {
-                        Text(String(format: "฿%.2f", expense.amount))
+                        Text("\(groupCurrency.symbol)\(String(format: "%.2f", expense.amount))")
                             .font(.system(size: 16, weight: .bold, design: .rounded))
                             .foregroundColor(.white)
                         

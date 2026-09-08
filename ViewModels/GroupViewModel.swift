@@ -4,6 +4,7 @@ import SwiftUI
 class GroupViewModel: ObservableObject {
     @Published var groups: [Group] = []
     @Published var currentUser: User? = User(name: "You", paymentID: "0800000000")
+    @Published var defaultCurrency: Currency = .thb
     
     init() {
         setupMockData()
@@ -14,7 +15,7 @@ class GroupViewModel: ObservableObject {
         let bob = User(name: "Bob", paymentID: "0823456789")
         let charlie = User(name: "Charlie", paymentID: "0834567890")
         
-        let g1 = Group(name: "Weekend Trip", members: [currentUser!, alice, bob, charlie])
+        let g1 = Group(name: "Weekend Trip", members: [currentUser!, alice, bob, charlie], currency: .thb)
         groups.append(g1)
     }
     
@@ -29,11 +30,22 @@ class GroupViewModel: ObservableObject {
     }
     
     func addGroup(name: String) {
-        var newGroup = Group(name: name)
+        var newGroup = Group(name: name, currency: defaultCurrency)
         if let current = currentUser {
             newGroup.members.append(current)
         }
         groups.append(newGroup)
+    }
+    
+    func updateGroup(id: UUID, name: String, currency: Currency) {
+        if let index = groups.firstIndex(where: { $0.id == id }) {
+            groups[index].name = name
+            groups[index].currency = currency
+        }
+    }
+    
+    func deleteGroup(id: UUID) {
+        groups.removeAll(where: { $0.id == id })
     }
     
     func addMember(to group: Group, name: String, paymentID: String) {
@@ -46,6 +58,27 @@ class GroupViewModel: ObservableObject {
         if let index = groups.firstIndex(where: { $0.id == group.id }) {
             let expense = Expense(title: title, amount: amount, date: Date(), category: category, paidBy: paidBy, splitType: splitType, splitAmong: splitAmong, customShares: customShares)
             groups[index].expenses.append(expense)
+        }
+    }
+    
+    func updateExpense(in group: Group, expenseId: UUID, title: String, amount: Double, category: ExpenseCategory = .general, paidBy: User, splitType: SplitType = .equal, splitAmong: [User], customShares: [SplitShare]? = nil) {
+        if let groupIndex = groups.firstIndex(where: { $0.id == group.id }),
+           let expIndex = groups[groupIndex].expenses.firstIndex(where: { $0.id == expenseId }) {
+            var expense = groups[groupIndex].expenses[expIndex]
+            expense.title = title
+            expense.amount = amount
+            expense.category = category
+            expense.paidBy = paidBy
+            expense.splitType = splitType
+            expense.splitAmong = splitAmong
+            expense.customShares = customShares
+            groups[groupIndex].expenses[expIndex] = expense
+        }
+    }
+    
+    func deleteExpense(from group: Group, expenseId: UUID) {
+        if let groupIndex = groups.firstIndex(where: { $0.id == group.id }) {
+            groups[groupIndex].expenses.removeAll(where: { $0.id == expenseId })
         }
     }
     
@@ -99,5 +132,30 @@ class GroupViewModel: ObservableObject {
         }
         
         return settlements
+    }
+    
+    // Calculates global balances for the current user across all groups, organized by currency.
+    // Returns a dictionary where keys are friends, and values are arrays of balances in different currencies.
+    func calculateGlobalBalances() -> [User: [Currency: Double]] {
+        guard let current = currentUser else { return [:] }
+        var globalBalances: [User: [Currency: Double]] = [:]
+        
+        for group in groups {
+            let settlements = calculateSettlements(for: group)
+            for settlement in settlements {
+                if settlement.fromUser.id == current.id {
+                    // I owe them
+                    var userBalances = globalBalances[settlement.toUser] ?? [:]
+                    userBalances[group.currency, default: 0.0] -= settlement.amount
+                    globalBalances[settlement.toUser] = userBalances
+                } else if settlement.toUser.id == current.id {
+                    // They owe me
+                    var userBalances = globalBalances[settlement.fromUser] ?? [:]
+                    userBalances[group.currency, default: 0.0] += settlement.amount
+                    globalBalances[settlement.fromUser] = userBalances
+                }
+            }
+        }
+        return globalBalances
     }
 }

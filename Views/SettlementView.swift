@@ -61,7 +61,7 @@ struct SettlementView: View {
                         VStack(spacing: 16) {
                             ForEach(settlements) { settlement in
                                 Button(action: { selectedSettlement = settlement }) {
-                                    SettlementCardView(settlement: settlement)
+                                    SettlementCardView(settlement: settlement, currency: group.currency)
                                 }
                                 .buttonStyle(PlainButtonStyle())
                             }
@@ -72,7 +72,7 @@ struct SettlementView: View {
             }
         }
         .sheet(item: $selectedSettlement) { settlement in
-            QRCodePaymentView(settlement: settlement)
+            QRCodePaymentView(settlement: settlement, currency: group.currency)
         }
     }
 }
@@ -81,6 +81,7 @@ struct SettlementView: View {
 
 struct SettlementCardView: View {
     var settlement: Settlement
+    var currency: Currency
 
     var body: some View {
         Theme.applyGlassCard(
@@ -106,7 +107,7 @@ struct SettlementCardView: View {
                     Spacer()
 
                     VStack(alignment: .trailing, spacing: 6) {
-                        Text(String(format: "฿%.2f", settlement.amount))
+                        Text("\(currency.symbol)\(String(format: "%.2f", settlement.amount))")
                             .font(.system(size: 18, weight: .heavy, design: .rounded))
                             .foregroundColor(Color(red: 0.95, green: 0.37, blue: 0.54))
 
@@ -152,6 +153,7 @@ struct AvatarBubble: View {
 
 struct QRCodePaymentView: View {
     var settlement: Settlement
+    var currency: Currency
     let generator = QRCodeGenerator()
     @Environment(\.presentationMode) var presentationMode
 
@@ -187,7 +189,7 @@ struct QRCodePaymentView: View {
                         .font(.system(size: 32, weight: .heavy, design: .rounded))
                         .foregroundColor(.white)
 
-                    Text(String(format: "฿%.2f", settlement.amount))
+                    Text("\(currency.symbol)\(String(format: "%.2f", settlement.amount))")
                         .font(.system(size: 56, weight: .heavy, design: .rounded))
                         .foregroundColor(Theme.primaryAccent)
                 }

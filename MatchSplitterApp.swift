@@ -21,6 +21,16 @@ struct MainTabView: View {
                     Label("Groups", systemImage: "person.3.fill")
                 }
                 
+            FriendsView()
+                .tabItem {
+                    Label("Friends", systemImage: "person.2.fill")
+                }
+                
+            AnalyticsView()
+                .tabItem {
+                    Label("Analytics", systemImage: "chart.bar.fill")
+                }
+                
             ActivityFeedView()
                 .tabItem {
                     Label("Activity", systemImage: "bell.fill")

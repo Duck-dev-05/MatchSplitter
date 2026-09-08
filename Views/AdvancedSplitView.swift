@@ -71,7 +71,7 @@ struct AdvancedSplitView: View {
                 ScrollView {
                     VStack(spacing: 16) {
                         if localSplitType == .equal {
-                            Text("฿\(String(format: "%.2f", amount)) will be split equally among selected members.")
+                            Text("\(group.currency.symbol)\(String(format: "%.2f", amount)) will be split equally among selected members.")
                                 .font(.subheadline)
                                 .foregroundColor(.white.opacity(0.6))
                                 .padding(.bottom, 8)
@@ -109,7 +109,7 @@ struct AdvancedSplitView: View {
                                                 
                                                 if localSelectedUsers.contains(member.id) {
                                                     let splitAmount = amount / Double(localSelectedUsers.count)
-                                                    Text(String(format: "฿%.2f", splitAmount))
+                                                    Text("\(group.currency.symbol)\(String(format: "%.2f", splitAmount))")
                                                         .font(.system(size: 16, weight: .bold, design: .rounded))
                                                         .foregroundColor(Theme.secondaryAccent)
                                                 }
@@ -121,7 +121,7 @@ struct AdvancedSplitView: View {
                                 )
                             }
                         } else {
-                            Text("Enter exact amounts for each member. Total must equal ฿\(String(format: "%.2f", amount)).")
+                            Text("Enter exact amounts for each member. Total must equal \(group.currency.symbol)\(String(format: "%.2f", amount)).")
                                 .font(.subheadline)
                                 .foregroundColor(.white.opacity(0.6))
                                 .padding(.bottom, 8)
@@ -137,7 +137,7 @@ struct AdvancedSplitView: View {
                                             
                                             Spacer()
                                             
-                                            Text("฿")
+                                            Text(group.currency.symbol)
                                                 .foregroundColor(.white.opacity(0.4))
                                             TextField("0.00", text: Binding(
                                                 get: { localCustomShares[member.id] ?? "" },

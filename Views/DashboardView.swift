@@ -144,7 +144,7 @@ struct GroupCardView: View {
                                 .font(.caption2.weight(.medium))
                                 .foregroundColor(.white.opacity(0.45))
                                 .textCase(.uppercase)
-                            Text(String(format: "฿%.2f", totalSpent))
+                            Text("\(group.currency.symbol)\(String(format: "%.2f", totalSpent))")
                                 .font(.system(size: 22, weight: .heavy, design: .rounded))
                                 .foregroundColor(.white)
                         }

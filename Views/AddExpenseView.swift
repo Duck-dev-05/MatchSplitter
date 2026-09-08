@@ -15,14 +15,28 @@ struct AddExpenseView: View {
     @State private var splitType: SplitType = .equal
     @State private var customShares: [SplitShare] = []
     @State private var selectedSplitUsers: Set<UUID> = []
+    
+    var editingExpense: Expense?
 
     var isFormValid: Bool {
         !title.isEmpty && !amountString.isEmpty && selectedPayer != nil
     }
     
-    init(group: Group) {
+    init(group: Group, editingExpense: Expense? = nil) {
         self.group = group
-        self._selectedSplitUsers = State(initialValue: Set(group.members.map { $0.id }))
+        self.editingExpense = editingExpense
+        
+        if let exp = editingExpense {
+            self._title = State(initialValue: exp.title)
+            self._amountString = State(initialValue: String(format: "%.2f", exp.amount))
+            self._selectedPayer = State(initialValue: exp.paidBy.id)
+            self._selectedCategory = State(initialValue: exp.category)
+            self._splitType = State(initialValue: exp.splitType)
+            self._selectedSplitUsers = State(initialValue: Set(exp.splitAmong.map { $0.id }))
+            self._customShares = State(initialValue: exp.customShares ?? [])
+        } else {
+            self._selectedSplitUsers = State(initialValue: Set(group.members.map { $0.id }))
+        }
     }
 
     var body: some View {
@@ -47,7 +61,7 @@ struct AddExpenseView: View {
 
                     Spacer()
 
-                    Text("New Expense")
+                    Text(editingExpense != nil ? "Edit Expense" : "New Expense")
                         .font(.system(size: 18, weight: .bold))
                         .foregroundColor(.white)
 
@@ -72,7 +86,7 @@ struct AddExpenseView: View {
                                 .foregroundColor(.white.opacity(0.4))
 
                             HStack(alignment: .firstTextBaseline, spacing: 4) {
-                                Text("฿")
+                                Text(group.currency.symbol)
                                     .font(.system(size: 32, weight: .bold, design: .rounded))
                                     .foregroundColor(.white.opacity(0.4))
                                 TextField("0.00", text: $amountString)
@@ -220,16 +234,30 @@ struct AddExpenseView: View {
         
         let splitUsers = group.members.filter { selectedSplitUsers.contains($0.id) }
         
-        viewModel.addExpense(
-            to: group,
-            title: title,
-            amount: amount,
-            category: selectedCategory,
-            paidBy: payer,
-            splitType: splitType,
-            splitAmong: splitUsers,
-            customShares: splitType == .exact ? customShares : nil
-        )
+        if let existingExpense = editingExpense {
+            viewModel.updateExpense(
+                in: group,
+                expenseId: existingExpense.id,
+                title: title,
+                amount: amount,
+                category: selectedCategory,
+                paidBy: payer,
+                splitType: splitType,
+                splitAmong: splitUsers,
+                customShares: splitType == .exact ? customShares : nil
+            )
+        } else {
+            viewModel.addExpense(
+                to: group,
+                title: title,
+                amount: amount,
+                category: selectedCategory,
+                paidBy: payer,
+                splitType: splitType,
+                splitAmong: splitUsers,
+                customShares: splitType == .exact ? customShares : nil
+            )
+        }
         presentationMode.wrappedValue.dismiss()
     }
 }
