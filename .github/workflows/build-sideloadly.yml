@@ -18,23 +18,23 @@ jobs:
     - name: Generate Xcode Project
       run: xcodegen generate
       
-    - name: Build for iOS Device (Unsigned)
+    - name: Build for iOS Device (Ad-Hoc Signed)
       run: |
         xcodebuild \
           -project MatchSplitter.xcodeproj \
           -scheme MatchSplitter \
           -sdk iphoneos \
           -configuration Release \
-          CODE_SIGN_IDENTITY="" \
-          CODE_SIGNING_REQUIRED=NO \
-          CODE_SIGNING_ALLOWED=NO \
+          CODE_SIGN_IDENTITY="-" \
+          CODE_SIGNING_REQUIRED=YES \
+          CODE_SIGNING_ALLOWED=YES \
           CONFIGURATION_BUILD_DIR="$(pwd)/build" \
           clean build
           
     - name: Package .ipa
       run: |
         mkdir -p Payload
-        find . -name "MatchSplitter.app" -type d -exec cp -R {} Payload/ \;
+        cp -R build/MatchSplitter.app Payload/
         zip -r MatchSplitter.ipa Payload
         
     - name: Upload IPA Artifact
