@@ -5,7 +5,7 @@ targets:
   MatchSplitter:
     type: application
     platform: iOS
-    deploymentTarget: "16.0"
+    deploymentTarget: "15.0"
     sources:
       - MatchSplitterApp.swift
       - Models

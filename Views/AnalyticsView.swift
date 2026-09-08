@@ -1,10 +1,11 @@
 import SwiftUI
+#if canImport(Charts)
 import Charts
+#endif
 
 struct AnalyticsView: View {
     @EnvironmentObject var viewModel: GroupViewModel
     
-    // Compute total spent per category across all groups
     var categoryData: [(category: String, amount: Double)] {
         var totals: [ExpenseCategory: Double] = [:]
         
@@ -18,13 +19,12 @@ struct AnalyticsView: View {
             .sorted { $0.amount > $1.amount }
     }
     
-    // Calculate total money you've paid overall vs what you owe
     var overallBalance: Double {
         let balances = viewModel.calculateGlobalBalances()
         var net = 0.0
         for (_, curBalances) in balances {
             for (_, amount) in curBalances {
-                net += amount // Positive means they owe me
+                net += amount
             }
         }
         return net
@@ -53,7 +53,8 @@ struct AnalyticsView: View {
                                         .foregroundColor(.white.opacity(0.5))
                                         .textCase(.uppercase)
                                     
-                                    Text(overallBalance >= 0 ? "+฿\(String(format: "%.2f", overallBalance))" : "-฿\(String(format: "%.2f", abs(overallBalance)))")
+                                    let currencySymbol = viewModel.defaultCurrency.symbol
+                                    Text(overallBalance >= 0 ? "+\(currencySymbol)\(String(format: "%.2f", overallBalance))" : "-\(currencySymbol)\(String(format: "%.2f", abs(overallBalance)))")
                                         .font(.system(size: 40, weight: .heavy, design: .rounded))
                                         .foregroundColor(overallBalance >= 0 ? .green : Color(red: 0.95, green: 0.37, blue: 0.54))
                                     
@@ -79,43 +80,13 @@ struct AnalyticsView: View {
                             }
                             .padding(.top, 40)
                         } else {
-                            Theme.applyGlassCard(
-                                to: AnyView(
-                                    VStack(alignment: .leading, spacing: 20) {
-                                        Text("Spending by Category")
-                                            .font(.system(size: 18, weight: .bold))
-                                            .foregroundColor(.white)
-                                        
-                                        Chart {
-                                            ForEach(categoryData, id: \.category) { item in
-                                                BarMark(
-                                                    x: .value("Amount", item.amount),
-                                                    y: .value("Category", item.category)
-                                                )
-                                                .foregroundStyle(Theme.primaryGradient)
-                                                .cornerRadius(4)
-                                            }
-                                        }
-                                        .frame(height: 250)
-                                        .chartXAxis {
-                                            AxisMarks(values: .automatic) {
-                                                AxisValueLabel()
-                                                    .foregroundStyle(Color.white.opacity(0.5))
-                                            }
-                                        }
-                                        .chartYAxis {
-                                            AxisMarks {
-                                                AxisValueLabel()
-                                                    .foregroundStyle(Color.white)
-                                                    .font(.system(size: 12, weight: .medium))
-                                            }
-                                        }
-                                    }
-                                    .padding(24)
-                                ),
-                                cornerRadius: 24
-                            )
-                            .padding(.horizontal, 20)
+                            if #available(iOS 16.0, *) {
+                                // iOS 16+ UI with Swift Charts
+                                iOS16ChartView(categoryData: categoryData)
+                            } else {
+                                // Fallback UI for iOS 15
+                                iOS15ChartView(categoryData: categoryData)
+                            }
                         }
                     }
                     .padding(.bottom, 40)
@@ -123,5 +94,101 @@ struct AnalyticsView: View {
             }
             .navigationBarHidden(true)
         }
+    }
+}
+
+// MARK: - iOS 15 Fallback View
+struct iOS15ChartView: View {
+    let categoryData: [(category: String, amount: Double)]
+    
+    var body: some View {
+        Theme.applyGlassCard(
+            to: AnyView(
+                VStack(alignment: .leading, spacing: 24) {
+                    Text("Spending by Category (Legacy)")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.white)
+                    
+                    let maxAmount = categoryData.map { $0.amount }.max() ?? 1.0
+                    
+                    VStack(spacing: 16) {
+                        ForEach(categoryData, id: \.category) { item in
+                            HStack(spacing: 12) {
+                                Text(item.category)
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundColor(.white)
+                                    .frame(width: 80, alignment: .leading)
+                                
+                                GeometryReader { geometry in
+                                    let barWidth = CGFloat(item.amount / maxAmount) * geometry.size.width
+                                    RoundedRectangle(cornerRadius: 4)
+                                        .fill(Theme.primaryGradient)
+                                        .frame(width: max(barWidth, 4), height: 16)
+                                }
+                                .frame(height: 16)
+                                
+                                Text(String(format: "%.0f", item.amount))
+                                    .font(.caption)
+                                    .foregroundColor(.white.opacity(0.5))
+                                    .frame(width: 40, alignment: .trailing)
+                            }
+                        }
+                    }
+                }
+                .padding(24)
+            ),
+            cornerRadius: 24
+        )
+        .padding(.horizontal, 20)
+    }
+}
+
+// MARK: - iOS 16+ View
+@available(iOS 16.0, *)
+struct iOS16ChartView: View {
+    let categoryData: [(category: String, amount: Double)]
+    
+    var body: some View {
+        #if canImport(Charts)
+        Theme.applyGlassCard(
+            to: AnyView(
+                VStack(alignment: .leading, spacing: 20) {
+                    Text("Spending by Category")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.white)
+                    
+                    Chart {
+                        ForEach(categoryData, id: \.category) { item in
+                            BarMark(
+                                x: .value("Amount", item.amount),
+                                y: .value("Category", item.category)
+                            )
+                            .foregroundStyle(Theme.primaryGradient)
+                            .cornerRadius(4)
+                        }
+                    }
+                    .frame(height: 250)
+                    .chartXAxis {
+                        AxisMarks(values: .automatic) {
+                            AxisValueLabel()
+                                .foregroundStyle(Color.white.opacity(0.5))
+                        }
+                    }
+                    .chartYAxis {
+                        AxisMarks {
+                            AxisValueLabel()
+                                .foregroundStyle(Color.white)
+                                .font(.system(size: 12, weight: .medium))
+                        }
+                    }
+                }
+                .padding(24)
+            ),
+            cornerRadius: 24
+        )
+        .padding(.horizontal, 20)
+        #else
+        EmptyView()
+        #endif
     }
 }
