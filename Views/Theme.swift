@@ -156,7 +156,6 @@ struct SectionHeader: View {
                 .font(.system(size: 13, weight: .bold))
                 .foregroundColor(.white.opacity(0.45))
                 .textCase(.uppercase)
-                .tracking(1)
             Spacer()
             if let trailing = trailing {
                 trailing

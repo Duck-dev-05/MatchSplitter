@@ -61,7 +61,6 @@ struct DashboardView: View {
                                             .font(.system(size: 11, weight: .bold))
                                             .foregroundColor(.white.opacity(0.55))
                                             .textCase(.uppercase)
-                                            .tracking(1.5)
 
                                         Text(netBalance >= 0
                                              ? "+\(viewModel.defaultCurrency.symbol)\(String(format: "%.2f", netBalance))"

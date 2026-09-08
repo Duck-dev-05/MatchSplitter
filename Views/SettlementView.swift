@@ -202,7 +202,6 @@ struct QRCodePaymentView: View {
                         .font(.system(size: 11, weight: .bold))
                         .foregroundColor(.white.opacity(0.40))
                         .textCase(.uppercase)
-                        .tracking(1.5)
 
                     HStack(spacing: 12) {
                         GradientAvatar(name: settlement.fromUser.name, size: 36,
