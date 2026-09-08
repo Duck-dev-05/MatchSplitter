@@ -87,7 +87,6 @@ struct GroupDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: { showingAddExpense = true }) {
                 HStack(spacing: 16) {
                     Button(action: { showingAddExpense = true }) {
                         ZStack {
