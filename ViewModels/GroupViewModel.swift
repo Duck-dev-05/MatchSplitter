@@ -29,6 +29,20 @@ class GroupViewModel: ObservableObject {
         }
     }
     
+    func updateCurrentUser(name: String, paymentID: String) {
+        if let current = currentUser {
+            let updatedUser = User(id: current.id, name: name, paymentID: paymentID.isEmpty ? nil : paymentID)
+            currentUser = updatedUser
+            
+            // Also update this user's name across all groups they belong to
+            for groupIndex in groups.indices {
+                if let memberIndex = groups[groupIndex].members.firstIndex(where: { $0.id == current.id }) {
+                    groups[groupIndex].members[memberIndex] = updatedUser
+                }
+            }
+        }
+    }
+    
     func addGroup(name: String) {
         var newGroup = Group(name: name, currency: defaultCurrency)
         if let current = currentUser {

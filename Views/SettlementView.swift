@@ -14,24 +14,30 @@ struct SettlementView: View {
             VStack(spacing: 0) {
                 // Drag Handle
                 RoundedRectangle(cornerRadius: 3)
-                    .fill(Color.white.opacity(0.2))
-                    .frame(width: 40, height: 5)
+                    .fill(Color.white.opacity(0.18))
+                    .frame(width: 38, height: 5)
                     .padding(.top, 14)
 
-                // Header Bar
+                // Header
                 HStack {
+                    Button(action: { presentationMode.wrappedValue.dismiss() }) {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.white.opacity(0.55))
+                            .frame(width: 32, height: 32)
+                            .background(Color.white.opacity(0.10))
+                            .clipShape(Circle())
+                    }
                     Spacer()
-                    Text("Settlements")
+                    Text("Settle Up")
                         .font(.system(size: 18, weight: .bold))
                         .foregroundColor(.white)
                     Spacer()
-                    Button("Done") {
-                        presentationMode.wrappedValue.dismiss()
-                    }
-                    .foregroundColor(Theme.primaryAccent)
-                    .font(.system(size: 16, weight: .semibold))
+                    Button("Done") { presentationMode.wrappedValue.dismiss() }
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(Theme.secondaryAccent)
                 }
-                .padding(.horizontal, 24)
+                .padding(.horizontal, 20)
                 .padding(.vertical, 14)
 
                 let settlements = viewModel.calculateSettlements(for: group)
@@ -41,24 +47,24 @@ struct SettlementView: View {
                     VStack(spacing: 20) {
                         ZStack {
                             Circle()
-                                .fill(Color.green.opacity(0.15))
+                                .fill(Theme.successColor.opacity(0.12))
                                 .frame(width: 120, height: 120)
-                            Image(systemName: "checkmark.circle.fill")
-                                .font(.system(size: 64))
-                                .foregroundColor(.green)
+                            Image(systemName: "checkmark.seal.fill")
+                                .font(.system(size: 58))
+                                .foregroundColor(Theme.successColor)
                         }
                         Text("All Settled Up!")
                             .font(.system(size: 28, weight: .heavy, design: .rounded))
                             .foregroundColor(.white)
                         Text("Everyone is even. No payments needed.")
                             .font(.subheadline)
-                            .foregroundColor(.white.opacity(0.5))
+                            .foregroundColor(.white.opacity(0.45))
                             .multilineTextAlignment(.center)
                     }
                     Spacer()
                 } else {
                     ScrollView(showsIndicators: false) {
-                        VStack(spacing: 16) {
+                        VStack(spacing: 12) {
                             ForEach(settlements) { settlement in
                                 Button(action: { selectedSettlement = settlement }) {
                                     SettlementCardView(settlement: settlement, currency: group.currency)
@@ -66,7 +72,7 @@ struct SettlementView: View {
                                 .buttonStyle(PlainButtonStyle())
                             }
                         }
-                        .padding(24)
+                        .padding(20)
                     }
                 }
             }
@@ -78,7 +84,6 @@ struct SettlementView: View {
 }
 
 // MARK: - Settlement Card
-
 struct SettlementCardView: View {
     var settlement: Settlement
     var currency: Currency
@@ -86,53 +91,66 @@ struct SettlementCardView: View {
     var body: some View {
         Theme.applyGlassCard(
             to: AnyView(
-                HStack(spacing: 16) {
-                    // From Avatar
-                    AvatarBubble(name: settlement.fromUser.name, color: Color(red: 0.95, green: 0.37, blue: 0.54))
+                HStack(spacing: 14) {
+                    // From avatar
+                    GradientAvatar(
+                        name: settlement.fromUser.name,
+                        size: 46,
+                        gradient: LinearGradient(colors: [Theme.dangerColor, Theme.dangerColor.opacity(0.6)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                    )
 
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(settlement.fromUser.name)
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(.white)
+                    // Direction arrow
+                    VStack(spacing: 6) {
+                        Image(systemName: "arrow.right")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.white.opacity(0.25))
+                        Text("\(currency.symbol)\(String(format: "%.2f", settlement.amount))")
+                            .font(.system(size: 15, weight: .heavy, design: .rounded))
+                            .foregroundColor(Theme.dangerColor)
+                    }
+
+                    // To avatar
+                    GradientAvatar(
+                        name: settlement.toUser.name,
+                        size: 46,
+                        gradient: LinearGradient(colors: [Theme.successColor, Theme.successColor.opacity(0.6)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                    )
+
+                    VStack(alignment: .leading, spacing: 3) {
                         HStack(spacing: 4) {
-                            Text("owes")
-                                .foregroundColor(.white.opacity(0.5))
+                            Text(settlement.fromUser.name)
+                                .fontWeight(.semibold)
+                            Text("→")
+                                .foregroundColor(.white.opacity(0.35))
                             Text(settlement.toUser.name)
-                                .foregroundColor(.white.opacity(0.8))
                                 .fontWeight(.semibold)
                         }
-                        .font(.caption)
+                        .font(.system(size: 14))
+                        .foregroundColor(.white)
+                        Text("Tap to generate QR")
+                            .font(.system(size: 11))
+                            .foregroundColor(.white.opacity(0.35))
                     }
 
                     Spacer()
 
-                    VStack(alignment: .trailing, spacing: 6) {
-                        Text("\(currency.symbol)\(String(format: "%.2f", settlement.amount))")
-                            .font(.system(size: 18, weight: .heavy, design: .rounded))
-                            .foregroundColor(Color(red: 0.95, green: 0.37, blue: 0.54))
-
-                        HStack(spacing: 4) {
-                            Image(systemName: "qrcode")
-                                .font(.system(size: 10, weight: .bold))
-                            Text("PAY NOW")
-                                .font(.system(size: 10, weight: .bold))
-                        }
-                        .foregroundColor(Theme.secondaryAccent)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .background(Theme.primaryAccent.opacity(0.15))
-                        .clipShape(Capsule())
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .fill(Theme.primaryAccent.opacity(0.15))
+                            .frame(width: 36, height: 36)
+                        Image(systemName: "qrcode")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(Theme.primaryAccent)
                     }
                 }
-                .padding(20)
+                .padding(16)
             ),
-            cornerRadius: 24
+            cornerRadius: 20
         )
     }
 }
 
-// MARK: - Avatar Bubble
-
+// MARK: - Avatar Bubble (kept for compatibility)
 struct AvatarBubble: View {
     var name: String
     var color: Color
@@ -149,8 +167,7 @@ struct AvatarBubble: View {
     }
 }
 
-// MARK: - QR Code Payment View
-
+// MARK: - QR Payment View
 struct QRCodePaymentView: View {
     var settlement: Settlement
     var currency: Currency
@@ -164,66 +181,78 @@ struct QRCodePaymentView: View {
             VStack(spacing: 0) {
                 // Drag Handle
                 RoundedRectangle(cornerRadius: 3)
-                    .fill(Color.white.opacity(0.2))
-                    .frame(width: 40, height: 5)
+                    .fill(Color.white.opacity(0.18))
+                    .frame(width: 38, height: 5)
                     .padding(.top, 14)
 
                 HStack {
                     Spacer()
                     Button("Close") { presentationMode.wrappedValue.dismiss() }
-                        .foregroundColor(Theme.primaryAccent)
+                        .foregroundColor(Theme.secondaryAccent)
                         .font(.system(size: 16, weight: .semibold))
                 }
                 .padding(.horizontal, 24)
-                .padding(.top, 12)
+                .padding(.top, 14)
 
                 Spacer()
 
-                VStack(spacing: 12) {
+                // Amount display
+                VStack(spacing: 10) {
                     Text("SCAN TO PAY")
-                        .font(.caption.weight(.bold))
-                        .foregroundColor(.white.opacity(0.4))
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(.white.opacity(0.40))
                         .textCase(.uppercase)
+                        .tracking(1.5)
 
-                    Text(settlement.toUser.name)
-                        .font(.system(size: 32, weight: .heavy, design: .rounded))
-                        .foregroundColor(.white)
+                    HStack(spacing: 12) {
+                        GradientAvatar(name: settlement.fromUser.name, size: 36,
+                            gradient: LinearGradient(colors: [Theme.dangerColor, Theme.dangerColor.opacity(0.7)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                        Image(systemName: "arrow.right")
+                            .foregroundColor(.white.opacity(0.30))
+                        GradientAvatar(name: settlement.toUser.name, size: 36,
+                            gradient: LinearGradient(colors: [Theme.successColor, Theme.successColor.opacity(0.7)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                        Text(settlement.toUser.name)
+                            .font(.system(size: 22, weight: .heavy, design: .rounded))
+                            .foregroundColor(.white)
+                    }
 
                     Text("\(currency.symbol)\(String(format: "%.2f", settlement.amount))")
-                        .font(.system(size: 56, weight: .heavy, design: .rounded))
+                        .font(.system(size: 52, weight: .heavy, design: .rounded))
                         .foregroundColor(Theme.primaryAccent)
                 }
-                .padding(.bottom, 40)
+                .padding(.bottom, 32)
 
-                // QR Code Card
+                // QR Card
                 let payload = generator.generatePaymentPayload(
                     paymentID: settlement.toUser.paymentID ?? "Unknown",
                     amount: settlement.amount
                 )
 
                 ZStack {
-                    RoundedRectangle(cornerRadius: 32)
+                    RoundedRectangle(cornerRadius: 28, style: .continuous)
                         .fill(Color.white)
-                        .shadow(color: Theme.primaryAccent.opacity(0.4), radius: 40, x: 0, y: 20)
-                        .frame(width: 300, height: 300)
+                        .shadow(color: Theme.primaryAccent.opacity(0.45), radius: 40, x: 0, y: 18)
+                        .frame(width: 290, height: 290)
 
                     Image(uiImage: generator.generateQRCode(from: payload))
                         .interpolation(.none)
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 250, height: 250)
+                        .frame(width: 240, height: 240)
                 }
-                .padding(.bottom, 32)
+                .padding(.bottom, 28)
 
                 if let pid = settlement.toUser.paymentID {
                     Theme.applyGlassCard(
                         to: AnyView(
                             HStack(spacing: 8) {
                                 Image(systemName: "creditcard.fill")
+                                    .foregroundColor(Theme.secondaryAccent)
                                 Text("ID: \(pid)")
                                     .fontWeight(.medium)
+                                    .foregroundColor(.white.opacity(0.80))
                             }
-                            .foregroundColor(.white.opacity(0.8))
+                            .font(.system(size: 14))
                             .padding(.horizontal, 20)
                             .padding(.vertical, 12)
                         ),

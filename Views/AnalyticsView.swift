@@ -5,86 +5,114 @@ import Charts
 
 struct AnalyticsView: View {
     @EnvironmentObject var viewModel: GroupViewModel
-    
-    var categoryData: [(category: String, amount: Double)] {
+
+    var categoryData: [(category: String, amount: Double, icon: String, color: Color)] {
         var totals: [ExpenseCategory: Double] = [:]
-        
         for group in viewModel.groups {
             for expense in group.expenses {
                 totals[expense.category, default: 0.0] += expense.amount
             }
         }
-        
-        return totals.map { (category: $0.key.rawValue, amount: $0.value) }
-            .sorted { $0.amount > $1.amount }
-    }
-    
-    var overallBalance: Double {
-        let balances = viewModel.calculateGlobalBalances()
-        var net = 0.0
-        for (_, curBalances) in balances {
-            for (_, amount) in curBalances {
-                net += amount
+        return totals.map { key, val in
+            let color: Color
+            switch key {
+            case .food:          color = Color(red: 1.0, green: 0.65, blue: 0.15)
+            case .transport:     color = Theme.secondaryAccent
+            case .rent:          color = Theme.primaryAccent
+            case .entertainment: color = Theme.dangerColor
+            case .travel:        color = Theme.successColor
+            case .general:       color = Color.white.opacity(0.5)
             }
+            return (category: key.rawValue, amount: val, icon: key.iconName, color: color)
         }
-        return net
+        .sorted { $0.amount > $1.amount }
+    }
+
+    var totalSpent: Double {
+        viewModel.groups.flatMap { $0.expenses.map { $0.amount } }.reduce(0, +)
+    }
+
+    var overallBalance: Double {
+        viewModel.calculateGlobalBalances().values.flatMap { $0.values }.reduce(0, +)
+    }
+
+    var totalOwed: Double {
+        viewModel.calculateGlobalBalances().values.flatMap { $0.values }.filter { $0 < 0 }.reduce(0, +)
     }
 
     var body: some View {
         NavigationView {
             ZStack {
                 Theme.backgroundGradient.ignoresSafeArea()
-                
+
+                Circle()
+                    .fill(Theme.primaryAccent.opacity(0.09))
+                    .frame(width: 260, height: 260)
+                    .blur(radius: 80)
+                    .offset(x: -80, y: 40)
+                    .ignoresSafeArea()
+
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 24) {
+                        // Page title
                         Text("Analytics")
                             .font(.system(size: 30, weight: .heavy, design: .rounded))
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 24)
                             .padding(.top, 16)
-                        
-                        // Net Balance Card
-                        Theme.applyGlassCard(
+
+                        // 3-column stats row
+                        Theme.applyAccentCard(
                             to: AnyView(
-                                VStack(spacing: 8) {
-                                    Text("NET BALANCE")
-                                        .font(.caption.weight(.bold))
-                                        .foregroundColor(.white.opacity(0.5))
-                                        .textCase(.uppercase)
-                                    
-                                    let currencySymbol = viewModel.defaultCurrency.symbol
-                                    Text(overallBalance >= 0 ? "+\(currencySymbol)\(String(format: "%.2f", overallBalance))" : "-\(currencySymbol)\(String(format: "%.2f", abs(overallBalance)))")
-                                        .font(.system(size: 40, weight: .heavy, design: .rounded))
-                                        .foregroundColor(overallBalance >= 0 ? .green : Color(red: 0.95, green: 0.37, blue: 0.54))
-                                    
-                                    Text(overallBalance >= 0 ? "You are owed overall" : "You owe overall")
-                                        .font(.subheadline)
-                                        .foregroundColor(.white.opacity(0.6))
+                                HStack(spacing: 0) {
+                                    StatBadge(
+                                        icon: "banknote.fill",
+                                        label: "Total Spent",
+                                        value: "\(viewModel.defaultCurrency.symbol)\(String(format: "%.0f", totalSpent))",
+                                        color: Theme.secondaryAccent
+                                    )
+                                    Divider().frame(height: 44).background(Color.white.opacity(0.10))
+                                    StatBadge(
+                                        icon: "arrow.down.circle.fill",
+                                        label: "Owed to You",
+                                        value: "\(viewModel.defaultCurrency.symbol)\(String(format: "%.0f", overallBalance > 0 ? overallBalance : 0))",
+                                        color: Theme.successColor
+                                    )
+                                    Divider().frame(height: 44).background(Color.white.opacity(0.10))
+                                    StatBadge(
+                                        icon: "arrow.up.circle.fill",
+                                        label: "You Owe",
+                                        value: "\(viewModel.defaultCurrency.symbol)\(String(format: "%.0f", abs(totalOwed)))",
+                                        color: Theme.dangerColor
+                                    )
                                 }
-                                .padding(24)
-                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 20)
                             ),
                             cornerRadius: 24
                         )
                         .padding(.horizontal, 20)
-                        
-                        // Category Chart
+
+                        // Chart
                         if categoryData.isEmpty {
                             VStack(spacing: 16) {
-                                Image(systemName: "chart.pie.fill")
-                                    .font(.system(size: 48))
-                                    .foregroundColor(.white.opacity(0.2))
+                                ZStack {
+                                    Circle()
+                                        .fill(Theme.primaryAccent.opacity(0.08))
+                                        .frame(width: 100, height: 100)
+                                    Image(systemName: "chart.pie.fill")
+                                        .font(.system(size: 44))
+                                        .foregroundColor(Theme.primaryAccent.opacity(0.35))
+                                }
                                 Text("No spending data yet.")
-                                    .foregroundColor(.white.opacity(0.5))
+                                    .foregroundColor(.white.opacity(0.45))
+                                    .font(.subheadline)
                             }
-                            .padding(.top, 40)
+                            .padding(.top, 30)
                         } else {
                             if #available(iOS 16.0, *) {
-                                // iOS 16+ UI with Swift Charts
-                                iOS16ChartView(categoryData: categoryData)
+                                iOS16ChartView(categoryData: categoryData.map { ($0.category, $0.amount) })
                             } else {
-                                // Fallback UI for iOS 15
                                 iOS15ChartView(categoryData: categoryData)
                             }
                         }
@@ -97,45 +125,62 @@ struct AnalyticsView: View {
     }
 }
 
-// MARK: - iOS 15 Fallback View
+// MARK: - iOS 15 Custom Chart
 struct iOS15ChartView: View {
-    let categoryData: [(category: String, amount: Double)]
-    
+    let categoryData: [(category: String, amount: Double, icon: String, color: Color)]
+
     var body: some View {
         Theme.applyGlassCard(
             to: AnyView(
-                VStack(alignment: .leading, spacing: 24) {
-                    Text("Spending by Category (Legacy)")
-                        .font(.system(size: 18, weight: .bold))
+                VStack(alignment: .leading, spacing: 20) {
+                    Text("Spending by Category")
+                        .font(.system(size: 17, weight: .bold))
                         .foregroundColor(.white)
-                    
+
                     let maxAmount = categoryData.map { $0.amount }.max() ?? 1.0
-                    
-                    VStack(spacing: 16) {
+
+                    VStack(spacing: 14) {
                         ForEach(categoryData, id: \.category) { item in
                             HStack(spacing: 12) {
-                                Text(item.category)
-                                    .font(.system(size: 12, weight: .medium))
-                                    .foregroundColor(.white)
-                                    .frame(width: 80, alignment: .leading)
-                                
-                                GeometryReader { geometry in
-                                    let barWidth = CGFloat(item.amount / maxAmount) * geometry.size.width
-                                    RoundedRectangle(cornerRadius: 4)
-                                        .fill(Theme.primaryGradient)
-                                        .frame(width: max(barWidth, 4), height: 16)
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(item.color.opacity(0.15))
+                                        .frame(width: 32, height: 32)
+                                    Image(systemName: item.icon)
+                                        .font(.system(size: 13, weight: .semibold))
+                                        .foregroundColor(item.color)
                                 }
-                                .frame(height: 16)
-                                
+
+                                GeometryReader { geo in
+                                    ZStack(alignment: .leading) {
+                                        RoundedRectangle(cornerRadius: 4)
+                                            .fill(Color.white.opacity(0.06))
+                                            .frame(maxWidth: .infinity)
+                                            .frame(height: 12)
+                                        RoundedRectangle(cornerRadius: 4)
+                                            .fill(LinearGradient(
+                                                colors: [item.color, item.color.opacity(0.6)],
+                                                startPoint: .leading, endPoint: .trailing))
+                                            .frame(width: max(CGFloat(item.amount / maxAmount) * geo.size.width, 6))
+                                            .frame(height: 12)
+                                    }
+                                }
+                                .frame(height: 12)
+
                                 Text(String(format: "%.0f", item.amount))
-                                    .font(.caption)
-                                    .foregroundColor(.white.opacity(0.5))
-                                    .frame(width: 40, alignment: .trailing)
+                                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                                    .foregroundColor(.white.opacity(0.55))
+                                    .frame(width: 48, alignment: .trailing)
                             }
+
+                            Text(item.category)
+                                .font(.system(size: 11))
+                                .foregroundColor(.white.opacity(0.40))
+                                .padding(.leading, 44)
                         }
                     }
                 }
-                .padding(24)
+                .padding(22)
             ),
             cornerRadius: 24
         )
@@ -143,20 +188,20 @@ struct iOS15ChartView: View {
     }
 }
 
-// MARK: - iOS 16+ View
+// MARK: - iOS 16+ Chart
 @available(iOS 16.0, *)
 struct iOS16ChartView: View {
     let categoryData: [(category: String, amount: Double)]
-    
+
     var body: some View {
         #if canImport(Charts)
         Theme.applyGlassCard(
             to: AnyView(
-                VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: 18) {
                     Text("Spending by Category")
-                        .font(.system(size: 18, weight: .bold))
+                        .font(.system(size: 17, weight: .bold))
                         .foregroundColor(.white)
-                    
+
                     Chart {
                         ForEach(categoryData, id: \.category) { item in
                             BarMark(
@@ -164,14 +209,13 @@ struct iOS16ChartView: View {
                                 y: .value("Category", item.category)
                             )
                             .foregroundStyle(Theme.primaryGradient)
-                            .cornerRadius(4)
+                            .cornerRadius(5)
                         }
                     }
-                    .frame(height: 250)
+                    .frame(height: CGFloat(categoryData.count) * 46 + 20)
                     .chartXAxis {
                         AxisMarks(values: .automatic) {
-                            AxisValueLabel()
-                                .foregroundStyle(Color.white.opacity(0.5))
+                            AxisValueLabel().foregroundStyle(Color.white.opacity(0.45))
                         }
                     }
                     .chartYAxis {
@@ -182,7 +226,7 @@ struct iOS16ChartView: View {
                         }
                     }
                 }
-                .padding(24)
+                .padding(22)
             ),
             cornerRadius: 24
         )
