@@ -120,14 +120,16 @@ struct GroupDetailView: View {
                                 .foregroundColor(.white)
                         }
                     }
-                    Button(action: { showingSettings = true }) {
-                        ZStack {
-                            Circle()
-                                .fill(Color.white.opacity(0.12))
-                                .frame(width: 34, height: 34)
-                            Image(systemName: "gearshape.fill")
-                                .font(.system(size: 13))
-                                .foregroundColor(.white)
+                    if currentGroup.creatorID == viewModel.currentUser?.id {
+                        Button(action: { showingSettings = true }) {
+                            ZStack {
+                                Circle()
+                                    .fill(Color.white.opacity(0.12))
+                                    .frame(width: 34, height: 34)
+                                Image(systemName: "gearshape.fill")
+                                    .font(.system(size: 13))
+                                    .foregroundColor(.white)
+                            }
                         }
                     }
                 }

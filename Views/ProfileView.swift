@@ -124,8 +124,7 @@ struct ProfileView: View {
 
                     Button(action: {
                         withAnimation(.spring()) {
-                            viewModel.groups = []
-                            viewModel.setupMockData()
+                            viewModel.resetData()
                         }
                     }) {
                         Theme.applyGlassCard(

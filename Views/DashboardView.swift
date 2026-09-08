@@ -181,8 +181,11 @@ struct DashboardView: View {
 // MARK: - Group Card
 struct GroupCardView: View {
     var group: Group
+    @EnvironmentObject var viewModel: GroupViewModel
 
     var totalSpent: Double { group.expenses.reduce(0) { $0 + $1.amount } }
+
+    var isCreator: Bool { group.creatorID == viewModel.currentUser?.id }
 
     var accentColor: Color {
         let colors: [Color] = [
@@ -229,9 +232,19 @@ struct GroupCardView: View {
                         }
 
                         VStack(alignment: .leading, spacing: 5) {
-                            Text(group.name)
-                                .font(.system(size: 17, weight: .bold, design: .rounded))
-                                .foregroundColor(.white)
+                            HStack {
+                                Text(group.name)
+                                    .font(.system(size: 17, weight: .bold, design: .rounded))
+                                    .foregroundColor(.white)
+                                
+                                Text(isCreator ? "Creator" : "Member")
+                                    .font(.system(size: 9, weight: .bold))
+                                    .foregroundColor(isCreator ? Theme.secondaryAccent : .white.opacity(0.4))
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 3)
+                                    .background(isCreator ? Theme.secondaryAccent.opacity(0.15) : Color.white.opacity(0.1))
+                                    .clipShape(Capsule())
+                            }
 
                             // Member avatars row
                             HStack(spacing: -8) {

@@ -7,26 +7,31 @@ class GroupViewModel: ObservableObject {
     @Published var defaultCurrency: Currency = .thb
     
     init() {
-        setupMockData()
+        loadData()
     }
     
-    func setupMockData() {
-        let alice = User(name: "Alice", paymentID: "0812345678")
-        let bob = User(name: "Bob", paymentID: "0823456789")
-        let charlie = User(name: "Charlie", paymentID: "0834567890")
-        
-        let g1 = Group(name: "Weekend Trip", members: [currentUser!, alice, bob, charlie], currency: .thb)
-        groups.append(g1)
+    private func loadData() {
+        if let data = DatabaseManager.shared.load() {
+            self.groups = data.groups
+            self.currentUser = data.currentUser
+            self.defaultCurrency = data.defaultCurrency
+        }
+    }
+    
+    private func saveData() {
+        let data = AppData(groups: groups, currentUser: currentUser, defaultCurrency: defaultCurrency)
+        DatabaseManager.shared.save(appData: data)
+    }
+    
+    func resetData() {
+        groups = []
+        saveData()
     }
     
     func completeOnboarding(name: String, paymentID: String) {
         let newUser = User(name: name, paymentID: paymentID)
         currentUser = newUser
-        
-        // Add the current user to the mock group for demonstration
-        if !groups.isEmpty {
-            groups[0].members.append(newUser)
-        }
+        saveData()
     }
     
     func updateCurrentUser(name: String, paymentID: String) {
@@ -40,31 +45,36 @@ class GroupViewModel: ObservableObject {
                     groups[groupIndex].members[memberIndex] = updatedUser
                 }
             }
+            saveData()
         }
     }
     
     func addGroup(name: String) {
-        var newGroup = Group(name: name, currency: defaultCurrency)
         if let current = currentUser {
+            var newGroup = Group(name: name, currency: defaultCurrency, creatorID: current.id)
             newGroup.members.append(current)
+            groups.append(newGroup)
+            saveData()
         }
-        groups.append(newGroup)
     }
     
     func updateGroup(id: UUID, name: String, currency: Currency) {
         if let index = groups.firstIndex(where: { $0.id == id }) {
             groups[index].name = name
             groups[index].currency = currency
+            saveData()
         }
     }
     
     func deleteGroup(id: UUID) {
         groups.removeAll(where: { $0.id == id })
+        saveData()
     }
     
     func addMember(to group: Group, name: String, paymentID: String) {
         if let index = groups.firstIndex(where: { $0.id == group.id }) {
             groups[index].members.append(User(name: name, paymentID: paymentID.isEmpty ? nil : paymentID))
+            saveData()
         }
     }
     
@@ -72,6 +82,7 @@ class GroupViewModel: ObservableObject {
         if let index = groups.firstIndex(where: { $0.id == group.id }) {
             let expense = Expense(title: title, amount: amount, date: Date(), category: category, paidBy: paidBy, splitType: splitType, splitAmong: splitAmong, customShares: customShares)
             groups[index].expenses.append(expense)
+            saveData()
         }
     }
     
@@ -87,12 +98,14 @@ class GroupViewModel: ObservableObject {
             expense.splitAmong = splitAmong
             expense.customShares = customShares
             groups[groupIndex].expenses[expIndex] = expense
+            saveData()
         }
     }
     
     func deleteExpense(from group: Group, expenseId: UUID) {
         if let groupIndex = groups.firstIndex(where: { $0.id == group.id }) {
             groups[groupIndex].expenses.removeAll(where: { $0.id == expenseId })
+            saveData()
         }
     }
     
