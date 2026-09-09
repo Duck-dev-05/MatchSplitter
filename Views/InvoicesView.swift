@@ -138,8 +138,8 @@ struct InvoicesView: View {
             }
             .listStyle(PlainListStyle())
             .background(Color.clear)
+            }
         }
-        .background(Theme.background.ignoresSafeArea())
         .navigationTitle("Ledger")
     }
 }

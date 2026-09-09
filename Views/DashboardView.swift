@@ -185,8 +185,8 @@ struct DashboardView: View {
                 }
                 Button("Cancel", role: .cancel) { newGroupName = "" }
             }
+            .onAppear { withAnimation { appear = true } }
         }
-        .onAppear { withAnimation { appear = true } }
     }
 }
 
