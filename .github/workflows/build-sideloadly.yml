@@ -25,17 +25,19 @@ jobs:
           -scheme MatchSplitter \
           -sdk iphoneos \
           -configuration Release \
-          CODE_SIGN_IDENTITY="-" \
-          CODE_SIGNING_REQUIRED=YES \
-          CODE_SIGNING_ALLOWED=YES \
+          CODE_SIGN_IDENTITY="" \
+          CODE_SIGNING_REQUIRED=NO \
+          CODE_SIGNING_ALLOWED=NO \
           CONFIGURATION_BUILD_DIR="$(pwd)/build" \
           clean build
           
     - name: Package .ipa
       run: |
+        brew install ldid
         mkdir -p Payload
         cp -R build/MatchSplitter.app Payload/
-        zip -r MatchSplitter.ipa Payload -x "*.DS_Store"
+        ldid -S Payload/MatchSplitter.app
+        zip -qr MatchSplitter.ipa Payload -x "*.DS_Store" -x "*__MACOSX*"
         
     - name: Upload IPA Artifact
       uses: actions/upload-artifact@v4
