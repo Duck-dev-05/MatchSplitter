@@ -9,11 +9,10 @@ struct ProfileView: View {
         viewModel.groups.flatMap { $0.expenses }.count
     }
 
+    @State private var showingLogin = false
+
     var body: some View {
-        if viewModel.currentUser == nil {
-            LoginView()
-        } else {
-            ZStack {
+        ZStack {
                 Theme.backgroundGradient.ignoresSafeArea()
 
             Circle()
@@ -25,6 +24,25 @@ struct ProfileView: View {
 
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 24) {
+                    if viewModel.currentUser == nil {
+                        Theme.applyGlassCard(
+                            to: AnyView(
+                                HStack {
+                                    Image(systemName: "exclamationmark.circle.fill")
+                                        .foregroundColor(Color(red: 1.0, green: 0.65, blue: 0.15))
+                                    Text("Log in or register to save your data and manage your expenses.")
+                                        .font(.system(size: 14))
+                                        .foregroundColor(.white)
+                                    Spacer()
+                                }
+                                .padding(14)
+                            ),
+                            cornerRadius: 12
+                        )
+                        .padding(.horizontal, 20)
+                        .padding(.top, 20)
+                    }
+
                     // MARK: Avatar Hero
                     VStack(spacing: 16) {
                         ZStack {
@@ -61,18 +79,34 @@ struct ProfileView: View {
                             }
                         }
 
-                        Button(action: { showingEditProfile = true }) {
-                            HStack(spacing: 6) {
-                                Image(systemName: "pencil")
-                                Text("Edit Profile")
+                        if viewModel.currentUser == nil {
+                            Button(action: { showingLogin = true }) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "person.crop.circle.badge.plus")
+                                    Text("Log In / Register")
+                                }
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 22)
+                                .padding(.vertical, 10)
+                                .background(Theme.primaryAccent)
+                                .clipShape(Capsule())
+                                .shadow(color: Theme.primaryAccent.opacity(0.4), radius: 8, x: 0, y: 4)
                             }
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 22)
-                            .padding(.vertical, 10)
-                            .background(Color.white.opacity(0.12))
-                            .clipShape(Capsule())
-                            .overlay(Capsule().stroke(Color.white.opacity(0.12), lineWidth: 1))
+                        } else {
+                            Button(action: { showingEditProfile = true }) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "pencil")
+                                    Text("Edit Profile")
+                                }
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 22)
+                                .padding(.vertical, 10)
+                                .background(Color.white.opacity(0.12))
+                                .clipShape(Capsule())
+                                .overlay(Capsule().stroke(Color.white.opacity(0.12), lineWidth: 1))
+                            }
                         }
                     }
                     .padding(.bottom, 8)
@@ -137,31 +171,33 @@ struct ProfileView: View {
                         .padding(.bottom, 10)
 
                     VStack(spacing: 14) {
-                        Button(action: {
-                            withAnimation(.spring()) {
-                                viewModel.logout()
-                            }
-                        }) {
-                            Theme.applyGlassCard(
-                                to: AnyView(
-                                    HStack(spacing: 14) {
-                                        ZStack {
-                                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                                .fill(Color(red: 1.0, green: 0.65, blue: 0.15).opacity(0.15))
-                                                .frame(width: 40, height: 40)
-                                            Image(systemName: "rectangle.portrait.and.arrow.right")
-                                                .font(.system(size: 16, weight: .bold))
+                        if viewModel.currentUser != nil {
+                            Button(action: {
+                                withAnimation(.spring()) {
+                                    viewModel.logout()
+                                }
+                            }) {
+                                Theme.applyGlassCard(
+                                    to: AnyView(
+                                        HStack(spacing: 14) {
+                                            ZStack {
+                                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                                    .fill(Color(red: 1.0, green: 0.65, blue: 0.15).opacity(0.15))
+                                                    .frame(width: 40, height: 40)
+                                                Image(systemName: "rectangle.portrait.and.arrow.right")
+                                                    .font(.system(size: 16, weight: .bold))
+                                                    .foregroundColor(Color(red: 1.0, green: 0.65, blue: 0.15))
+                                            }
+                                            Text("Log Out")
+                                                .font(.system(size: 16, weight: .semibold))
                                                 .foregroundColor(Color(red: 1.0, green: 0.65, blue: 0.15))
+                                            Spacer()
                                         }
-                                        Text("Log Out")
-                                            .font(.system(size: 16, weight: .semibold))
-                                            .foregroundColor(Color(red: 1.0, green: 0.65, blue: 0.15))
-                                        Spacer()
-                                    }
-                                    .padding(18)
-                                ),
-                                cornerRadius: 22
-                            )
+                                        .padding(18)
+                                    ),
+                                    cornerRadius: 22
+                                )
+                            }
                         }
 
                         Button(action: {
@@ -202,6 +238,8 @@ struct ProfileView: View {
         .sheet(isPresented: $showingEditProfile) {
             EditProfileView()
         }
+        .sheet(isPresented: $showingLogin) {
+            LoginView()
         }
     }
 }

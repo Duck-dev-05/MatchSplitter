@@ -8,6 +8,7 @@ enum AuthMode {
 
 struct LoginView: View {
     @EnvironmentObject var viewModel: GroupViewModel
+    @Environment(\.presentationMode) var presentationMode
     
     @State private var mode: AuthMode = .login
     @State private var email = ""
@@ -36,6 +37,19 @@ struct LoginView: View {
                 }
             
             VStack(spacing: 30) {
+                HStack {
+                    Spacer()
+                    Button(action: {
+                        presentationMode.wrappedValue.dismiss()
+                    }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 24))
+                            .foregroundColor(.white.opacity(0.7))
+                    }
+                }
+                .padding(.horizontal, 25)
+                .padding(.top, 40) // Ensure it's not under the notch/dynamic island
+                
                 Spacer()
                 
                 // Logo/Header
@@ -261,6 +275,7 @@ struct LoginView: View {
     private func handleLogin() {
         if let user = viewModel.registeredUsers.first(where: { $0.email == email && $0.password == password }) {
             viewModel.login(user: user)
+            presentationMode.wrappedValue.dismiss()
         } else {
             errorMessage = "Invalid email or password."
         }
@@ -273,6 +288,7 @@ struct LoginView: View {
         
         let newUser = User(name: name, email: email, password: password, paymentID: finalID, paymentType: finalType)
         viewModel.register(user: newUser, defaultCurrency: currency)
+        presentationMode.wrappedValue.dismiss()
     }
     
     func placeholderFor(type: String) -> String {
