@@ -330,7 +330,7 @@ struct AddGroupSheet: View {
     @Environment(\.presentationMode) var presentationMode
 
     @State private var groupName: String = ""
-    @State private var selectedCurrency: Currency? = nil
+    @State private var selectedCurrency: Currency = .usd
 
     var body: some View {
         ZStack {
@@ -348,14 +348,14 @@ struct AddGroupSheet: View {
                         .foregroundColor(.white)
                     Spacer()
                     Button("Create") {
-                        if !groupName.isEmpty, let currency = selectedCurrency {
-                            viewModel.addGroup(name: groupName, currency: currency)
+                        if !groupName.isEmpty {
+                            viewModel.addGroup(name: groupName, currency: selectedCurrency)
                             presentationMode.wrappedValue.dismiss()
                         }
                     }
                     .font(.system(size: 16, weight: .bold))
-                    .foregroundColor((groupName.isEmpty || selectedCurrency == nil) ? Color.white.opacity(0.2) : Theme.secondaryAccent)
-                    .disabled(groupName.isEmpty || selectedCurrency == nil)
+                    .foregroundColor(groupName.isEmpty ? Color.white.opacity(0.2) : Theme.secondaryAccent)
+                    .disabled(groupName.isEmpty)
                 }
                 .padding(.horizontal, 24)
                 .padding(.vertical, 18)
@@ -398,12 +398,7 @@ struct AddGroupSheet: View {
                                             }
                                         } label: {
                                             HStack {
-                                                if let currency = selectedCurrency {
-                                                    Text("\(currency.rawValue) (\(currency.symbol))")
-                                                } else {
-                                                    Text("Select Currency")
-                                                        .foregroundColor(.white.opacity(0.6))
-                                                }
+                                                Text("\(selectedCurrency.rawValue) (\(selectedCurrency.symbol))")
                                                 Spacer()
                                                 Image(systemName: "chevron.up.chevron.down")
                                             }
@@ -425,7 +420,7 @@ struct AddGroupSheet: View {
             }
         }
         .onAppear {
-            // No default selection, force user to choose
+            selectedCurrency = viewModel.defaultCurrency
         }
     }
 }

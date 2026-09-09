@@ -10,7 +10,10 @@ struct ProfileView: View {
     }
 
     var body: some View {
-        ZStack {
+        if viewModel.currentUser == nil {
+            LoginView()
+        } else {
+            ZStack {
                 Theme.backgroundGradient.ignoresSafeArea()
 
             Circle()
@@ -170,6 +173,7 @@ struct ProfileView: View {
         .sheet(isPresented: $showingEditProfile) {
             EditProfileView()
         }
+        }
     }
 }
 
@@ -210,7 +214,7 @@ struct EditProfileView: View {
     @State private var name: String = ""
     @State private var paymentType: String = "None"
     @State private var paymentID: String = ""
-    @State private var defaultCurrency: Currency? = nil
+    @State private var defaultCurrency: Currency = .usd
     
     let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "None"]
 
@@ -233,9 +237,7 @@ struct EditProfileView: View {
                         let finalType = paymentType == "None" ? nil : paymentType
                         let finalID = paymentType == "None" ? "" : paymentID
                         viewModel.updateCurrentUser(name: name, paymentID: finalID, paymentType: finalType)
-                        if let currency = defaultCurrency {
-                            viewModel.defaultCurrency = currency
-                        }
+                        viewModel.defaultCurrency = defaultCurrency
                         presentationMode.wrappedValue.dismiss()
                     }
                     .font(.system(size: 16, weight: .bold))
@@ -298,12 +300,7 @@ struct EditProfileView: View {
                                             }
                                         } label: {
                                             HStack {
-                                                if let currency = defaultCurrency {
-                                                    Text("\(currency.rawValue) (\(currency.symbol))")
-                                                } else {
-                                                    Text("Select Currency")
-                                                        .foregroundColor(.white.opacity(0.6))
-                                                }
+                                                Text("\(defaultCurrency.rawValue) (\(defaultCurrency.symbol))")
                                                 Spacer()
                                                 Image(systemName: "chevron.up.chevron.down")
                                             }
