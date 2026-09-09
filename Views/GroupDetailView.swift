@@ -90,8 +90,7 @@ struct GroupDetailView: View {
                     ),
                     cornerRadius: 32
                 )
-                .ignoresSafeArea(edges: .top)
-                .padding(.top, -20) // extend under navigation bar
+                .padding(.top, 10)
 
                 // MARK: Expenses
                 SectionHeader(title: "Expenses")
