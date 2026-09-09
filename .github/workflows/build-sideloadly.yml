@@ -25,9 +25,9 @@ jobs:
           -scheme MatchSplitter \
           -sdk iphoneos \
           -configuration Release \
-          CODE_SIGN_IDENTITY="" \
-          CODE_SIGNING_REQUIRED=NO \
-          CODE_SIGNING_ALLOWED=NO \
+          CODE_SIGN_IDENTITY="-" \
+          CODE_SIGNING_REQUIRED=YES \
+          CODE_SIGNING_ALLOWED=YES \
           CONFIGURATION_BUILD_DIR="$(pwd)/build" \
           clean build
           
