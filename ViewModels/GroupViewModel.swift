@@ -16,6 +16,11 @@ class GroupViewModel: ObservableObject {
             self.currentUser = data.currentUser
             self.defaultCurrency = data.defaultCurrency
         }
+        
+        // Auto-login to bypass login screen for fast testing
+        if self.currentUser == nil {
+            self.completeOnboarding(name: "Test User", paymentID: "")
+        }
     }
     
     private func saveData() {
