@@ -330,7 +330,7 @@ struct AddGroupSheet: View {
     @Environment(\.presentationMode) var presentationMode
 
     @State private var groupName: String = ""
-    @State private var selectedCurrency: Currency = .usd
+    @State private var selectedCurrency: Currency? = nil
 
     var body: some View {
         ZStack {
@@ -348,14 +348,14 @@ struct AddGroupSheet: View {
                         .foregroundColor(.white)
                     Spacer()
                     Button("Create") {
-                        if !groupName.isEmpty {
-                            viewModel.addGroup(name: groupName, currency: selectedCurrency)
+                        if !groupName.isEmpty, let currency = selectedCurrency {
+                            viewModel.addGroup(name: groupName, currency: currency)
                             presentationMode.wrappedValue.dismiss()
                         }
                     }
                     .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(groupName.isEmpty ? Color.white.opacity(0.2) : Theme.secondaryAccent)
-                    .disabled(groupName.isEmpty)
+                    .foregroundColor((groupName.isEmpty || selectedCurrency == nil) ? Color.white.opacity(0.2) : Theme.secondaryAccent)
+                    .disabled(groupName.isEmpty || selectedCurrency == nil)
                 }
                 .padding(.horizontal, 24)
                 .padding(.vertical, 18)
@@ -392,13 +392,25 @@ struct AddGroupSheet: View {
                                                 .font(.system(size: 15, weight: .semibold))
                                                 .foregroundColor(Color(red: 1.0, green: 0.65, blue: 0.15))
                                         }
-                                        Picker("Currency", selection: $selectedCurrency) {
+                                        Menu {
                                             ForEach(Currency.allCases, id: \.self) { c in
-                                                Text("\(c.rawValue) (\(c.symbol))").tag(c)
+                                                Button("\(c.rawValue) (\(c.symbol))") { selectedCurrency = c }
                                             }
+                                        } label: {
+                                            HStack {
+                                                if let currency = selectedCurrency {
+                                                    Text("\(currency.rawValue) (\(currency.symbol))")
+                                                } else {
+                                                    Text("Select Currency")
+                                                        .foregroundColor(.white.opacity(0.6))
+                                                }
+                                                Spacer()
+                                                Image(systemName: "chevron.up.chevron.down")
+                                            }
+                                            .padding()
+                                            .background(Color.white.opacity(0.0))
+                                            .foregroundColor(.white)
                                         }
-                                        .pickerStyle(MenuPickerStyle())
-                                        .accentColor(.white)
                                         Spacer()
                                     }
                                     .padding(.horizontal, 18)
@@ -413,7 +425,7 @@ struct AddGroupSheet: View {
             }
         }
         .onAppear {
-            selectedCurrency = viewModel.defaultCurrency
+            // No default selection, force user to choose
         }
     }
 }

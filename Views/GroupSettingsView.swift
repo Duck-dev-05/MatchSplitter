@@ -6,7 +6,7 @@ struct GroupSettingsView: View {
     @Environment(\.presentationMode) var presentationMode
     
     @State private var groupName: String
-    @State private var selectedCurrency: Currency
+    @State private var selectedCurrency: Currency?
     @State private var showingDeleteConfirm = false
     
     init(group: Group) {
@@ -37,12 +37,14 @@ struct GroupSettingsView: View {
                     Spacer()
 
                     Button("Save") {
-                        viewModel.updateGroup(id: group.id, name: groupName, currency: selectedCurrency)
+                        if let currency = selectedCurrency {
+                            viewModel.updateGroup(id: group.id, name: groupName, currency: currency)
+                        }
                         presentationMode.wrappedValue.dismiss()
                     }
                     .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(groupName.isEmpty ? Color.white.opacity(0.2) : Theme.primaryAccent)
-                    .disabled(groupName.isEmpty)
+                    .foregroundColor((groupName.isEmpty || selectedCurrency == nil) ? Color.white.opacity(0.2) : Theme.primaryAccent)
+                    .disabled(groupName.isEmpty || selectedCurrency == nil)
                 }
                 .padding(.horizontal, 24)
                 .padding(.vertical, 16)
@@ -82,13 +84,25 @@ struct GroupSettingsView: View {
                                                 .font(.system(size: 16, weight: .bold))
                                                 .foregroundColor(Theme.secondaryAccent)
                                         }
-                                        Picker("Currency", selection: $selectedCurrency) {
+                                        Menu {
                                             ForEach(Currency.allCases, id: \.self) { currency in
-                                                Text("\(currency.rawValue) (\(currency.symbol))").tag(currency)
+                                                Button("\(currency.rawValue) (\(currency.symbol))") { selectedCurrency = currency }
                                             }
+                                        } label: {
+                                            HStack {
+                                                if let currency = selectedCurrency {
+                                                    Text("\(currency.rawValue) (\(currency.symbol))")
+                                                } else {
+                                                    Text("Select Currency")
+                                                        .foregroundColor(.white.opacity(0.6))
+                                                }
+                                                Spacer()
+                                                Image(systemName: "chevron.up.chevron.down")
+                                            }
+                                            .padding()
+                                            .background(Color.white.opacity(0.0))
+                                            .foregroundColor(.white)
                                         }
-                                        .pickerStyle(MenuPickerStyle())
-                                        .accentColor(.white)
                                         Spacer()
                                     }
                                     .padding(20)

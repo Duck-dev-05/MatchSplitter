@@ -25,6 +25,10 @@ class GroupViewModel: ObservableObject {
     
     func resetData() {
         groups = []
+        currentUser = nil
+        // Reset defaultCurrency is not strictly necessary since the user will pick one in onboarding,
+        // but it's good practice to clear it.
+        // However, if we don't know the exact starting value, .usd is fine.
         saveData()
     }
     

@@ -6,7 +6,7 @@ struct LoginView: View {
     @State private var paymentID: String = ""
     @State private var paymentType: String = "None"
     @State private var currentStep: Int = 1
-    @State private var selectedCurrency: Currency = .usd
+    @State private var selectedCurrency: Currency? = nil
     @State private var isAnimating: Bool = false
     
     let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "None"]
@@ -115,7 +115,12 @@ struct LoginView: View {
                                 }
                             } label: {
                                 HStack {
-                                    Text("\(selectedCurrency.rawValue) (\(selectedCurrency.symbol))")
+                                    if let currency = selectedCurrency {
+                                        Text("\(currency.rawValue) (\(currency.symbol))")
+                                    } else {
+                                        Text("Select Currency")
+                                            .foregroundColor(.white.opacity(0.6))
+                                    }
                                     Spacer()
                                     Image(systemName: "chevron.up.chevron.down")
                                 }
@@ -127,9 +132,10 @@ struct LoginView: View {
                         }
                         
                         Button(action: {
+                            guard let currency = selectedCurrency else { return }
                             let finalType = paymentType == "None" ? nil : paymentType
                             let finalID = paymentType == "None" ? "" : paymentID
-                            viewModel.completeOnboarding(name: name, paymentID: finalID, paymentType: finalType, defaultCurrency: selectedCurrency)
+                            viewModel.completeOnboarding(name: name, paymentID: finalID, paymentType: finalType, defaultCurrency: currency)
                         }) {
                             Text("Finish & Get Started")
                                 .font(.headline)
@@ -141,8 +147,8 @@ struct LoginView: View {
                                 .shadow(radius: 5)
                         }
                         .padding(.top, 10)
-                        .disabled(paymentType != "None" && paymentID.isEmpty)
-                        .opacity((paymentType != "None" && paymentID.isEmpty) ? 0.6 : 1.0)
+                        .disabled((paymentType != "None" && paymentID.isEmpty) || selectedCurrency == nil)
+                        .opacity(((paymentType != "None" && paymentID.isEmpty) || selectedCurrency == nil) ? 0.6 : 1.0)
                         
                         Button(action: {
                             withAnimation { currentStep = 1 }

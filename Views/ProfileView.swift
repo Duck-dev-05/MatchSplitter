@@ -10,10 +10,7 @@ struct ProfileView: View {
     }
 
     var body: some View {
-        if viewModel.currentUser == nil {
-            LoginView()
-        } else {
-            ZStack {
+        ZStack {
                 Theme.backgroundGradient.ignoresSafeArea()
 
             Circle()
@@ -173,7 +170,6 @@ struct ProfileView: View {
         .sheet(isPresented: $showingEditProfile) {
             EditProfileView()
         }
-        }
     }
 }
 
@@ -214,7 +210,7 @@ struct EditProfileView: View {
     @State private var name: String = ""
     @State private var paymentType: String = "None"
     @State private var paymentID: String = ""
-    @State private var defaultCurrency: Currency = .thb
+    @State private var defaultCurrency: Currency? = nil
     
     let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "None"]
 
@@ -237,7 +233,9 @@ struct EditProfileView: View {
                         let finalType = paymentType == "None" ? nil : paymentType
                         let finalID = paymentType == "None" ? "" : paymentID
                         viewModel.updateCurrentUser(name: name, paymentID: finalID, paymentType: finalType)
-                        viewModel.defaultCurrency = defaultCurrency
+                        if let currency = defaultCurrency {
+                            viewModel.defaultCurrency = currency
+                        }
                         presentationMode.wrappedValue.dismiss()
                     }
                     .font(.system(size: 16, weight: .bold))
@@ -294,13 +292,25 @@ struct EditProfileView: View {
                                                 .font(.system(size: 15, weight: .semibold))
                                                 .foregroundColor(Color(red: 1.0, green: 0.65, blue: 0.15))
                                         }
-                                        Picker("Currency", selection: $defaultCurrency) {
+                                        Menu {
                                             ForEach(Currency.allCases, id: \.self) { c in
-                                                Text("\(c.rawValue) (\(c.symbol))").tag(c)
+                                                Button("\(c.rawValue) (\(c.symbol))") { defaultCurrency = c }
                                             }
+                                        } label: {
+                                            HStack {
+                                                if let currency = defaultCurrency {
+                                                    Text("\(currency.rawValue) (\(currency.symbol))")
+                                                } else {
+                                                    Text("Select Currency")
+                                                        .foregroundColor(.white.opacity(0.6))
+                                                }
+                                                Spacer()
+                                                Image(systemName: "chevron.up.chevron.down")
+                                            }
+                                            .padding()
+                                            .background(Color.white.opacity(0.0))
+                                            .foregroundColor(.white)
                                         }
-                                        .pickerStyle(MenuPickerStyle())
-                                        .accentColor(.white)
                                         Spacer()
                                     }
                                     .padding(.horizontal, 18)
