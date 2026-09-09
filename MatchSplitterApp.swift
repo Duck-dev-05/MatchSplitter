@@ -6,15 +6,9 @@ struct MatchSplitterApp: App {
 
     var body: some Scene {
         WindowGroup {
-            if groupViewModel.currentUser == nil {
-                LoginView()
-                    .environmentObject(groupViewModel)
-                    .preferredColorScheme(.dark)
-            } else {
-                MainTabView()
-                    .environmentObject(groupViewModel)
-                    .preferredColorScheme(.dark)
-            }
+            MainTabView()
+                .environmentObject(groupViewModel)
+                .preferredColorScheme(.dark)
         }
     }
 }

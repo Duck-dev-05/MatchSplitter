@@ -28,15 +28,15 @@ class GroupViewModel: ObservableObject {
         saveData()
     }
     
-    func completeOnboarding(name: String, paymentID: String) {
-        let newUser = User(name: name, paymentID: paymentID)
+    func completeOnboarding(name: String, paymentID: String, paymentType: String? = nil) {
+        let newUser = User(name: name, paymentID: paymentID, paymentType: paymentType)
         currentUser = newUser
         saveData()
     }
     
-    func updateCurrentUser(name: String, paymentID: String) {
+    func updateCurrentUser(name: String, paymentID: String, paymentType: String? = nil) {
         if let current = currentUser {
-            let updatedUser = User(id: current.id, name: name, paymentID: paymentID.isEmpty ? nil : paymentID)
+            let updatedUser = User(id: current.id, name: name, paymentID: paymentID.isEmpty ? nil : paymentID, paymentType: paymentType)
             currentUser = updatedUser
             
             // Also update this user's name across all groups they belong to
@@ -71,9 +71,9 @@ class GroupViewModel: ObservableObject {
         saveData()
     }
     
-    func addMember(to group: Group, name: String, paymentID: String) {
+    func addMember(to group: Group, name: String, paymentID: String, paymentType: String? = nil) {
         if let index = groups.firstIndex(where: { $0.id == group.id }) {
-            groups[index].members.append(User(name: name, paymentID: paymentID.isEmpty ? nil : paymentID))
+            groups[index].members.append(User(name: name, paymentID: paymentID.isEmpty ? nil : paymentID, paymentType: paymentType))
             saveData()
         }
     }

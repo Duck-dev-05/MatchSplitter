@@ -4,10 +4,12 @@ struct User: Identifiable, Codable, Hashable {
     var id: UUID
     var name: String
     var paymentID: String? // e.g., phone number for PromptPay/PayNow
+    var paymentType: String? // e.g., PromptPay, Bank Transfer, PayPal
 
-    init(id: UUID = UUID(), name: String, paymentID: String? = nil) {
+    init(id: UUID = UUID(), name: String, paymentID: String? = nil, paymentType: String? = nil) {
         self.id = id
         self.name = name
         self.paymentID = paymentID
+        self.paymentType = paymentType
     }
 }

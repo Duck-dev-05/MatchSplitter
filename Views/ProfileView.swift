@@ -10,8 +10,11 @@ struct ProfileView: View {
     }
 
     var body: some View {
-        ZStack {
-            Theme.backgroundGradient.ignoresSafeArea()
+        if viewModel.currentUser == nil {
+            LoginView()
+        } else {
+            ZStack {
+                Theme.backgroundGradient.ignoresSafeArea()
 
             Circle()
                 .fill(Theme.primaryAccent.opacity(0.10))
@@ -46,8 +49,13 @@ struct ProfileView: View {
                                 HStack(spacing: 5) {
                                     Image(systemName: "creditcard.fill")
                                         .font(.system(size: 11))
-                                    Text(pid)
-                                        .font(.system(size: 13))
+                                    if let ptype = viewModel.currentUser?.paymentType, ptype != "None" {
+                                        Text("\(ptype): \(pid)")
+                                            .font(.system(size: 13))
+                                    } else {
+                                        Text(pid)
+                                            .font(.system(size: 13))
+                                    }
                                 }
                                 .foregroundColor(.white.opacity(0.45))
                             }
@@ -109,7 +117,13 @@ struct ProfileView: View {
                             VStack(spacing: 0) {
                                 ProfileSettingRow(icon: "person.fill", iconColor: Theme.primaryAccent, label: "Name", value: viewModel.currentUser?.name ?? "Unknown")
                                 Divider().background(Color.white.opacity(0.07))
-                                ProfileSettingRow(icon: "creditcard.fill", iconColor: Theme.secondaryAccent, label: "Payment ID", value: viewModel.currentUser?.paymentID ?? "Not set")
+                                ProfileSettingRow(icon: "creditcard.fill", iconColor: Theme.secondaryAccent, label: "Payment Method", value: {
+                                    if let type = viewModel.currentUser?.paymentType, type != "None" {
+                                        let id = viewModel.currentUser?.paymentID ?? ""
+                                        return "\(type) \(id.isEmpty ? "" : "- \(id)")"
+                                    }
+                                    return viewModel.currentUser?.paymentID ?? "Not set"
+                                }())
                                 Divider().background(Color.white.opacity(0.07))
                                 ProfileSettingRow(icon: "banknote.fill", iconColor: Color(red: 1.0, green: 0.65, blue: 0.15), label: "Default Currency", value: "\(viewModel.defaultCurrency.rawValue) (\(viewModel.defaultCurrency.symbol))")
                             }
@@ -159,6 +173,7 @@ struct ProfileView: View {
         .sheet(isPresented: $showingEditProfile) {
             EditProfileView()
         }
+        }
     }
 }
 
@@ -197,8 +212,11 @@ struct EditProfileView: View {
     @Environment(\.presentationMode) var presentationMode
 
     @State private var name: String = ""
+    @State private var paymentType: String = "None"
     @State private var paymentID: String = ""
     @State private var defaultCurrency: Currency = .thb
+    
+    let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "None"]
 
     var body: some View {
         ZStack {
@@ -216,7 +234,9 @@ struct EditProfileView: View {
                         .foregroundColor(.white)
                     Spacer()
                     Button("Save") {
-                        viewModel.updateCurrentUser(name: name, paymentID: paymentID)
+                        let finalType = paymentType == "None" ? nil : paymentType
+                        let finalID = paymentType == "None" ? "" : paymentID
+                        viewModel.updateCurrentUser(name: name, paymentID: finalID, paymentType: finalType)
                         viewModel.defaultCurrency = defaultCurrency
                         presentationMode.wrappedValue.dismiss()
                     }
@@ -234,8 +254,37 @@ struct EditProfileView: View {
                                 VStack(spacing: 0) {
                                     EditFieldRow(icon: "person.fill", iconColor: Theme.primaryAccent, placeholder: "Your Name", text: $name)
                                     Divider().background(Color.white.opacity(0.07))
-                                    EditFieldRow(icon: "creditcard.fill", iconColor: Theme.secondaryAccent, placeholder: "Payment ID / Phone", text: $paymentID)
+                                    
+                                    HStack(spacing: 14) {
+                                        ZStack {
+                                            RoundedRectangle(cornerRadius: 10)
+                                                .fill(Theme.secondaryAccent.opacity(0.15))
+                                                .frame(width: 38, height: 38)
+                                            Image(systemName: "building.columns.fill")
+                                                .font(.system(size: 15, weight: .semibold))
+                                                .foregroundColor(Theme.secondaryAccent)
+                                        }
+                                        Menu {
+                                            ForEach(paymentTypes, id: \.self) { type in
+                                                Button(type) { paymentType = type }
+                                            }
+                                        } label: {
+                                            HStack {
+                                                Text(paymentType)
+                                                Spacer()
+                                                Image(systemName: "chevron.up.chevron.down")
+                                            }
+                                        }
+                                        .accentColor(.white)
+                                    }
+                                    .padding(.horizontal, 18)
+                                    .padding(.vertical, 14)
                                     Divider().background(Color.white.opacity(0.07))
+                                    
+                                    if paymentType != "None" {
+                                        EditFieldRow(icon: "creditcard.fill", iconColor: Theme.secondaryAccent, placeholder: "Payment Details / ID", text: $paymentID)
+                                        Divider().background(Color.white.opacity(0.07))
+                                    }
                                     HStack(spacing: 14) {
                                         ZStack {
                                             RoundedRectangle(cornerRadius: 10)
@@ -267,6 +316,7 @@ struct EditProfileView: View {
         }
         .onAppear {
             name = viewModel.currentUser?.name ?? ""
+            paymentType = viewModel.currentUser?.paymentType ?? "None"
             paymentID = viewModel.currentUser?.paymentID ?? ""
             defaultCurrency = viewModel.defaultCurrency
         }
