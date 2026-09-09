@@ -35,8 +35,7 @@ jobs:
       run: |
         mkdir -p Payload
         cp -R build/MatchSplitter.app Payload/
-        codesign --force --deep --sign - Payload/MatchSplitter.app
-        zip -r MatchSplitter.ipa Payload
+        zip -r MatchSplitter.ipa Payload -x "*.DS_Store"
         
     - name: Upload IPA Artifact
       uses: actions/upload-artifact@v4
