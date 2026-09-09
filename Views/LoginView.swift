@@ -9,7 +9,7 @@ struct LoginView: View {
     var body: some View {
         ZStack {
             // Animated Background
-            LinearGradient(gradient: Gradient(colors: [Theme.accent, Theme.neon, Theme.glass]),
+            LinearGradient(gradient: Gradient(colors: [Theme.primaryAccent, Theme.secondaryAccent, Theme.backgroundEnd]),
                            startPoint: isAnimating ? .topLeading : .bottomTrailing,
                            endPoint: isAnimating ? .bottomTrailing : .topLeading)
                 .ignoresSafeArea()
@@ -69,7 +69,7 @@ struct LoginView: View {
                     }) {
                         Text("Get Started")
                             .font(.headline)
-                            .foregroundColor(Theme.accent)
+                            .foregroundColor(Theme.primaryAccent)
                             .frame(maxWidth: .infinity)
                             .padding()
                             .background(Color.white)

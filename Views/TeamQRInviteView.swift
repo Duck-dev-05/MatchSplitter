@@ -23,8 +23,8 @@ struct TeamQRInviteView: View {
             
             ZStack {
                 RoundedRectangle(cornerRadius: 30)
-                    .fill(Theme.surfaceCard)
-                    .shadow(color: Theme.accent.opacity(0.3), radius: 20)
+                    .fill(Theme.cardBackground)
+                    .shadow(color: Theme.primaryAccent.opacity(0.3), radius: 20)
                 
                 Image(uiImage: qrGenerator.generateQRCode(from: invitePayload))
                     .interpolation(.none)
@@ -40,7 +40,7 @@ struct TeamQRInviteView: View {
             
             Spacer()
         }
-        .background(Theme.background.ignoresSafeArea())
+        .background(Theme.backgroundGradient.ignoresSafeArea())
         .navigationTitle("Team Invite")
         .navigationBarTitleDisplayMode(.inline)
     }
