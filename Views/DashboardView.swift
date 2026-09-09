@@ -5,6 +5,7 @@ struct DashboardView: View {
     @State private var showingAddGroup = false
     @State private var newGroupName = ""
     @State private var appear = false
+    @State private var showLoginAlert = false
 
     var totalGroups: Int { viewModel.groups.count }
 
@@ -156,7 +157,13 @@ struct DashboardView: View {
                     Spacer()
                     HStack {
                         Spacer()
-                        Button(action: { showingAddGroup = true }) {
+                        Button(action: {
+                            if viewModel.currentUser == nil {
+                                showLoginAlert = true
+                            } else {
+                                showingAddGroup = true
+                            }
+                        }) {
                             ZStack {
                                 Circle()
                                     .fill(Theme.primaryGradient)
@@ -175,6 +182,11 @@ struct DashboardView: View {
             .navigationBarHidden(true)
             .sheet(isPresented: $showingAddGroup) {
                 AddGroupSheet()
+            }
+            .alert("Account Required", isPresented: $showLoginAlert) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text("Please go to the Profile tab to Login or Register before creating groups.")
             }
             .onAppear { withAnimation { appear = true } }
         }

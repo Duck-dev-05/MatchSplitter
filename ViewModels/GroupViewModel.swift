@@ -4,7 +4,7 @@ import SwiftUI
 class GroupViewModel: ObservableObject {
     @Published var groups: [Group] = []
     @Published var currentUser: User? = nil
-    @Published var defaultCurrency: Currency = .thb
+    @Published var defaultCurrency: Currency = .usd
     
     init() {
         loadData()

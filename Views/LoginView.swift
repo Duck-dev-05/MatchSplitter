@@ -40,7 +40,7 @@ struct LoginView: View {
                 
                 // Glassmorphic Card
                 VStack(spacing: 20) {
-                    Text(currentStep == 1 ? "Welcome" : "Setup Payment")
+                    Text(currentStep == 1 ? "Login / Register" : "Setup Payment")
                         .font(.title2)
                         .fontWeight(.bold)
                         .foregroundColor(.white)
