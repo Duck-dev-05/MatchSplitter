@@ -12,6 +12,7 @@ targets:
       - Views
       - ViewModels
       - Services
+      - Assets.xcassets
     info:
       path: Info.plist
       properties:
