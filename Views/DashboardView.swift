@@ -173,17 +173,8 @@ struct DashboardView: View {
                 }
             }
             .navigationBarHidden(true)
-            .alert("New Group", isPresented: $showingAddGroup) {
-                TextField("Group Name", text: $newGroupName)
-                Button("Create") {
-                    if !newGroupName.isEmpty {
-                        withAnimation(.spring()) {
-                            viewModel.addGroup(name: newGroupName)
-                            newGroupName = ""
-                        }
-                    }
-                }
-                Button("Cancel", role: .cancel) { newGroupName = "" }
+            .sheet(isPresented: $showingAddGroup) {
+                AddGroupSheet()
             }
             .onAppear { withAnimation { appear = true } }
         }
@@ -329,6 +320,100 @@ struct EmptyGroupsView: View {
                 .font(.subheadline)
                 .foregroundColor(.white.opacity(0.40))
                 .multilineTextAlignment(.center)
+        }
+    }
+}
+
+// MARK: - Add Group Sheet
+struct AddGroupSheet: View {
+    @EnvironmentObject var viewModel: GroupViewModel
+    @Environment(\.presentationMode) var presentationMode
+
+    @State private var groupName: String = ""
+    @State private var selectedCurrency: Currency = .usd
+
+    var body: some View {
+        ZStack {
+            Theme.backgroundGradient.ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                // Header
+                HStack {
+                    Button("Cancel") { presentationMode.wrappedValue.dismiss() }
+                        .foregroundColor(.white.opacity(0.55))
+                        .font(.system(size: 16))
+                    Spacer()
+                    Text("New Group")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.white)
+                    Spacer()
+                    Button("Create") {
+                        if !groupName.isEmpty {
+                            viewModel.addGroup(name: groupName, currency: selectedCurrency)
+                            presentationMode.wrappedValue.dismiss()
+                        }
+                    }
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(groupName.isEmpty ? Color.white.opacity(0.2) : Theme.secondaryAccent)
+                    .disabled(groupName.isEmpty)
+                }
+                .padding(.horizontal, 24)
+                .padding(.vertical, 18)
+
+                ScrollView {
+                    VStack(spacing: 20) {
+                        Theme.applyGlassCard(
+                            to: AnyView(
+                                VStack(spacing: 0) {
+                                    HStack(spacing: 14) {
+                                        ZStack {
+                                            RoundedRectangle(cornerRadius: 10)
+                                                .fill(Theme.primaryAccent.opacity(0.15))
+                                                .frame(width: 38, height: 38)
+                                            Image(systemName: "person.3.fill")
+                                                .font(.system(size: 15, weight: .semibold))
+                                                .foregroundColor(Theme.primaryAccent)
+                                        }
+                                        TextField("Group Name", text: $groupName)
+                                            .font(.system(size: 15))
+                                            .foregroundColor(.white)
+                                    }
+                                    .padding(.horizontal, 18)
+                                    .padding(.vertical, 14)
+                                    
+                                    Divider().background(Color.white.opacity(0.07))
+                                    
+                                    HStack(spacing: 14) {
+                                        ZStack {
+                                            RoundedRectangle(cornerRadius: 10)
+                                                .fill(Color(red: 1.0, green: 0.65, blue: 0.15).opacity(0.15))
+                                                .frame(width: 38, height: 38)
+                                            Image(systemName: "banknote.fill")
+                                                .font(.system(size: 15, weight: .semibold))
+                                                .foregroundColor(Color(red: 1.0, green: 0.65, blue: 0.15))
+                                        }
+                                        Picker("Currency", selection: $selectedCurrency) {
+                                            ForEach(Currency.allCases, id: \.self) { c in
+                                                Text("\(c.rawValue) (\(c.symbol))").tag(c)
+                                            }
+                                        }
+                                        .pickerStyle(MenuPickerStyle())
+                                        .accentColor(.white)
+                                        Spacer()
+                                    }
+                                    .padding(.horizontal, 18)
+                                    .padding(.vertical, 14)
+                                }
+                            ),
+                            cornerRadius: 22
+                        )
+                    }
+                    .padding(20)
+                }
+            }
+        }
+        .onAppear {
+            selectedCurrency = viewModel.defaultCurrency
         }
     }
 }

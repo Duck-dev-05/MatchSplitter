@@ -6,6 +6,7 @@ struct LoginView: View {
     @State private var paymentID: String = ""
     @State private var paymentType: String = "None"
     @State private var currentStep: Int = 1
+    @State private var selectedCurrency: Currency = .usd
     @State private var isAnimating: Bool = false
     
     let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "None"]
@@ -103,12 +104,32 @@ struct LoginView: View {
                                     .cornerRadius(10)
                                     .foregroundColor(.white)
                             }
+                            
+                            Text("Default Currency")
+                                .foregroundColor(.white.opacity(0.8))
+                                .font(.caption)
+                            
+                            Menu {
+                                ForEach(Currency.allCases, id: \.self) { c in
+                                    Button("\(c.rawValue) (\(c.symbol))") { selectedCurrency = c }
+                                }
+                            } label: {
+                                HStack {
+                                    Text("\(selectedCurrency.rawValue) (\(selectedCurrency.symbol))")
+                                    Spacer()
+                                    Image(systemName: "chevron.up.chevron.down")
+                                }
+                                .padding()
+                                .background(Color.white.opacity(0.2))
+                                .cornerRadius(10)
+                                .foregroundColor(.white)
+                            }
                         }
                         
                         Button(action: {
                             let finalType = paymentType == "None" ? nil : paymentType
                             let finalID = paymentType == "None" ? "" : paymentID
-                            viewModel.completeOnboarding(name: name, paymentID: finalID, paymentType: finalType)
+                            viewModel.completeOnboarding(name: name, paymentID: finalID, paymentType: finalType, defaultCurrency: selectedCurrency)
                         }) {
                             Text("Finish & Get Started")
                                 .font(.headline)

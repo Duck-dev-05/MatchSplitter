@@ -28,9 +28,10 @@ class GroupViewModel: ObservableObject {
         saveData()
     }
     
-    func completeOnboarding(name: String, paymentID: String, paymentType: String? = nil) {
+    func completeOnboarding(name: String, paymentID: String, paymentType: String? = nil, defaultCurrency: Currency) {
         let newUser = User(name: name, paymentID: paymentID, paymentType: paymentType)
         currentUser = newUser
+        self.defaultCurrency = defaultCurrency
         saveData()
     }
     
@@ -49,9 +50,9 @@ class GroupViewModel: ObservableObject {
         }
     }
     
-    func addGroup(name: String) {
+    func addGroup(name: String, currency: Currency? = nil) {
         if let current = currentUser {
-            var newGroup = Group(name: name, currency: defaultCurrency, creatorID: current.id)
+            var newGroup = Group(name: name, currency: currency ?? defaultCurrency, creatorID: current.id)
             newGroup.members.append(current)
             groups.append(newGroup)
             saveData()
