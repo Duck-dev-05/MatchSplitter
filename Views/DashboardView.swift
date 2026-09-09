@@ -13,9 +13,21 @@ struct DashboardView: View {
         return balances.values.flatMap { $0.values }.reduce(0, +)
     }
 
+    @ViewBuilder
     var body: some View {
-        NavigationView {
-            ZStack {
+        if #available(iOS 16.0, *) {
+            NavigationStack {
+                dashboardContent
+            }
+        } else {
+            NavigationView {
+                dashboardContent
+            }
+        }
+    }
+
+    var dashboardContent: some View {
+        ZStack {
                 Theme.backgroundGradient.ignoresSafeArea()
 
                 // Background glow blobs

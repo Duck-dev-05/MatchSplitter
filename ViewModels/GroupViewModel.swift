@@ -3,7 +3,7 @@ import SwiftUI
 
 class GroupViewModel: ObservableObject {
     @Published var groups: [Group] = []
-    @Published var currentUser: User? = User(name: "You", paymentID: "0800000000")
+    @Published var currentUser: User? = nil
     @Published var defaultCurrency: Currency = .thb
     
     init() {
@@ -109,6 +109,14 @@ class GroupViewModel: ObservableObject {
         }
     }
     
+    func addPayment(to group: Group, fromUser: User, toUser: User, amount: Double, date: Date = Date()) {
+        if let groupIndex = groups.firstIndex(where: { $0.id == group.id }) {
+            let payment = Payment(fromUser: fromUser, toUser: toUser, amount: amount, date: date)
+            groups[groupIndex].payments.append(payment)
+            saveData()
+        }
+    }
+    
     func calculateSettlements(for group: Group) -> [Settlement] {
         var balances: [UUID: Double] = [:]
         
@@ -129,6 +137,12 @@ class GroupViewModel: ObservableObject {
                     balances[share.user.id, default: 0.0] -= share.exactAmount
                 }
             }
+        }
+        
+        // Deduct payments
+        for payment in group.payments {
+            balances[payment.fromUser.id, default: 0.0] += payment.amount
+            balances[payment.toUser.id, default: 0.0] -= payment.amount
         }
         
         var debtors = balances.filter { $0.value < -0.01 }.sorted(by: { $0.value < $1.value })
@@ -184,5 +198,33 @@ class GroupViewModel: ObservableObject {
             }
         }
         return globalBalances
+    }
+    
+    func exportDataToCSV(group: Group) -> URL? {
+        var csvString = "Type,Date,Title,Paid By,Amount\n"
+        
+        let formatter = DateFormatter()
+        formatter.dateStyle = .short
+        
+        for expense in group.expenses {
+            let dateStr = formatter.string(from: expense.date)
+            csvString.append("Expense,\(dateStr),\(expense.title),\(expense.paidBy.name),\(expense.amount)\n")
+        }
+        
+        for payment in group.payments {
+            let dateStr = formatter.string(from: payment.date)
+            csvString.append("Payment,\(dateStr),Payment to \(payment.toUser.name),\(payment.fromUser.name),\(payment.amount)\n")
+        }
+        
+        let fileName = "\(group.name)_Export.csv"
+        let path = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
+        
+        do {
+            try csvString.write(to: path, atomically: true, encoding: .utf8)
+            return path
+        } catch {
+            print("Failed to create CSV: \(error.localizedDescription)")
+            return nil
+        }
     }
 }

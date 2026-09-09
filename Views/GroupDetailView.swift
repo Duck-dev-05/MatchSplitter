@@ -70,6 +70,18 @@ struct GroupDetailView: View {
                                     .background(Color.white.opacity(0.12))
                                     .clipShape(Capsule())
                                 }
+
+                                // Leaderboard
+                                NavigationLink(destination: LeaderboardView(group: currentGroup)) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(Color.white.opacity(0.12))
+                                            .frame(width: 40, height: 40)
+                                        Image(systemName: "trophy.fill")
+                                            .font(.system(size: 14, weight: .bold))
+                                            .foregroundColor(.yellow)
+                                    }
+                                }
                             }
                             .padding(.top, 4)
                         }
@@ -137,12 +149,15 @@ struct GroupDetailView: View {
         }
         .sheet(isPresented: $showingAddExpense) {
             AddExpenseView(group: currentGroup)
+                .halfSheetIfAvailable()
         }
         .sheet(isPresented: $showingSettlements) {
             SettlementView(group: currentGroup)
+                .halfSheetIfAvailable()
         }
         .sheet(isPresented: $showingSettings) {
             GroupSettingsView(group: currentGroup)
+                .halfSheetIfAvailable()
         }
     }
 }

@@ -164,3 +164,15 @@ struct SectionHeader: View {
         .padding(.horizontal, 24)
     }
 }
+
+// MARK: - View Extensions
+extension View {
+    @ViewBuilder
+    func halfSheetIfAvailable() -> some View {
+        if #available(iOS 16.0, *) {
+            self.presentationDetents([.medium, .large])
+        } else {
+            self
+        }
+    }
+}

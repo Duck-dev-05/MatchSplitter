@@ -26,10 +26,13 @@ struct GroupMembersView: View {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 16) {
                     ForEach(Array(currentGroup.members.enumerated()), id: \.element.id) { (index, member) in
-                        MemberRowView(
-                            member: member,
-                            color: avatarColors[index % avatarColors.count]
-                        )
+                        NavigationLink(destination: InvoicesView(group: currentGroup, user: member)) {
+                            MemberRowView(
+                                member: member,
+                                color: avatarColors[index % avatarColors.count]
+                            )
+                        }
+                        .buttonStyle(PlainButtonStyle())
                     }
                 }
                 .padding(24)
@@ -39,25 +42,40 @@ struct GroupMembersView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: { showingAddMember = true }) {
-                    ZStack {
-                        Circle()
-                            .fill(Color.white.opacity(0.12))
-                            .frame(width: 32, height: 32)
-                        Image(systemName: "person.badge.plus")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(.white)
+                HStack(spacing: 16) {
+                    NavigationLink(destination: TeamQRInviteView(group: currentGroup)) {
+                        ZStack {
+                            Circle()
+                                .fill(Color.white.opacity(0.12))
+                                .frame(width: 32, height: 32)
+                            Image(systemName: "qrcode")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(.white)
+                        }
+                    }
+                    Button(action: { showingAddMember = true }) {
+                        ZStack {
+                            Circle()
+                                .fill(Color.white.opacity(0.12))
+                                .frame(width: 32, height: 32)
+                            Image(systemName: "person.badge.plus")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(.white)
+                        }
                     }
                 }
             }
         }
-        .alert("Add Member", isPresented: $showingAddMember) {
-            TextField("Name", text: $newName)
+        .alert("Add Member(s)", isPresented: $showingAddMember) {
+            TextField("Name (comma separated for multiple)", text: $newName)
             TextField("Payment ID (Optional)", text: $newPaymentID)
             Button("Add") {
                 if !newName.isEmpty {
                     withAnimation(.spring()) {
-                        viewModel.addMember(to: currentGroup, name: newName, paymentID: newPaymentID)
+                        let names = newName.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
+                        for name in names {
+                            viewModel.addMember(to: currentGroup, name: name, paymentID: names.count == 1 ? newPaymentID : "")
+                        }
                     }
                     newName = ""
                     newPaymentID = ""

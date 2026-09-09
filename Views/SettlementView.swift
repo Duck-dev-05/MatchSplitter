@@ -79,6 +79,7 @@ struct SettlementView: View {
         }
         .sheet(item: $selectedSettlement) { settlement in
             QRCodePaymentView(settlement: settlement, currency: group.currency)
+                .halfSheetIfAvailable()
         }
     }
 }
@@ -186,6 +187,13 @@ struct QRCodePaymentView: View {
                     .padding(.top, 14)
 
                 HStack {
+                    if #available(iOS 16.0, *) {
+                        Button(action: shareReceipt) {
+                            Image(systemName: "square.and.arrow.up")
+                                .foregroundColor(Theme.secondaryAccent)
+                                .font(.system(size: 20))
+                        }
+                    }
                     Spacer()
                     Button("Close") { presentationMode.wrappedValue.dismiss() }
                         .foregroundColor(Theme.secondaryAccent)
@@ -260,6 +268,46 @@ struct QRCodePaymentView: View {
                 }
 
                 Spacer()
+            }
+        }
+    }
+    
+    @available(iOS 16.0, *)
+    @MainActor
+    private func shareReceipt() {
+        let receiptView = VStack(spacing: 20) {
+            Text("MatchSplitter Receipt")
+                .font(.title)
+                .bold()
+                .foregroundColor(Theme.primaryAccent)
+            Text("\(settlement.fromUser.name) owes \(settlement.toUser.name)")
+                .font(.headline)
+                .foregroundColor(.white)
+            Text("\(currency.symbol)\(String(format: "%.2f", settlement.amount))")
+                .font(.system(size: 40, weight: .heavy))
+                .foregroundColor(.white)
+            
+            Image(uiImage: generator.generateQRCode(from: generator.generatePaymentPayload(paymentID: settlement.toUser.paymentID ?? "", amount: settlement.amount)))
+                .interpolation(.none)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 200, height: 200)
+                .padding()
+                .background(Color.white)
+                .cornerRadius(10)
+        }
+        .padding(40)
+        .background(Theme.backgroundGradient)
+        
+        let renderer = ImageRenderer(content: receiptView)
+        renderer.scale = UIScreen.main.scale
+        
+        if let uiImage = renderer.uiImage {
+            let activityVC = UIActivityViewController(activityItems: [uiImage], applicationActivities: nil)
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let window = windowScene.windows.first,
+               let rootVC = window.rootViewController {
+                rootVC.present(activityVC, animated: true, completion: nil)
             }
         }
     }
