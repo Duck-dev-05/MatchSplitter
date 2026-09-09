@@ -46,8 +46,3 @@ struct TeamQRInviteView: View {
     }
 }
 
-struct TeamQRInviteView_Previews: PreviewProvider {
-    static var previews: some View {
-        TeamQRInviteView(group: Group(name: "Sunday Football", creatorID: UUID()))
-    }
-}

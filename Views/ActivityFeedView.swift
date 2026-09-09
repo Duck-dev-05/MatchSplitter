@@ -3,9 +3,7 @@ import SwiftUI
 struct ActivityFeedView: View {
     @EnvironmentObject var viewModel: GroupViewModel
     
-    // In a real app, this would be a computed property gathering 
-    // activities from all groups, sorted by date.
-    // For this mock, we'll just extract the expenses.
+    // Extract expenses from all groups, sorted by date.
     var activities: [(group: Group, expense: Expense)] {
         var all: [(Group, Expense)] = []
         for group in viewModel.groups {

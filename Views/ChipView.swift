@@ -14,11 +14,3 @@ struct ChipView: View {
     }
 }
 
-struct ChipView_Previews: PreviewProvider {
-    static var previews: some View {
-        ChipView(text: "Category")
-            .previewLayout(.sizeThatFits)
-            .padding()
-            .previewDisplayName("Light Theme Pill")
-    }
-}
