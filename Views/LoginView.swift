@@ -1,13 +1,25 @@
 import SwiftUI
 
+enum AuthMode {
+    case login
+    case registerStep1
+    case registerStep2
+}
+
 struct LoginView: View {
     @EnvironmentObject var viewModel: GroupViewModel
+    
+    @State private var mode: AuthMode = .login
+    @State private var email = ""
+    @State private var password = ""
+    
     @State private var name: String = ""
     @State private var paymentID: String = ""
     @State private var paymentType: String = "None"
-    @State private var currentStep: Int = 1
     @State private var selectedCurrency: Currency? = nil
+    
     @State private var isAnimating: Bool = false
+    @State private var errorMessage: String = ""
     
     let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "None"]
     
@@ -40,17 +52,88 @@ struct LoginView: View {
                 
                 // Glassmorphic Card
                 VStack(spacing: 20) {
-                    Text(currentStep == 1 ? "Login / Register" : "Setup Payment")
+                    Text(mode == .login ? "Login" : (mode == .registerStep1 ? "Register" : "Setup Payment"))
                         .font(.title2)
                         .fontWeight(.bold)
                         .foregroundColor(.white)
                     
-                    if currentStep == 1 {
-                        VStack(alignment: .leading) {
-                            Text("Your Name")
-                                .foregroundColor(.white.opacity(0.8))
-                                .font(.caption)
-                            TextField("Enter your name", text: $name)
+                    // Auth Segmented Control
+                    if mode != .registerStep2 {
+                        HStack {
+                            Button("Login") { mode = .login; errorMessage = "" }
+                                .padding(.vertical, 8)
+                                .frame(maxWidth: .infinity)
+                                .background(mode == .login ? Color.white.opacity(0.2) : Color.clear)
+                                .cornerRadius(10)
+                                .foregroundColor(mode == .login ? .white : .white.opacity(0.5))
+                            
+                            Button("Register") { mode = .registerStep1; errorMessage = "" }
+                                .padding(.vertical, 8)
+                                .frame(maxWidth: .infinity)
+                                .background(mode == .registerStep1 ? Color.white.opacity(0.2) : Color.clear)
+                                .cornerRadius(10)
+                                .foregroundColor(mode == .registerStep1 ? .white : .white.opacity(0.5))
+                        }
+                        .background(Color.white.opacity(0.1))
+                        .cornerRadius(12)
+                        .padding(.bottom, 10)
+                    }
+                    
+                    if !errorMessage.isEmpty {
+                        Text(errorMessage)
+                            .font(.caption)
+                            .foregroundColor(Theme.dangerColor)
+                            .padding(.bottom, 5)
+                    }
+                    
+                    if mode == .login {
+                        VStack(alignment: .leading, spacing: 15) {
+                            TextField("Email", text: $email)
+                                .keyboardType(.emailAddress)
+                                .autocapitalization(.none)
+                                .padding()
+                                .background(Color.white.opacity(0.2))
+                                .cornerRadius(10)
+                                .foregroundColor(.white)
+                            
+                            SecureField("Password", text: $password)
+                                .padding()
+                                .background(Color.white.opacity(0.2))
+                                .cornerRadius(10)
+                                .foregroundColor(.white)
+                        }
+                        
+                        Button(action: handleLogin) {
+                            Text("Login")
+                                .font(.headline)
+                                .foregroundColor(Theme.primaryAccent)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color.white)
+                                .cornerRadius(15)
+                                .shadow(radius: 5)
+                        }
+                        .padding(.top, 10)
+                        .disabled(email.isEmpty || password.isEmpty)
+                        .opacity(email.isEmpty || password.isEmpty ? 0.6 : 1.0)
+                        
+                    } else if mode == .registerStep1 {
+                        VStack(alignment: .leading, spacing: 15) {
+                            TextField("Your Name", text: $name)
+                                .padding()
+                                .background(Color.white.opacity(0.2))
+                                .cornerRadius(10)
+                                .foregroundColor(.white)
+                                
+                            TextField("Email", text: $email)
+                                .keyboardType(.emailAddress)
+                                .autocapitalization(.none)
+                                .padding()
+                                .background(Color.white.opacity(0.2))
+                                .cornerRadius(10)
+                                .foregroundColor(.white)
+                            
+                            SecureField("Password", text: $password)
                                 .padding()
                                 .background(Color.white.opacity(0.2))
                                 .cornerRadius(10)
@@ -58,7 +141,12 @@ struct LoginView: View {
                         }
                         
                         Button(action: {
-                            withAnimation { currentStep = 2 }
+                            if viewModel.registeredUsers.contains(where: { $0.email == email }) {
+                                errorMessage = "Email already in use."
+                            } else {
+                                errorMessage = ""
+                                withAnimation { mode = .registerStep2 }
+                            }
                         }) {
                             Text("Next")
                                 .font(.headline)
@@ -70,9 +158,10 @@ struct LoginView: View {
                                 .shadow(radius: 5)
                         }
                         .padding(.top, 10)
-                        .disabled(name.isEmpty)
-                        .opacity(name.isEmpty ? 0.6 : 1.0)
-                    } else {
+                        .disabled(name.isEmpty || email.isEmpty || password.isEmpty)
+                        .opacity(name.isEmpty || email.isEmpty || password.isEmpty ? 0.6 : 1.0)
+                        
+                    } else if mode == .registerStep2 {
                         VStack(alignment: .leading, spacing: 15) {
                             Text("Payment Type")
                                 .foregroundColor(.white.opacity(0.8))
@@ -131,13 +220,8 @@ struct LoginView: View {
                             }
                         }
                         
-                        Button(action: {
-                            guard let currency = selectedCurrency else { return }
-                            let finalType = paymentType == "None" ? nil : paymentType
-                            let finalID = paymentType == "None" ? "" : paymentID
-                            viewModel.completeOnboarding(name: name, paymentID: finalID, paymentType: finalType, defaultCurrency: currency)
-                        }) {
-                            Text("Finish & Get Started")
+                        Button(action: handleRegister) {
+                            Text("Finish & Register")
                                 .font(.headline)
                                 .foregroundColor(Theme.primaryAccent)
                                 .frame(maxWidth: .infinity)
@@ -151,7 +235,7 @@ struct LoginView: View {
                         .opacity(((paymentType != "None" && paymentID.isEmpty) || selectedCurrency == nil) ? 0.6 : 1.0)
                         
                         Button(action: {
-                            withAnimation { currentStep = 1 }
+                            withAnimation { mode = .registerStep1 }
                         }) {
                             Text("Back")
                                 .font(.subheadline)
@@ -172,6 +256,23 @@ struct LoginView: View {
                 Spacer()
             }
         }
+    }
+    
+    private func handleLogin() {
+        if let user = viewModel.registeredUsers.first(where: { $0.email == email && $0.password == password }) {
+            viewModel.login(user: user)
+        } else {
+            errorMessage = "Invalid email or password."
+        }
+    }
+    
+    private func handleRegister() {
+        guard let currency = selectedCurrency else { return }
+        let finalType = paymentType == "None" ? nil : paymentType
+        let finalID = paymentType == "None" ? "" : paymentID
+        
+        let newUser = User(name: name, email: email, password: password, paymentID: finalID, paymentType: finalType)
+        viewModel.register(user: newUser, defaultCurrency: currency)
     }
     
     func placeholderFor(type: String) -> String {

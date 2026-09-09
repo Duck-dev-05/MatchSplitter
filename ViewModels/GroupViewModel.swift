@@ -4,6 +4,7 @@ import SwiftUI
 class GroupViewModel: ObservableObject {
     @Published var groups: [Group] = []
     @Published var currentUser: User? = nil
+    @Published var registeredUsers: [User] = []
     @Published var defaultCurrency: Currency = .usd
     
     init() {
@@ -14,28 +15,40 @@ class GroupViewModel: ObservableObject {
         if let data = DatabaseManager.shared.load() {
             self.groups = data.groups
             self.currentUser = data.currentUser
+            self.registeredUsers = data.registeredUsers ?? []
             self.defaultCurrency = data.defaultCurrency
         }
     }
     
     private func saveData() {
-        let data = AppData(groups: groups, currentUser: currentUser, defaultCurrency: defaultCurrency)
+        let data = AppData(groups: groups, currentUser: currentUser, registeredUsers: registeredUsers, defaultCurrency: defaultCurrency)
         DatabaseManager.shared.save(appData: data)
     }
     
     func resetData() {
         groups = []
         currentUser = nil
+        registeredUsers = []
         // Reset defaultCurrency is not strictly necessary since the user will pick one in onboarding,
         // but it's good practice to clear it.
         // However, if we don't know the exact starting value, .usd is fine.
         saveData()
     }
     
-    func completeOnboarding(name: String, paymentID: String, paymentType: String? = nil, defaultCurrency: Currency) {
-        let newUser = User(name: name, paymentID: paymentID, paymentType: paymentType)
-        currentUser = newUser
+    func register(user: User, defaultCurrency: Currency) {
+        currentUser = user
+        registeredUsers.append(user)
         self.defaultCurrency = defaultCurrency
+        saveData()
+    }
+    
+    func login(user: User) {
+        currentUser = user
+        saveData()
+    }
+    
+    func logout() {
+        currentUser = nil
         saveData()
     }
     

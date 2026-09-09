@@ -136,31 +136,60 @@ struct ProfileView: View {
                     SectionHeader(title: "Danger Zone")
                         .padding(.bottom, 10)
 
-                    Button(action: {
-                        withAnimation(.spring()) {
-                            viewModel.resetData()
-                        }
-                    }) {
-                        Theme.applyGlassCard(
-                            to: AnyView(
-                                HStack(spacing: 14) {
-                                    ZStack {
-                                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                            .fill(Theme.dangerColor.opacity(0.15))
-                                            .frame(width: 40, height: 40)
-                                        Image(systemName: "arrow.counterclockwise")
-                                            .font(.system(size: 16, weight: .bold))
-                                            .foregroundColor(Theme.dangerColor)
+                    VStack(spacing: 14) {
+                        Button(action: {
+                            withAnimation(.spring()) {
+                                viewModel.logout()
+                            }
+                        }) {
+                            Theme.applyGlassCard(
+                                to: AnyView(
+                                    HStack(spacing: 14) {
+                                        ZStack {
+                                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                                .fill(Color(red: 1.0, green: 0.65, blue: 0.15).opacity(0.15))
+                                                .frame(width: 40, height: 40)
+                                            Image(systemName: "rectangle.portrait.and.arrow.right")
+                                                .font(.system(size: 16, weight: .bold))
+                                                .foregroundColor(Color(red: 1.0, green: 0.65, blue: 0.15))
+                                        }
+                                        Text("Log Out")
+                                            .font(.system(size: 16, weight: .semibold))
+                                            .foregroundColor(Color(red: 1.0, green: 0.65, blue: 0.15))
+                                        Spacer()
                                     }
-                                    Text("Reset App Data")
-                                        .font(.system(size: 16, weight: .semibold))
-                                        .foregroundColor(Theme.dangerColor)
-                                    Spacer()
-                                }
-                                .padding(18)
-                            ),
-                            cornerRadius: 22
-                        )
+                                    .padding(18)
+                                ),
+                                cornerRadius: 22
+                            )
+                        }
+
+                        Button(action: {
+                            withAnimation(.spring()) {
+                                viewModel.resetData()
+                            }
+                        }) {
+                            Theme.applyGlassCard(
+                                to: AnyView(
+                                    HStack(spacing: 14) {
+                                        ZStack {
+                                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                                .fill(Theme.dangerColor.opacity(0.15))
+                                                .frame(width: 40, height: 40)
+                                            Image(systemName: "arrow.counterclockwise")
+                                                .font(.system(size: 16, weight: .bold))
+                                                .foregroundColor(Theme.dangerColor)
+                                        }
+                                        Text("Reset App Data")
+                                            .font(.system(size: 16, weight: .semibold))
+                                            .foregroundColor(Theme.dangerColor)
+                                        Spacer()
+                                    }
+                                    .padding(18)
+                                ),
+                                cornerRadius: 22
+                            )
+                        }
                     }
                     .padding(.horizontal, 20)
                     .padding(.bottom, 40)

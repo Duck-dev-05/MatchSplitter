@@ -3,6 +3,7 @@ import Foundation
 struct AppData: Codable {
     var groups: [Group]
     var currentUser: User?
+    var registeredUsers: [User]?
     var defaultCurrency: Currency
 }
 
