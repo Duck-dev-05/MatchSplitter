@@ -188,7 +188,6 @@ struct DashboardView: View {
             .onAppear { withAnimation { appear = true } }
         }
     }
-}
 
 // MARK: - Group Card
 struct GroupCardView: View {
