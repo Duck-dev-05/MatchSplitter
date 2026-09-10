@@ -220,7 +220,7 @@ struct ProfileView: View {
                 }
             }
         }
-        .navigationTitle("Profile")
+        .navigationTitle(viewModel.currentUser == nil ? "Login" : "Profile")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             pulse = true

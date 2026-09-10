@@ -1,4 +1,6 @@
 import SwiftUI
+import GoogleSignIn
+import GoogleSignInSwift
 
 enum AuthMode {
     case login
@@ -193,6 +195,8 @@ struct LoginView: View {
 
             GradientButton(label: "Login", isEnabled: isStepValid, action: handleLogin)
                 .padding(.top, 6)
+            
+            googleSignInSection
         }
     }
 
@@ -212,6 +216,8 @@ struct LoginView: View {
                 }
             }
             .padding(.top, 6)
+            
+            googleSignInSection
         }
     }
 
@@ -334,6 +340,49 @@ struct LoginView: View {
             presentationMode.wrappedValue.dismiss()
         } else {
             errorMessage = "Invalid email or password."
+        }
+    }
+    
+    private var googleSignInSection: some View {
+        VStack(spacing: 16) {
+            HStack {
+                VStack { Divider().background(Color.white.opacity(0.3)) }
+                Text("OR")
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.6))
+                    .padding(.horizontal, 8)
+                VStack { Divider().background(Color.white.opacity(0.3)) }
+            }
+            .padding(.top, 8)
+
+            GoogleSignInButton(action: handleGoogleSignIn)
+                .frame(height: 50)
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        }
+    }
+    
+    private func getRootViewController() -> UIViewController? {
+        guard let screen = UIApplication.shared.connectedScenes.first as? UIWindowScene else { return nil }
+        return screen.windows.first?.rootViewController
+    }
+
+    private func handleGoogleSignIn() {
+        guard let rootViewController = getRootViewController() else { return }
+        
+        GIDSignIn.sharedInstance.signIn(withPresenting: rootViewController) { signInResult, error in
+            guard error == nil else {
+                self.errorMessage = error?.localizedDescription ?? "Google Sign-In failed."
+                return
+            }
+            
+            guard let user = signInResult?.user,
+                  let profile = user.profile else { return }
+            
+            let name = profile.name
+            let email = profile.email
+            
+            viewModel.loginOrRegisterWithGoogle(name: name, email: email)
+            presentationMode.wrappedValue.dismiss()
         }
     }
 

@@ -52,6 +52,16 @@ class GroupViewModel: ObservableObject {
         saveData()
     }
     
+    func loginOrRegisterWithGoogle(name: String, email: String) {
+        if let existingUser = registeredUsers.first(where: { $0.email == email }) {
+            login(user: existingUser)
+        } else {
+            let newUser = User(name: name, email: email, password: "GoogleSignInUser", paymentID: nil, paymentType: nil)
+            register(user: newUser, defaultCurrency: .usd) // Using default USD for new Google Sign-in users
+            login(user: newUser)
+        }
+    }
+    
     func updateCurrentUser(name: String, paymentID: String, paymentType: String? = nil) {
         if let current = currentUser {
             let updatedUser = User(id: current.id, name: name, paymentID: paymentID.isEmpty ? nil : paymentID, paymentType: paymentType)

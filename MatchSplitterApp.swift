@@ -1,4 +1,5 @@
 import SwiftUI
+import GoogleSignIn
 
 @main
 struct MatchSplitterApp: App {
@@ -9,6 +10,9 @@ struct MatchSplitterApp: App {
             MainTabView()
                 .environmentObject(groupViewModel)
                 .preferredColorScheme(.dark)
+                .onOpenURL { url in
+                    GIDSignIn.sharedInstance.handle(url)
+                }
         }
     }
 }
@@ -71,7 +75,7 @@ struct MainTabView: View {
                 
             NavigationView { ProfileView() }
                 .tabItem {
-                    Label("Profile", systemImage: selectedTab == 4 ? "person.crop.circle.fill" : "person.crop.circle")
+                    Label(groupViewModel.currentUser == nil ? "Login" : "Profile", systemImage: selectedTab == 4 ? "person.crop.circle.fill" : "person.crop.circle")
                 }
                 .tag(4)
         }

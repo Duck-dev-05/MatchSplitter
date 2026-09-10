@@ -5,6 +5,9 @@ packages:
   EFQRCode:
     url: https://github.com/EFPrefix/EFQRCode.git
     from: 6.2.2
+  GoogleSignIn:
+    url: https://github.com/google/GoogleSignIn-iOS.git
+    from: 7.0.0
 targets:
   MatchSplitter:
     type: application
@@ -19,7 +22,12 @@ targets:
       - Assets.xcassets
     dependencies:
       - package: EFQRCode
+      - package: GoogleSignIn
     info:
       path: Info.plist
       properties:
         UILaunchScreen: {}
+        GIDClientID: 186631252201-k3dg32m7s5i0jqerp66880hvenb48c2o.apps.googleusercontent.com
+        CFBundleURLTypes:
+          - CFBundleURLSchemes:
+              - com.googleusercontent.apps.186631252201-k3dg32m7s5i0jqerp66880hvenb48c2o
