@@ -234,7 +234,12 @@ struct ProfileView: View {
         }
         .navigationTitle("Profile")
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear { pulse = true }
+        .onAppear { 
+            pulse = true 
+            if viewModel.currentUser == nil {
+                showingLogin = true
+            }
+        }
         .sheet(isPresented: $showingEditProfile) {
             EditProfileView()
         }
