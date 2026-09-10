@@ -32,7 +32,7 @@ struct GroupMembersView: View {
                                 color: avatarColors[index % avatarColors.count]
                             )
                         }
-                        .buttonStyle(PlainButtonStyle())
+                        .buttonStyle(PressableButtonStyle())
                     }
                 }
                 .padding(24)
@@ -91,49 +91,43 @@ struct MemberRowView: View {
     var color: Color
 
     var body: some View {
-        Theme.applyGlassCard(
-            to: AnyView(
-                HStack(spacing: 16) {
-                    ZStack {
-                        Circle()
-                            .fill(
-                                LinearGradient(
-                                    colors: [color, color.opacity(0.6)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .frame(width: 50, height: 50)
-                            .shadow(color: color.opacity(0.4), radius: 10, x: 0, y: 5)
-                        Text(member.name.prefix(1).uppercased())
-                            .font(.system(size: 20, weight: .bold, design: .rounded))
-                            .foregroundColor(.white)
-                    }
+        HStack(spacing: 16) {
+            GradientAvatar(
+                name: member.name,
+                size: 50,
+                gradient: LinearGradient(
+                    colors: [color, color.opacity(0.6)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
 
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(member.name)
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(.white)
-                        if let pid = member.paymentID, !pid.isEmpty {
-                            HStack(spacing: 6) {
-                                Image(systemName: "creditcard.fill")
-                                    .font(.system(size: 12))
-                                Text(pid)
-                                    .font(.subheadline)
-                            }
-                            .foregroundColor(.white.opacity(0.5))
-                        } else {
-                            Text("No payment ID")
-                                .font(.subheadline)
-                                .foregroundColor(.white.opacity(0.3))
-                        }
+            VStack(alignment: .leading, spacing: 4) {
+                Text(member.name)
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.white)
+                if let pid = member.paymentID, !pid.isEmpty {
+                    HStack(spacing: 6) {
+                        Image(systemName: "creditcard.fill")
+                            .font(.system(size: 12))
+                        Text(pid)
+                            .font(.subheadline)
                     }
-
-                    Spacer()
+                    .foregroundColor(.white.opacity(0.5))
+                } else {
+                    Text("No payment ID")
+                        .font(.subheadline)
+                        .foregroundColor(.white.opacity(0.3))
                 }
-                .padding(16)
-            ),
-            cornerRadius: 20
-        )
+            }
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundColor(.white.opacity(0.22))
+        }
+        .padding(16)
+        .glassCard(cornerRadius: 20)
     }
 }

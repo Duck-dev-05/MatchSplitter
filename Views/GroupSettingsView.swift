@@ -4,11 +4,11 @@ struct GroupSettingsView: View {
     var group: Group
     @EnvironmentObject var viewModel: GroupViewModel
     @Environment(\.presentationMode) var presentationMode
-    
+
     @State private var groupName: String
     @State private var selectedCurrency: Currency
     @State private var showingDeleteConfirm = false
-    
+
     init(group: Group) {
         self.group = group
         self._groupName = State(initialValue: group.name)
@@ -20,113 +20,77 @@ struct GroupSettingsView: View {
             Theme.backgroundGradient.ignoresSafeArea()
 
             VStack(spacing: 0) {
-                // Header Bar
-                HStack {
-                    Button("Cancel") {
-                        presentationMode.wrappedValue.dismiss()
-                    }
-                    .foregroundColor(.white.opacity(0.6))
-                    .font(.system(size: 16, weight: .medium))
+                DragHandle()
+                    .padding(.bottom, 4)
 
-                    Spacer()
-
-                    Text("Group Settings")
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.white)
-
-                    Spacer()
-
-                    Button("Save") {
+                SheetHeader(
+                    title: "Group Settings",
+                    trailingLabel: "Save",
+                    trailingEnabled: !groupName.isEmpty,
+                    trailingColor: Theme.primaryAccent,
+                    onLeading: { presentationMode.wrappedValue.dismiss() },
+                    onTrailing: {
                         viewModel.updateGroup(id: group.id, name: groupName, currency: selectedCurrency)
                         presentationMode.wrappedValue.dismiss()
                     }
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(groupName.isEmpty ? Color.white.opacity(0.2) : Theme.primaryAccent)
-                    .disabled(groupName.isEmpty)
-                }
-                .padding(.horizontal, 24)
-                .padding(.vertical, 16)
+                )
 
                 ScrollView(showsIndicators: false) {
-                    VStack(spacing: 24) {
-                        
+                    VStack(spacing: 20) {
+
                         // Settings Card
-                        Theme.applyGlassCard(
-                            to: AnyView(
-                                VStack(spacing: 0) {
-                                    // Name Row
-                                    HStack(spacing: 16) {
-                                        ZStack {
-                                            RoundedRectangle(cornerRadius: 12)
-                                                .fill(Theme.primaryAccent.opacity(0.2))
-                                                .frame(width: 40, height: 40)
-                                            Image(systemName: "pencil")
-                                                .font(.system(size: 16, weight: .bold))
-                                                .foregroundColor(Theme.secondaryAccent)
-                                        }
-                                        TextField("Group Name", text: $groupName)
-                                            .font(.system(size: 16, weight: .medium))
-                                            .foregroundColor(.white)
+                        VStack(spacing: 0) {
+                            HStack(spacing: 16) {
+                                IconBadge(systemName: "pencil", color: Theme.secondaryAccent)
+                                TextField("Group Name", text: $groupName)
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundColor(.white)
+                            }
+                            .padding(20)
+
+                            Divider().background(Color.white.opacity(0.08))
+
+                            HStack(spacing: 16) {
+                                IconBadge(systemName: "banknote.fill", color: Theme.warmGold)
+                                Menu {
+                                    ForEach(Currency.allCases, id: \.self) { currency in
+                                        Button("\(currency.rawValue) (\(currency.symbol))") { selectedCurrency = currency }
                                     }
-                                    .padding(20)
-
-                                    Divider().background(Color.white.opacity(0.08))
-
-                                    // Currency Row
-                                    HStack(spacing: 16) {
-                                        ZStack {
-                                            RoundedRectangle(cornerRadius: 12)
-                                                .fill(Theme.primaryAccent.opacity(0.2))
-                                                .frame(width: 40, height: 40)
-                                            Image(systemName: "banknote.fill")
-                                                .font(.system(size: 16, weight: .bold))
-                                                .foregroundColor(Theme.secondaryAccent)
-                                        }
-                                        Menu {
-                                            ForEach(Currency.allCases, id: \.self) { currency in
-                                                Button("\(currency.rawValue) (\(currency.symbol))") { selectedCurrency = currency }
-                                            }
-                                        } label: {
-                                            HStack {
-                                                Text("\(selectedCurrency.rawValue) (\(selectedCurrency.symbol))")
-                                                Spacer()
-                                                Image(systemName: "chevron.up.chevron.down")
-                                            }
-                                            .padding()
-                                            .background(Color.white.opacity(0.0))
-                                            .foregroundColor(.white)
-                                        }
+                                } label: {
+                                    HStack {
+                                        Text("\(selectedCurrency.rawValue) (\(selectedCurrency.symbol))")
                                         Spacer()
+                                        Image(systemName: "chevron.up.chevron.down")
                                     }
-                                    .padding(20)
+                                    .foregroundColor(.white)
                                 }
-                            ),
-                            cornerRadius: 24
-                        )
-                        
+                                Spacer()
+                            }
+                            .padding(20)
+                        }
+                        .glassCard(cornerRadius: 24)
+
                         // Delete Button
                         Button(action: { showingDeleteConfirm = true }) {
-                            Theme.applyGlassCard(
-                                to: AnyView(
-                                    HStack(spacing: 16) {
-                                        ZStack {
-                                            RoundedRectangle(cornerRadius: 12)
-                                                .fill(Color(red: 0.95, green: 0.37, blue: 0.54).opacity(0.2))
-                                                .frame(width: 40, height: 40)
-                                            Image(systemName: "trash.fill")
-                                                .font(.system(size: 16, weight: .bold))
-                                                .foregroundColor(Color(red: 0.95, green: 0.37, blue: 0.54))
-                                        }
-                                        Text("Delete Group")
-                                            .font(.system(size: 16, weight: .bold))
-                                            .foregroundColor(Color(red: 0.95, green: 0.37, blue: 0.54))
-                                        Spacer()
-                                    }
-                                    .padding(20)
-                                ),
-                                cornerRadius: 20
+                            HStack(spacing: 16) {
+                                IconBadge(systemName: "trash.fill", color: Theme.dangerColor)
+                                Text("Delete Group")
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(Theme.dangerColor)
+                                Spacer()
+                            }
+                            .padding(20)
+                            .background(
+                                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                    .fill(Theme.cardBackground)
+                                    .shadow(color: Color.black.opacity(0.30), radius: 16, x: 0, y: 8)
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                    .stroke(Theme.dangerColor.opacity(0.30), lineWidth: 1)
                             )
                         }
+                        .buttonStyle(PressableButtonStyle())
                     }
                     .padding(24)
                 }

@@ -6,17 +6,14 @@ struct SettlementView: View {
     @Environment(\.presentationMode) var presentationMode
 
     @State private var selectedSettlement: Settlement?
+    @State private var appear = false
 
     var body: some View {
         ZStack {
             Theme.backgroundGradient.ignoresSafeArea()
 
             VStack(spacing: 0) {
-                // Drag Handle
-                RoundedRectangle(cornerRadius: 3)
-                    .fill(Color.white.opacity(0.18))
-                    .frame(width: 38, height: 5)
-                    .padding(.top, 14)
+                DragHandle()
 
                 // Header
                 HStack {
@@ -28,6 +25,7 @@ struct SettlementView: View {
                             .background(Color.white.opacity(0.10))
                             .clipShape(Circle())
                     }
+                    .buttonStyle(PressableButtonStyle())
                     Spacer()
                     Text("Settle Up")
                         .font(.system(size: 18, weight: .bold))
@@ -44,32 +42,23 @@ struct SettlementView: View {
 
                 if settlements.isEmpty {
                     Spacer()
-                    VStack(spacing: 20) {
-                        ZStack {
-                            Circle()
-                                .fill(Theme.successColor.opacity(0.12))
-                                .frame(width: 120, height: 120)
-                            Image(systemName: "checkmark.seal.fill")
-                                .font(.system(size: 58))
-                                .foregroundColor(Theme.successColor)
-                        }
-                        Text("All Settled Up!")
-                            .font(.system(size: 28, weight: .heavy, design: .rounded))
-                            .foregroundColor(.white)
-                        Text("Everyone is even. No payments needed.")
-                            .font(.subheadline)
-                            .foregroundColor(.white.opacity(0.45))
-                            .multilineTextAlignment(.center)
-                    }
+                    allSettledView
                     Spacer()
                 } else {
                     ScrollView(showsIndicators: false) {
                         VStack(spacing: 12) {
-                            ForEach(settlements) { settlement in
+                            ForEach(Array(settlements.enumerated()), id: \.element.id) { index, settlement in
                                 Button(action: { selectedSettlement = settlement }) {
                                     SettlementCardView(settlement: settlement, currency: group.currency)
                                 }
-                                .buttonStyle(PlainButtonStyle())
+                                .buttonStyle(PressableButtonStyle())
+                                .offset(y: appear ? 0 : 20)
+                                .opacity(appear ? 1 : 0)
+                                .animation(
+                                    .spring(response: 0.45, dampingFraction: 0.75)
+                                    .delay(Double(index) * 0.07),
+                                    value: appear
+                                )
                             }
                         }
                         .padding(20)
@@ -81,6 +70,30 @@ struct SettlementView: View {
             QRCodePaymentView(settlement: settlement, currency: group.currency)
                 .halfSheetIfAvailable()
         }
+        .onAppear { withAnimation { appear = true } }
+    }
+
+    private var allSettledView: some View {
+        VStack(spacing: 20) {
+            ZStack {
+                Circle()
+                    .fill(Theme.successColor.opacity(0.12))
+                    .frame(width: 120, height: 120)
+                Circle()
+                    .stroke(Theme.successColor.opacity(0.25), lineWidth: 1.5)
+                    .frame(width: 138, height: 138)
+                Image(systemName: "checkmark.seal.fill")
+                    .font(.system(size: 58))
+                    .foregroundColor(Theme.successColor)
+            }
+            Text("All Settled Up!")
+                .font(.system(size: 28, weight: .heavy, design: .rounded))
+                .foregroundColor(.white)
+            Text("Everyone is even. No payments needed.")
+                .font(.subheadline)
+                .foregroundColor(.white.opacity(0.45))
+                .multilineTextAlignment(.center)
+        }
     }
 }
 
@@ -89,65 +102,72 @@ struct SettlementCardView: View {
     var settlement: Settlement
     var currency: Currency
 
+    @State private var arrowAnimate = false
+
     var body: some View {
-        Theme.applyGlassCard(
-            to: AnyView(
-                HStack(spacing: 14) {
-                    // From avatar
-                    GradientAvatar(
-                        name: settlement.fromUser.name,
-                        size: 46,
-                        gradient: LinearGradient(colors: [Theme.dangerColor, Theme.dangerColor.opacity(0.6)], startPoint: .topLeading, endPoint: .bottomTrailing)
-                    )
+        HStack(spacing: 14) {
+            // From avatar
+            GradientAvatar(
+                name: settlement.fromUser.name,
+                size: 46,
+                gradient: LinearGradient(
+                    colors: [Theme.dangerColor, Theme.dangerColor.opacity(0.6)],
+                    startPoint: .topLeading, endPoint: .bottomTrailing
+                )
+            )
 
-                    // Direction arrow
-                    VStack(spacing: 6) {
-                        Image(systemName: "arrow.right")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(.white.opacity(0.25))
-                        Text("\(currency.symbol)\(String(format: "%.2f", settlement.amount))")
-                            .font(.system(size: 15, weight: .heavy, design: .rounded))
-                            .foregroundColor(Theme.dangerColor)
-                    }
+            // Direction arrow + amount
+            VStack(spacing: 4) {
+                Image(systemName: "arrow.right")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(Theme.secondaryAccent.opacity(arrowAnimate ? 0.9 : 0.3))
+                    .scaleEffect(arrowAnimate ? 1.15 : 1.0)
+                    .animation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true), value: arrowAnimate)
+                Text("\(currency.symbol)\(String(format: "%.2f", settlement.amount))")
+                    .font(.system(size: 14, weight: .heavy, design: .rounded))
+                    .foregroundColor(Theme.dangerColor)
+            }
+            .onAppear { arrowAnimate = true }
 
-                    // To avatar
-                    GradientAvatar(
-                        name: settlement.toUser.name,
-                        size: 46,
-                        gradient: LinearGradient(colors: [Theme.successColor, Theme.successColor.opacity(0.6)], startPoint: .topLeading, endPoint: .bottomTrailing)
-                    )
+            // To avatar
+            GradientAvatar(
+                name: settlement.toUser.name,
+                size: 46,
+                gradient: LinearGradient(
+                    colors: [Theme.successColor, Theme.successColor.opacity(0.6)],
+                    startPoint: .topLeading, endPoint: .bottomTrailing
+                )
+            )
 
-                    VStack(alignment: .leading, spacing: 3) {
-                        HStack(spacing: 4) {
-                            Text(settlement.fromUser.name)
-                                .fontWeight(.semibold)
-                            Text("→")
-                                .foregroundColor(.white.opacity(0.35))
-                            Text(settlement.toUser.name)
-                                .fontWeight(.semibold)
-                        }
-                        .font(.system(size: 14))
-                        .foregroundColor(.white)
-                        Text("Tap to generate QR")
-                            .font(.system(size: 11))
-                            .foregroundColor(.white.opacity(0.35))
-                    }
-
-                    Spacer()
-
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(Theme.primaryAccent.opacity(0.15))
-                            .frame(width: 36, height: 36)
-                        Image(systemName: "qrcode")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(Theme.primaryAccent)
-                    }
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(spacing: 4) {
+                    Text(settlement.fromUser.name)
+                        .fontWeight(.semibold)
+                    Text("→")
+                        .foregroundColor(.white.opacity(0.35))
+                    Text(settlement.toUser.name)
+                        .fontWeight(.semibold)
                 }
-                .padding(16)
-            ),
-            cornerRadius: 20
-        )
+                .font(.system(size: 14))
+                .foregroundColor(.white)
+                Text("Tap to generate QR")
+                    .font(.system(size: 11))
+                    .foregroundColor(.white.opacity(0.35))
+            }
+
+            Spacer()
+
+            ZStack {
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(Theme.primaryAccent.opacity(0.15))
+                    .frame(width: 36, height: 36)
+                Image(systemName: "qrcode")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(Theme.primaryAccent)
+            }
+        }
+        .padding(16)
+        .glassCard(cornerRadius: 20)
     }
 }
 
@@ -179,12 +199,16 @@ struct QRCodePaymentView: View {
         ZStack {
             Theme.backgroundGradient.ignoresSafeArea()
 
+            // Glow blobs
+            Circle()
+                .fill(Theme.primaryAccent.opacity(0.12))
+                .frame(width: 260, height: 260)
+                .blur(radius: 80)
+                .offset(x: -80, y: -100)
+                .ignoresSafeArea()
+
             VStack(spacing: 0) {
-                // Drag Handle
-                RoundedRectangle(cornerRadius: 3)
-                    .fill(Color.white.opacity(0.18))
-                    .frame(width: 38, height: 5)
-                    .padding(.top, 14)
+                DragHandle()
 
                 HStack {
                     if #available(iOS 16.0, *) {
@@ -193,6 +217,7 @@ struct QRCodePaymentView: View {
                                 .foregroundColor(Theme.secondaryAccent)
                                 .font(.system(size: 20))
                         }
+                        .buttonStyle(PressableButtonStyle())
                     }
                     Spacer()
                     Button("Close") { presentationMode.wrappedValue.dismiss() }
@@ -212,12 +237,22 @@ struct QRCodePaymentView: View {
                         .textCase(.uppercase)
 
                     HStack(spacing: 12) {
-                        GradientAvatar(name: settlement.fromUser.name, size: 36,
-                            gradient: LinearGradient(colors: [Theme.dangerColor, Theme.dangerColor.opacity(0.7)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                        GradientAvatar(
+                            name: settlement.fromUser.name, size: 36,
+                            gradient: LinearGradient(
+                                colors: [Theme.dangerColor, Theme.dangerColor.opacity(0.7)],
+                                startPoint: .topLeading, endPoint: .bottomTrailing
+                            )
+                        )
                         Image(systemName: "arrow.right")
-                            .foregroundColor(.white.opacity(0.30))
-                        GradientAvatar(name: settlement.toUser.name, size: 36,
-                            gradient: LinearGradient(colors: [Theme.successColor, Theme.successColor.opacity(0.7)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                            .foregroundColor(Theme.secondaryAccent.opacity(0.70))
+                        GradientAvatar(
+                            name: settlement.toUser.name, size: 36,
+                            gradient: LinearGradient(
+                                colors: [Theme.successColor, Theme.successColor.opacity(0.7)],
+                                startPoint: .topLeading, endPoint: .bottomTrailing
+                            )
+                        )
                         Text(settlement.toUser.name)
                             .font(.system(size: 22, weight: .heavy, design: .rounded))
                             .foregroundColor(.white)
@@ -225,17 +260,18 @@ struct QRCodePaymentView: View {
 
                     Text("\(currency.symbol)\(String(format: "%.2f", settlement.amount))")
                         .font(.system(size: 52, weight: .heavy, design: .rounded))
-                        .foregroundColor(Theme.primaryAccent)
+                        .foregroundStyle(Theme.primaryGradient)
                 }
                 .padding(.bottom, 32)
 
-                // QR Card
+                // QR Card with decorative corner brackets
                 let payload = generator.generatePaymentPayload(
                     paymentID: settlement.toUser.paymentID ?? "Unknown",
                     amount: settlement.amount
                 )
 
                 ZStack {
+                    // White card
                     RoundedRectangle(cornerRadius: 28, style: .continuous)
                         .fill(Color.white)
                         .shadow(color: Theme.primaryAccent.opacity(0.45), radius: 40, x: 0, y: 18)
@@ -246,32 +282,57 @@ struct QRCodePaymentView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 240, height: 240)
+
+                    // Decorative corner brackets
+                    qrCornerBrackets
                 }
                 .padding(.bottom, 28)
 
                 if let pid = settlement.toUser.paymentID {
-                    Theme.applyGlassCard(
-                        to: AnyView(
-                            HStack(spacing: 8) {
-                                Image(systemName: "creditcard.fill")
-                                    .foregroundColor(Theme.secondaryAccent)
-                                Text("ID: \(pid)")
-                                    .fontWeight(.medium)
-                                    .foregroundColor(.white.opacity(0.80))
-                            }
-                            .font(.system(size: 14))
-                            .padding(.horizontal, 20)
-                            .padding(.vertical, 12)
-                        ),
-                        cornerRadius: 16
-                    )
+                    HStack(spacing: 8) {
+                        Image(systemName: "creditcard.fill")
+                            .foregroundColor(Theme.secondaryAccent)
+                        Text("ID: \(pid)")
+                            .fontWeight(.medium)
+                            .foregroundColor(.white.opacity(0.80))
+                    }
+                    .font(.system(size: 14))
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+                    .glassCard(cornerRadius: 16)
                 }
 
                 Spacer()
             }
         }
     }
-    
+
+    // Decorative corner bracket overlay on the QR card
+    private var qrCornerBrackets: some View {
+        ZStack {
+            // Top-left
+            bracketCorner().offset(x: -125, y: -125)
+            // Top-right
+            bracketCorner().rotationEffect(.degrees(90)).offset(x: 125, y: -125)
+            // Bottom-right
+            bracketCorner().rotationEffect(.degrees(180)).offset(x: 125, y: 125)
+            // Bottom-left
+            bracketCorner().rotationEffect(.degrees(270)).offset(x: -125, y: 125)
+        }
+    }
+
+    private func bracketCorner() -> some View {
+        ZStack(alignment: .topLeading) {
+            Path { path in
+                path.move(to: CGPoint(x: 0, y: 20))
+                path.addLine(to: CGPoint(x: 0, y: 0))
+                path.addLine(to: CGPoint(x: 20, y: 0))
+            }
+            .stroke(Theme.primaryAccent, style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
+        }
+        .frame(width: 20, height: 20)
+    }
+
     @available(iOS 16.0, *)
     @MainActor
     private func shareReceipt() {
@@ -286,22 +347,25 @@ struct QRCodePaymentView: View {
             Text("\(currency.symbol)\(String(format: "%.2f", settlement.amount))")
                 .font(.system(size: 40, weight: .heavy))
                 .foregroundColor(.white)
-            
-            Image(uiImage: generator.generateQRCode(from: generator.generatePaymentPayload(paymentID: settlement.toUser.paymentID ?? "", amount: settlement.amount)))
-                .interpolation(.none)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 200, height: 200)
-                .padding()
-                .background(Color.white)
-                .cornerRadius(10)
+
+            Image(uiImage: generator.generateQRCode(from: generator.generatePaymentPayload(
+                paymentID: settlement.toUser.paymentID ?? "",
+                amount: settlement.amount
+            )))
+            .interpolation(.none)
+            .resizable()
+            .scaledToFit()
+            .frame(width: 200, height: 200)
+            .padding()
+            .background(Color.white)
+            .cornerRadius(10)
         }
         .padding(40)
         .background(Theme.backgroundGradient)
-        
+
         let renderer = ImageRenderer(content: receiptView)
         renderer.scale = UIScreen.main.scale
-        
+
         if let uiImage = renderer.uiImage {
             let activityVC = UIActivityViewController(activityItems: [uiImage], applicationActivities: nil)
             if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,

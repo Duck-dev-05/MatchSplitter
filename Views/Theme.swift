@@ -20,6 +20,8 @@ struct Theme {
     static let dangerColor       = Color(red: 0.95, green: 0.30, blue: 0.52)
     // Mint green for positive / settled
     static let successColor      = Color(red: 0.18, green: 0.88, blue: 0.62)
+    // Warm gold for currency/logout
+    static let warmGold          = Color(red: 1.0, green: 0.65, blue: 0.15)
 
     // Chip (tag) colors
     static let chipBackground    = Color(red: 0.45, green: 0.22, blue: 1.00).opacity(0.18)
@@ -58,47 +60,95 @@ struct Theme {
         )
     }
 
-    // MARK: - Shadows
+    // MARK: - Legacy helpers (kept for compatibility — prefer .glassCard() / .accentCard() modifiers)
+    static func applyGlassCard(to view: AnyView, cornerRadius: CGFloat = 20) -> some View {
+        view.glassCard(cornerRadius: cornerRadius)
+    }
+
+    static func applyAccentCard(to view: AnyView, cornerRadius: CGFloat = 28) -> some View {
+        view.accentCard(cornerRadius: cornerRadius)
+    }
+
+    /// Glow shadow helper
     static func glowShadow(_ color: Color = primaryAccent, radius: CGFloat = 18) -> some View {
         Circle()
             .fill(color.opacity(0.25))
             .blur(radius: radius)
     }
+}
 
-    // MARK: - Glass Card
-    /// Wraps a view in a styled frosted-glass card with border and shadow.
-    static func applyGlassCard(to view: AnyView, cornerRadius: CGFloat = 20) -> some View {
-        view
+// MARK: - Glass Card Modifier
+struct GlassCardModifier: ViewModifier {
+    var cornerRadius: CGFloat
+
+    func body(content: Content) -> some View {
+        content
             .background(
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .fill(cardBackground)
+                    .fill(Theme.cardBackground)
                     .shadow(color: Color.black.opacity(0.35), radius: 20, x: 0, y: 10)
-                    .shadow(color: primaryAccent.opacity(0.08), radius: 12, x: 0, y: 4)
+                    .shadow(color: Theme.primaryAccent.opacity(0.08), radius: 12, x: 0, y: 4)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .stroke(cardBorder, lineWidth: 1)
+                    .stroke(Theme.cardBorder, lineWidth: 1)
             )
     }
+}
 
-    /// Glowing accent card (used for hero panels)
-    static func applyAccentCard(to view: AnyView, cornerRadius: CGFloat = 28) -> some View {
-        view
+// MARK: - Accent Card Modifier
+struct AccentCardModifier: ViewModifier {
+    var cornerRadius: CGFloat
+
+    func body(content: Content) -> some View {
+        content
             .background(
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .fill(
                         LinearGradient(
-                            colors: [primaryAccent.opacity(0.35), secondaryAccent.opacity(0.18)],
+                            colors: [Theme.primaryAccent.opacity(0.35), Theme.secondaryAccent.opacity(0.18)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
-                    .shadow(color: primaryAccent.opacity(0.30), radius: 24, x: 0, y: 12)
+                    .shadow(color: Theme.primaryAccent.opacity(0.30), radius: 24, x: 0, y: 12)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .stroke(cardBorderStrong, lineWidth: 1)
+                    .stroke(Theme.cardBorderStrong, lineWidth: 1)
             )
+    }
+}
+
+// MARK: - Pressable Button Style
+struct PressableButtonStyle: ButtonStyle {
+    var scale: CGFloat = 0.96
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? scale : 1.0)
+            .opacity(configuration.isPressed ? 0.90 : 1.0)
+            .animation(.spring(response: 0.25, dampingFraction: 0.7), value: configuration.isPressed)
+    }
+}
+
+// MARK: - View Extensions
+extension View {
+    func glassCard(cornerRadius: CGFloat = 20) -> some View {
+        modifier(GlassCardModifier(cornerRadius: cornerRadius))
+    }
+
+    func accentCard(cornerRadius: CGFloat = 28) -> some View {
+        modifier(AccentCardModifier(cornerRadius: cornerRadius))
+    }
+
+    @ViewBuilder
+    func halfSheetIfAvailable() -> some View {
+        if #available(iOS 16.0, *) {
+            self.presentationDetents([.medium, .large])
+        } else {
+            self
+        }
     }
 }
 
@@ -165,14 +215,91 @@ struct SectionHeader: View {
     }
 }
 
-// MARK: - View Extensions
-extension View {
-    @ViewBuilder
-    func halfSheetIfAvailable() -> some View {
-        if #available(iOS 16.0, *) {
-            self.presentationDetents([.medium, .large])
-        } else {
-            self
+// MARK: - Drag Handle
+struct DragHandle: View {
+    var body: some View {
+        RoundedRectangle(cornerRadius: 3)
+            .fill(Color.white.opacity(0.22))
+            .frame(width: 38, height: 5)
+            .padding(.top, 14)
+    }
+}
+
+// MARK: - Sheet Header Bar
+struct SheetHeader: View {
+    var title: String
+    var leadingLabel: String = "Cancel"
+    var trailingLabel: String
+    var trailingEnabled: Bool = true
+    var trailingColor: Color = Theme.secondaryAccent
+    var onLeading: () -> Void
+    var onTrailing: () -> Void
+
+    var body: some View {
+        HStack {
+            Button(leadingLabel, action: onLeading)
+                .foregroundColor(.white.opacity(0.55))
+                .font(.system(size: 16))
+            Spacer()
+            Text(title)
+                .font(.system(size: 18, weight: .bold))
+                .foregroundColor(.white)
+            Spacer()
+            Button(trailingLabel, action: onTrailing)
+                .font(.system(size: 16, weight: .bold))
+                .foregroundColor(trailingEnabled ? trailingColor : Color.white.opacity(0.2))
+                .disabled(!trailingEnabled)
         }
+        .padding(.horizontal, 24)
+        .padding(.vertical, 18)
+    }
+}
+
+// MARK: - Icon Badge (round icon container)
+struct IconBadge: View {
+    var systemName: String
+    var color: Color
+    var size: CGFloat = 38
+    var iconSize: CGFloat = 15
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: size * 0.27, style: .continuous)
+                .fill(color.opacity(0.15))
+                .frame(width: size, height: size)
+            Image(systemName: systemName)
+                .font(.system(size: iconSize, weight: .semibold))
+                .foregroundColor(color)
+        }
+    }
+}
+
+// MARK: - Gradient Primary Button
+struct GradientButton: View {
+    var label: String
+    var isEnabled: Bool = true
+    var action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text(label)
+                .font(.system(size: 17, weight: .bold))
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+                .background(
+                    Group {
+                        if isEnabled {
+                            AnyView(Theme.primaryGradient)
+                        } else {
+                            AnyView(Color.white.opacity(0.10))
+                        }
+                    }
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .shadow(color: isEnabled ? Theme.primaryAccent.opacity(0.45) : .clear, radius: 12, x: 0, y: 6)
+        }
+        .disabled(!isEnabled)
+        .animation(.easeInOut(duration: 0.2), value: isEnabled)
     }
 }

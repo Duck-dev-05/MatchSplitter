@@ -75,69 +75,71 @@ struct InvoicesView: View {
             Theme.backgroundGradient.ignoresSafeArea()
             VStack(spacing: 0) {
                 // Header
-                Theme.applyGlassCard(
-                    to: AnyView(
-                        VStack {
-                            if #available(iOS 16.0, *) {
-                                Gauge(value: min(max(totalBalance, -1000), 1000), in: -1000...1000) {
-                                    Text(user.name)
-                                        .font(.headline)
-                                        .foregroundColor(.white.opacity(0.8))
-                                } currentValueLabel: {
-                                    VStack {
-                                        Text("\(totalBalance >= 0 ? "+" : "")\(totalBalance, specifier: "%.2f") \(group.currency.symbol)")
-                                            .font(.system(size: 16, weight: .bold))
-                                            .foregroundColor(totalBalance >= 0 ? Theme.successColor : Theme.dangerColor)
-                                    }
-                                }
-                                .gaugeStyle(.accessoryCircular)
-                                .tint(totalBalance >= 0 ? Theme.successColor : Theme.dangerColor)
-                                .scaleEffect(2.0)
-                                .padding(.vertical, 40)
-                            } else {
-                                Text(user.name)
-                                    .font(.title2)
-                                    .foregroundColor(.white.opacity(0.8))
-                                
+                VStack {
+                    if #available(iOS 16.0, *) {
+                        Gauge(value: min(max(totalBalance, -1000), 1000), in: -1000...1000) {
+                            Text(user.name)
+                                .font(.headline)
+                                .foregroundColor(.white.opacity(0.8))
+                        } currentValueLabel: {
+                            VStack {
                                 Text("\(totalBalance >= 0 ? "+" : "")\(totalBalance, specifier: "%.2f") \(group.currency.symbol)")
-                                    .font(.system(size: 40, weight: .bold))
+                                    .font(.system(size: 16, weight: .bold))
                                     .foregroundColor(totalBalance >= 0 ? Theme.successColor : Theme.dangerColor)
-                                
-                                Text(totalBalance >= 0 ? "In Credit" : "In Debt")
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
                             }
                         }
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                    ),
-                    cornerRadius: 0
-                )
-                
-                List {
-                ForEach(transactions) { tx in
-                    HStack {
-                        VStack(alignment: .leading, spacing: 5) {
-                            Text(tx.title)
-                                .font(.headline)
-                                .foregroundColor(.white)
-                            Text(tx.date, style: .date)
-                                .font(.caption)
-                                .foregroundColor(.gray)
-                        }
-                        
-                        Spacer()
-                        
-                        Text("\(tx.amount > 0 ? "+" : "")\(tx.amount, specifier: "%.2f")")
-                            .font(.headline)
-                            .foregroundColor(tx.amount > 0 ? Theme.successColor : Theme.dangerColor)
+                        .gaugeStyle(.accessoryCircular)
+                        .tint(totalBalance >= 0 ? Theme.successColor : Theme.dangerColor)
+                        .scaleEffect(2.0)
+                        .padding(.vertical, 40)
+                    } else {
+                        Text(user.name)
+                            .font(.title2)
+                            .foregroundColor(.white.opacity(0.8))
+
+                        Text("\(totalBalance >= 0 ? "+" : "")\(totalBalance, specifier: "%.2f") \(group.currency.symbol)")
+                            .font(.system(size: 40, weight: .bold))
+                            .foregroundColor(totalBalance >= 0 ? Theme.successColor : Theme.dangerColor)
+
+                        Text(totalBalance >= 0 ? "In Credit" : "In Debt")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.45))
                     }
-                    .padding(.vertical, 8)
-                    .listRowBackground(Color.clear)
                 }
-            }
-            .listStyle(PlainListStyle())
-            .background(Color.clear)
+                .padding()
+                .frame(maxWidth: .infinity)
+                .glassCard(cornerRadius: 24)
+                .padding(.horizontal, 20)
+                .padding(.top, 12)
+                .padding(.bottom, 8)
+
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 10) {
+                        ForEach(transactions) { tx in
+                            HStack {
+                                VStack(alignment: .leading, spacing: 5) {
+                                    Text(tx.title)
+                                        .font(.headline)
+                                        .foregroundColor(.white)
+                                    Text(tx.date, style: .date)
+                                        .font(.caption)
+                                        .foregroundColor(.white.opacity(0.45))
+                                }
+
+                                Spacer()
+
+                                Text("\(tx.amount > 0 ? "+" : "")\(tx.amount, specifier: "%.2f")")
+                                    .font(.headline)
+                                    .foregroundColor(tx.amount > 0 ? Theme.successColor : Theme.dangerColor)
+                            }
+                            .padding(16)
+                            .glassCard(cornerRadius: 16)
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 10)
+                    .padding(.bottom, 40)
+                }
             }
         }
         .navigationTitle("Ledger")

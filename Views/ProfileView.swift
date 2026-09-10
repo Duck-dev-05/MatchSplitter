@@ -4,41 +4,45 @@ struct ProfileView: View {
     @EnvironmentObject var viewModel: GroupViewModel
     @State private var showingEditProfile = false
     @State private var pulse = false
+    @State private var showingLogin = false
 
     var totalExpenses: Int {
         viewModel.groups.flatMap { $0.expenses }.count
     }
 
-    @State private var showingLogin = false
-
     var body: some View {
         ZStack {
-                Theme.backgroundGradient.ignoresSafeArea()
+            Theme.backgroundGradient.ignoresSafeArea()
 
+            // Large radial glow behind avatar
             Circle()
-                .fill(Theme.primaryAccent.opacity(0.10))
-                .frame(width: 280, height: 280)
-                .blur(radius: 80)
-                .offset(x: 100, y: -100)
+                .fill(
+                    RadialGradient(
+                        gradient: Gradient(colors: [Theme.primaryAccent.opacity(0.22), .clear]),
+                        center: .center,
+                        startRadius: 0,
+                        endRadius: 200
+                    )
+                )
+                .frame(width: 400, height: 400)
+                .offset(y: -160)
                 .ignoresSafeArea()
 
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 24) {
+
+                    // MARK: Not-logged-in banner
                     if viewModel.currentUser == nil {
-                        Theme.applyGlassCard(
-                            to: AnyView(
-                                HStack {
-                                    Image(systemName: "exclamationmark.circle.fill")
-                                        .foregroundColor(Color(red: 1.0, green: 0.65, blue: 0.15))
-                                    Text("Log in or register to save your data and manage your expenses.")
-                                        .font(.system(size: 14))
-                                        .foregroundColor(.white)
-                                    Spacer()
-                                }
-                                .padding(14)
-                            ),
-                            cornerRadius: 12
-                        )
+                        HStack(spacing: 10) {
+                            Image(systemName: "exclamationmark.circle.fill")
+                                .foregroundColor(Theme.warmGold)
+                            Text("Log in or register to save your data and manage your expenses.")
+                                .font(.system(size: 14))
+                                .foregroundColor(.white)
+                            Spacer()
+                        }
+                        .padding(14)
+                        .glassCard(cornerRadius: 14)
                         .padding(.horizontal, 20)
                         .padding(.top, 20)
                     }
@@ -46,24 +50,29 @@ struct ProfileView: View {
                     // MARK: Avatar Hero
                     VStack(spacing: 16) {
                         ZStack {
-                            // Animated pulsing ring
+                            // Outer pulse ring
                             Circle()
-                                .stroke(Theme.primaryGradient, lineWidth: 2.5)
-                                .frame(width: 118, height: 118)
-                                .scaleEffect(pulse ? 1.12 : 1.0)
-                                .opacity(pulse ? 0.0 : 0.7)
-                                .animation(.easeInOut(duration: 2.0).repeatForever(autoreverses: false), value: pulse)
+                                .stroke(Theme.primaryGradient, lineWidth: 2.0)
+                                .frame(width: 130, height: 130)
+                                .scaleEffect(pulse ? 1.14 : 1.0)
+                                .opacity(pulse ? 0.0 : 0.6)
+                                .animation(.easeInOut(duration: 2.2).repeatForever(autoreverses: false), value: pulse)
 
-                            GradientAvatar(name: viewModel.currentUser?.name ?? "Y", size: 100)
+                            // Inner subtle glow ring
+                            Circle()
+                                .stroke(Theme.secondaryAccent.opacity(0.25), lineWidth: 1)
+                                .frame(width: 116, height: 116)
+
+                            GradientAvatar(name: viewModel.currentUser?.name ?? "Y", size: 104)
                         }
-                        .padding(.top, 28)
+                        .padding(.top, 32)
 
-                        VStack(spacing: 5) {
+                        VStack(spacing: 6) {
                             Text(viewModel.currentUser?.name ?? "You")
-                                .font(.system(size: 26, weight: .bold, design: .rounded))
+                                .font(.system(size: 28, weight: .bold, design: .rounded))
                                 .foregroundColor(.white)
 
-                            if let pid = viewModel.currentUser?.paymentID {
+                            if let pid = viewModel.currentUser?.paymentID, !pid.isEmpty {
                                 HStack(spacing: 5) {
                                     Image(systemName: "creditcard.fill")
                                         .font(.system(size: 11))
@@ -76,9 +85,14 @@ struct ProfileView: View {
                                     }
                                 }
                                 .foregroundColor(.white.opacity(0.45))
+                            } else {
+                                Text("Member since \(formattedMemberSince())")
+                                    .font(.system(size: 13))
+                                    .foregroundColor(.white.opacity(0.35))
                             }
                         }
 
+                        // CTA Button
                         if viewModel.currentUser == nil {
                             Button(action: { showingLogin = true }) {
                                 HStack(spacing: 6) {
@@ -89,10 +103,11 @@ struct ProfileView: View {
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 22)
                                 .padding(.vertical, 10)
-                                .background(Theme.primaryAccent)
+                                .background(Theme.primaryGradient)
                                 .clipShape(Capsule())
-                                .shadow(color: Theme.primaryAccent.opacity(0.4), radius: 8, x: 0, y: 4)
+                                .shadow(color: Theme.primaryAccent.opacity(0.45), radius: 10, x: 0, y: 5)
                             }
+                            .buttonStyle(PressableButtonStyle())
                         } else {
                             Button(action: { showingEditProfile = true }) {
                                 HStack(spacing: 6) {
@@ -103,67 +118,60 @@ struct ProfileView: View {
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 22)
                                 .padding(.vertical, 10)
-                                .background(Color.white.opacity(0.12))
+                                .background(Color.white.opacity(0.10))
                                 .clipShape(Capsule())
-                                .overlay(Capsule().stroke(Color.white.opacity(0.12), lineWidth: 1))
+                                .overlay(Capsule().stroke(Color.white.opacity(0.14), lineWidth: 1))
                             }
+                            .buttonStyle(PressableButtonStyle())
                         }
                     }
                     .padding(.bottom, 8)
 
                     // MARK: Quick Stats
-                    Theme.applyAccentCard(
-                        to: AnyView(
-                            HStack(spacing: 0) {
-                                StatBadge(
-                                    icon: "person.3.fill",
-                                    label: "Groups",
-                                    value: "\(viewModel.groups.count)",
-                                    color: Theme.secondaryAccent
-                                )
-                                Divider().frame(height: 40).background(Color.white.opacity(0.10))
-                                StatBadge(
-                                    icon: "receipt.fill",
-                                    label: "Expenses",
-                                    value: "\(totalExpenses)",
-                                    color: Theme.secondaryAccent
-                                )
-                                Divider().frame(height: 40).background(Color.white.opacity(0.10))
-                                StatBadge(
-                                    icon: "banknote.fill",
-                                    label: "Currency",
-                                    value: viewModel.defaultCurrency.symbol,
-                                    color: Theme.secondaryAccent
-                                )
-                            }
-                            .padding(.vertical, 20)
-                        ),
-                        cornerRadius: 24
-                    )
+                    HStack(spacing: 0) {
+                        StatBadge(icon: "person.3.fill", label: "Groups", value: "\(viewModel.groups.count)", color: Theme.secondaryAccent)
+                        Divider().frame(height: 40).background(Color.white.opacity(0.10))
+                        StatBadge(icon: "receipt.fill", label: "Expenses", value: "\(totalExpenses)", color: Theme.secondaryAccent)
+                        Divider().frame(height: 40).background(Color.white.opacity(0.10))
+                        StatBadge(icon: "banknote.fill", label: "Currency", value: viewModel.defaultCurrency.symbol, color: Theme.secondaryAccent)
+                    }
+                    .padding(.vertical, 20)
+                    .accentCard(cornerRadius: 24)
                     .padding(.horizontal, 20)
 
                     // MARK: Account Info
                     SectionHeader(title: "Account")
                         .padding(.bottom, 10)
 
-                    Theme.applyGlassCard(
-                        to: AnyView(
-                            VStack(spacing: 0) {
-                                ProfileSettingRow(icon: "person.fill", iconColor: Theme.primaryAccent, label: "Name", value: viewModel.currentUser?.name ?? "Unknown")
-                                Divider().background(Color.white.opacity(0.07))
-                                ProfileSettingRow(icon: "creditcard.fill", iconColor: Theme.secondaryAccent, label: "Payment Method", value: {
-                                    if let type = viewModel.currentUser?.paymentType, type != "None" {
-                                        let id = viewModel.currentUser?.paymentID ?? ""
-                                        return "\(type) \(id.isEmpty ? "" : "- \(id)")"
-                                    }
-                                    return viewModel.currentUser?.paymentID ?? "Not set"
-                                }())
-                                Divider().background(Color.white.opacity(0.07))
-                                ProfileSettingRow(icon: "banknote.fill", iconColor: Color(red: 1.0, green: 0.65, blue: 0.15), label: "Default Currency", value: "\(viewModel.defaultCurrency.rawValue) (\(viewModel.defaultCurrency.symbol))")
-                            }
-                        ),
-                        cornerRadius: 22
-                    )
+                    VStack(spacing: 0) {
+                        ProfileSettingRow(
+                            icon: "person.fill",
+                            iconColor: Theme.primaryAccent,
+                            label: "Name",
+                            value: viewModel.currentUser?.name ?? "Unknown"
+                        )
+                        Divider().background(Color.white.opacity(0.07))
+                        ProfileSettingRow(
+                            icon: "creditcard.fill",
+                            iconColor: Theme.secondaryAccent,
+                            label: "Payment Method",
+                            value: {
+                                if let type = viewModel.currentUser?.paymentType, type != "None" {
+                                    let id = viewModel.currentUser?.paymentID ?? ""
+                                    return "\(type) \(id.isEmpty ? "" : "– \(id)")"
+                                }
+                                return viewModel.currentUser?.paymentID ?? "Not set"
+                            }()
+                        )
+                        Divider().background(Color.white.opacity(0.07))
+                        ProfileSettingRow(
+                            icon: "banknote.fill",
+                            iconColor: Theme.warmGold,
+                            label: "Default Currency",
+                            value: "\(viewModel.defaultCurrency.rawValue) (\(viewModel.defaultCurrency.symbol))"
+                        )
+                    }
+                    .glassCard(cornerRadius: 22)
                     .padding(.horizontal, 20)
 
                     // MARK: Danger Zone
@@ -173,69 +181,67 @@ struct ProfileView: View {
                     VStack(spacing: 14) {
                         if viewModel.currentUser != nil {
                             Button(action: {
-                                withAnimation(.spring()) {
-                                    viewModel.logout()
-                                }
+                                withAnimation(.spring()) { viewModel.logout() }
                             }) {
-                                Theme.applyGlassCard(
-                                    to: AnyView(
-                                        HStack(spacing: 14) {
-                                            ZStack {
-                                                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                                    .fill(Color(red: 1.0, green: 0.65, blue: 0.15).opacity(0.15))
-                                                    .frame(width: 40, height: 40)
-                                                Image(systemName: "rectangle.portrait.and.arrow.right")
-                                                    .font(.system(size: 16, weight: .bold))
-                                                    .foregroundColor(Color(red: 1.0, green: 0.65, blue: 0.15))
-                                            }
-                                            Text("Log Out")
-                                                .font(.system(size: 16, weight: .semibold))
-                                                .foregroundColor(Color(red: 1.0, green: 0.65, blue: 0.15))
-                                            Spacer()
-                                        }
-                                        .padding(18)
-                                    ),
-                                    cornerRadius: 22
+                                HStack(spacing: 14) {
+                                    IconBadge(systemName: "rectangle.portrait.and.arrow.right", color: Theme.warmGold)
+                                    Text("Log Out")
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundColor(Theme.warmGold)
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(size: 12, weight: .semibold))
+                                        .foregroundColor(Theme.warmGold.opacity(0.40))
+                                }
+                                .padding(18)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 22, style: .continuous)
+                                        .fill(Theme.cardBackground)
+                                        .shadow(color: Color.black.opacity(0.35), radius: 20, x: 0, y: 10)
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 22, style: .continuous)
+                                        .stroke(Theme.warmGold.opacity(0.22), lineWidth: 1)
                                 )
                             }
+                            .buttonStyle(PressableButtonStyle())
                         }
 
                         Button(action: {
-                            withAnimation(.spring()) {
-                                viewModel.resetData()
-                            }
+                            withAnimation(.spring()) { viewModel.resetData() }
                         }) {
-                            Theme.applyGlassCard(
-                                to: AnyView(
-                                    HStack(spacing: 14) {
-                                        ZStack {
-                                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                                .fill(Theme.dangerColor.opacity(0.15))
-                                                .frame(width: 40, height: 40)
-                                            Image(systemName: "arrow.counterclockwise")
-                                                .font(.system(size: 16, weight: .bold))
-                                                .foregroundColor(Theme.dangerColor)
-                                        }
-                                        Text("Reset App Data")
-                                            .font(.system(size: 16, weight: .semibold))
-                                            .foregroundColor(Theme.dangerColor)
-                                        Spacer()
-                                    }
-                                    .padding(18)
-                                ),
-                                cornerRadius: 22
+                            HStack(spacing: 14) {
+                                IconBadge(systemName: "arrow.counterclockwise", color: Theme.dangerColor)
+                                Text("Reset App Data")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(Theme.dangerColor)
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundColor(Theme.dangerColor.opacity(0.40))
+                            }
+                            .padding(18)
+                            .background(
+                                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                                    .fill(Theme.cardBackground)
+                                    .shadow(color: Color.black.opacity(0.35), radius: 20, x: 0, y: 10)
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                                    .stroke(Theme.dangerColor.opacity(0.30), lineWidth: 1)
                             )
                         }
+                        .buttonStyle(PressableButtonStyle())
                     }
                     .padding(.horizontal, 20)
-                    .padding(.bottom, 40)
+                    .padding(.bottom, 120)
                 }
             }
         }
         .navigationTitle("Profile")
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear { 
-            pulse = true 
+        .onAppear {
+            pulse = true
             if viewModel.currentUser == nil {
                 showingLogin = true
             }
@@ -246,6 +252,12 @@ struct ProfileView: View {
         .sheet(isPresented: $showingLogin) {
             LoginView()
         }
+    }
+
+    private func formattedMemberSince() -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM yyyy"
+        return formatter.string(from: Date())
     }
 }
 
@@ -258,14 +270,7 @@ struct ProfileSettingRow: View {
 
     var body: some View {
         HStack(spacing: 14) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(iconColor.opacity(0.15))
-                    .frame(width: 38, height: 38)
-                Image(systemName: icon)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(iconColor)
-            }
+            IconBadge(systemName: icon, color: iconColor)
             Text(label)
                 .font(.system(size: 15))
                 .foregroundColor(.white.opacity(0.65))
@@ -273,12 +278,14 @@ struct ProfileSettingRow: View {
             Text(value)
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.white)
+                .lineLimit(1)
         }
         .padding(.horizontal, 18)
         .padding(.vertical, 14)
     }
 }
 
+// MARK: - Edit Profile View
 struct EditProfileView: View {
     @EnvironmentObject var viewModel: GroupViewModel
     @Environment(\.presentationMode) var presentationMode
@@ -287,7 +294,7 @@ struct EditProfileView: View {
     @State private var paymentType: String = "None"
     @State private var paymentID: String = ""
     @State private var defaultCurrency: Currency = .usd
-    
+
     let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "None"]
 
     var body: some View {
@@ -295,99 +302,73 @@ struct EditProfileView: View {
             Theme.backgroundGradient.ignoresSafeArea()
 
             VStack(spacing: 0) {
-                // Header
-                HStack {
-                    Button("Cancel") { presentationMode.wrappedValue.dismiss() }
-                        .foregroundColor(.white.opacity(0.55))
-                        .font(.system(size: 16))
-                    Spacer()
-                    Text("Edit Profile")
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.white)
-                    Spacer()
-                    Button("Save") {
+                DragHandle()
+                    .padding(.bottom, 4)
+
+                SheetHeader(
+                    title: "Edit Profile",
+                    trailingLabel: "Save",
+                    trailingEnabled: !name.isEmpty,
+                    onLeading: { presentationMode.wrappedValue.dismiss() },
+                    onTrailing: {
                         let finalType = paymentType == "None" ? nil : paymentType
                         let finalID = paymentType == "None" ? "" : paymentID
                         viewModel.updateCurrentUser(name: name, paymentID: finalID, paymentType: finalType)
                         viewModel.defaultCurrency = defaultCurrency
                         presentationMode.wrappedValue.dismiss()
                     }
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(name.isEmpty ? Color.white.opacity(0.2) : Theme.secondaryAccent)
-                    .disabled(name.isEmpty)
-                }
-                .padding(.horizontal, 24)
-                .padding(.vertical, 18)
+                )
 
                 ScrollView {
                     VStack(spacing: 20) {
-                        Theme.applyGlassCard(
-                            to: AnyView(
-                                VStack(spacing: 0) {
-                                    EditFieldRow(icon: "person.fill", iconColor: Theme.primaryAccent, placeholder: "Your Name", text: $name)
-                                    Divider().background(Color.white.opacity(0.07))
-                                    
-                                    HStack(spacing: 14) {
-                                        ZStack {
-                                            RoundedRectangle(cornerRadius: 10)
-                                                .fill(Theme.secondaryAccent.opacity(0.15))
-                                                .frame(width: 38, height: 38)
-                                            Image(systemName: "building.columns.fill")
-                                                .font(.system(size: 15, weight: .semibold))
-                                                .foregroundColor(Theme.secondaryAccent)
-                                        }
-                                        Menu {
-                                            ForEach(paymentTypes, id: \.self) { type in
-                                                Button(type) { paymentType = type }
-                                            }
-                                        } label: {
-                                            HStack {
-                                                Text(paymentType)
-                                                Spacer()
-                                                Image(systemName: "chevron.up.chevron.down")
-                                            }
-                                        }
-                                        .accentColor(.white)
+                        VStack(spacing: 0) {
+                            EditFieldRow(icon: "person.fill", iconColor: Theme.primaryAccent, placeholder: "Your Name", text: $name)
+                            Divider().background(Color.white.opacity(0.07))
+
+                            HStack(spacing: 14) {
+                                IconBadge(systemName: "building.columns.fill", color: Theme.secondaryAccent)
+                                Menu {
+                                    ForEach(paymentTypes, id: \.self) { type in
+                                        Button(type) { paymentType = type }
                                     }
-                                    .padding(.horizontal, 18)
-                                    .padding(.vertical, 14)
-                                    Divider().background(Color.white.opacity(0.07))
-                                    
-                                    if paymentType != "None" {
-                                        EditFieldRow(icon: "creditcard.fill", iconColor: Theme.secondaryAccent, placeholder: "Payment Details / ID", text: $paymentID)
-                                        Divider().background(Color.white.opacity(0.07))
-                                    }
-                                    HStack(spacing: 14) {
-                                        ZStack {
-                                            RoundedRectangle(cornerRadius: 10)
-                                                .fill(Color(red: 1.0, green: 0.65, blue: 0.15).opacity(0.15))
-                                                .frame(width: 38, height: 38)
-                                            Image(systemName: "banknote.fill")
-                                                .font(.system(size: 15, weight: .semibold))
-                                                .foregroundColor(Color(red: 1.0, green: 0.65, blue: 0.15))
-                                        }
-                                        Menu {
-                                            ForEach(Currency.allCases, id: \.self) { c in
-                                                Button("\(c.rawValue) (\(c.symbol))") { defaultCurrency = c }
-                                            }
-                                        } label: {
-                                            HStack {
-                                                Text("\(defaultCurrency.rawValue) (\(defaultCurrency.symbol))")
-                                                Spacer()
-                                                Image(systemName: "chevron.up.chevron.down")
-                                            }
-                                            .padding()
-                                            .background(Color.white.opacity(0.0))
-                                            .foregroundColor(.white)
-                                        }
+                                } label: {
+                                    HStack {
+                                        Text(paymentType)
                                         Spacer()
+                                        Image(systemName: "chevron.up.chevron.down")
                                     }
-                                    .padding(.horizontal, 18)
-                                    .padding(.vertical, 14)
                                 }
-                            ),
-                            cornerRadius: 22
-                        )
+                                .accentColor(.white)
+                            }
+                            .padding(.horizontal, 18)
+                            .padding(.vertical, 14)
+                            Divider().background(Color.white.opacity(0.07))
+
+                            if paymentType != "None" {
+                                EditFieldRow(icon: "creditcard.fill", iconColor: Theme.secondaryAccent, placeholder: "Payment Details / ID", text: $paymentID)
+                                Divider().background(Color.white.opacity(0.07))
+                            }
+
+                            HStack(spacing: 14) {
+                                IconBadge(systemName: "banknote.fill", color: Theme.warmGold)
+                                Menu {
+                                    ForEach(Currency.allCases, id: \.self) { c in
+                                        Button("\(c.rawValue) (\(c.symbol))") { defaultCurrency = c }
+                                    }
+                                } label: {
+                                    HStack {
+                                        Text("\(defaultCurrency.rawValue) (\(defaultCurrency.symbol))")
+                                        Spacer()
+                                        Image(systemName: "chevron.up.chevron.down")
+                                    }
+                                    .foregroundColor(.white)
+                                }
+                                Spacer()
+                            }
+                            .padding(.horizontal, 18)
+                            .padding(.vertical, 14)
+                        }
+                        .glassCard(cornerRadius: 22)
                     }
                     .padding(20)
                 }
@@ -402,6 +383,7 @@ struct EditProfileView: View {
     }
 }
 
+// MARK: - Edit Field Row
 struct EditFieldRow: View {
     var icon: String
     var iconColor: Color
@@ -410,14 +392,7 @@ struct EditFieldRow: View {
 
     var body: some View {
         HStack(spacing: 14) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(iconColor.opacity(0.15))
-                    .frame(width: 38, height: 38)
-                Image(systemName: icon)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(iconColor)
-            }
+            IconBadge(systemName: icon, color: iconColor)
             TextField(placeholder, text: $text)
                 .font(.system(size: 15))
                 .foregroundColor(.white)

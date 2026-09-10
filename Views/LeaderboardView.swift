@@ -107,81 +107,64 @@ struct PodiumCard: View {
 struct StatRow: View {
     let user: User
     let group: Group
-    
+
     var totalPaid: Double {
         group.expenses.filter { $0.paidBy.id == user.id }.reduce(0) { $0 + $1.amount }
     }
-    
+
     var body: some View {
         HStack {
-            ZStack {
-                Circle()
-                    .fill(LinearGradient(gradient: Gradient(colors: [Theme.primaryAccent, Theme.secondaryAccent]), startPoint: .topLeading, endPoint: .bottomTrailing))
-                    .frame(width: 40, height: 40)
-                Text(String(user.name.prefix(1)).uppercased())
-                    .font(.headline)
-                    .foregroundColor(.white)
-            }
-            
+            GradientAvatar(name: user.name, size: 40)
+
             Text(user.name)
                 .font(.body)
                 .foregroundColor(.white)
-            
+
             Spacer()
-            
+
             VStack(alignment: .trailing) {
                 Text("Total Paid")
                     .font(.caption)
-                    .foregroundColor(.gray)
+                    .foregroundColor(.white.opacity(0.40))
                 Text("\(totalPaid, specifier: "%.2f") \(group.currency.symbol)")
                     .font(.headline)
                     .foregroundColor(Theme.primaryAccent)
             }
         }
         .padding()
-        .background(Theme.cardBackground)
-        .cornerRadius(15)
+        .glassCard(cornerRadius: 15)
         .padding(.horizontal)
     }
 }
 
-// MARK: - iOS 16 Grid
 @available(iOS 16.0, *)
 struct iOS16LeaderboardGrid: View {
     let group: Group
 
     var body: some View {
-        Theme.applyGlassCard(
-            to: AnyView(
-                Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 16) {
-                    GridRow {
-                        Text("MEMBER").font(.caption).foregroundColor(.gray)
-                        Text("PAID").font(.caption).foregroundColor(.gray).gridColumnAlignment(.trailing)
-                        Text("OWES").font(.caption).foregroundColor(.gray).gridColumnAlignment(.trailing)
+        Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 16) {
+            GridRow {
+                Text("MEMBER").font(.caption).foregroundColor(.white.opacity(0.40))
+                Text("PAID").font(.caption).foregroundColor(.white.opacity(0.40)).gridColumnAlignment(.trailing)
+                Text("OWES").font(.caption).foregroundColor(.white.opacity(0.40)).gridColumnAlignment(.trailing)
+            }
+            Divider().background(Color.white.opacity(0.1))
+
+            ForEach(group.members) { member in
+                let totalPaid = group.expenses.filter { $0.paidBy.id == member.id }.reduce(0) { $0 + $1.amount }
+                let totalOwed = group.expenses.filter { $0.splitAmong.contains(where: { $0.id == member.id }) }.reduce(0) { $0 + ($1.amount / Double($1.splitAmong.count)) }
+
+                GridRow {
+                    HStack {
+                        GradientAvatar(name: member.name, size: 32)
+                        Text(member.name).font(.subheadline).foregroundColor(.white)
                     }
-                    Divider().background(Color.white.opacity(0.1))
-                    
-                    ForEach(group.members) { member in
-                        let totalPaid = group.expenses.filter { $0.paidBy.id == member.id }.reduce(0) { $0 + $1.amount }
-                        // simplified owes
-                        let totalOwed = group.expenses.filter { $0.splitAmong.contains(where: { $0.id == member.id }) }.reduce(0) { $0 + ($1.amount / Double($1.splitAmong.count)) }
-                        
-                        GridRow {
-                            HStack {
-                                ZStack {
-                                    Circle().fill(Theme.primaryAccent.opacity(0.2)).frame(width: 32, height: 32)
-                                    Text(String(member.name.prefix(1)).uppercased()).font(.caption.bold()).foregroundColor(Theme.primaryAccent)
-                                }
-                                Text(member.name).font(.subheadline).foregroundColor(.white)
-                            }
-                            Text("\(group.currency.symbol)\(String(format: "%.2f", totalPaid))").font(.subheadline.bold()).foregroundColor(Theme.successColor)
-                            Text("\(group.currency.symbol)\(String(format: "%.2f", totalOwed))").font(.subheadline.bold()).foregroundColor(Theme.dangerColor)
-                        }
-                    }
+                    Text("\(group.currency.symbol)\(String(format: "%.2f", totalPaid))").font(.subheadline.bold()).foregroundColor(Theme.successColor)
+                    Text("\(group.currency.symbol)\(String(format: "%.2f", totalOwed))").font(.subheadline.bold()).foregroundColor(Theme.dangerColor)
                 }
-                .padding(20)
-            ),
-            cornerRadius: 20
-        )
+            }
+        }
+        .padding(20)
+        .glassCard(cornerRadius: 20)
     }
 }

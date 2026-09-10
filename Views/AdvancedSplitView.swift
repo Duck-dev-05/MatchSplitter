@@ -35,28 +35,17 @@ struct AdvancedSplitView: View {
             Theme.backgroundGradient.ignoresSafeArea()
             
             VStack(spacing: 0) {
-                // Header
-                HStack {
-                    Button("Cancel") {
-                        presentationMode.wrappedValue.dismiss()
-                    }
-                    .foregroundColor(.white.opacity(0.6))
-                    
-                    Spacer()
-                    
-                    Text("Split Options")
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.white)
-                    
-                    Spacer()
-                    
-                    Button("Done") {
-                        saveAndDismiss()
-                    }
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(Theme.primaryAccent)
-                }
-                .padding(24)
+                DragHandle()
+                    .padding(.bottom, 4)
+
+                SheetHeader(
+                    title: "Split Options",
+                    leadingLabel: "Cancel",
+                    trailingLabel: "Done",
+                    trailingColor: Theme.primaryAccent,
+                    onLeading: { presentationMode.wrappedValue.dismiss() },
+                    onTrailing: { saveAndDismiss() }
+                )
                 
                 // Picker
                 Picker("Split Type", selection: $localSplitType) {
@@ -78,47 +67,48 @@ struct AdvancedSplitView: View {
                                 .multilineTextAlignment(.center)
                             
                             ForEach(group.members) { member in
-                                Theme.applyGlassCard(
-                                    to: AnyView(
-                                        Button(action: {
-                                            if localSelectedUsers.contains(member.id) {
-                                                if localSelectedUsers.count > 1 {
-                                                    localSelectedUsers.remove(member.id)
-                                                }
-                                            } else {
-                                                localSelectedUsers.insert(member.id)
+                                Button(action: {
+                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                        if localSelectedUsers.contains(member.id) {
+                                            if localSelectedUsers.count > 1 {
+                                                localSelectedUsers.remove(member.id)
                                             }
-                                        }) {
-                                            HStack(spacing: 16) {
-                                                ZStack {
-                                                    Circle()
-                                                        .fill(localSelectedUsers.contains(member.id) ? Theme.primaryAccent : Color.white.opacity(0.1))
-                                                        .frame(width: 24, height: 24)
-                                                    if localSelectedUsers.contains(member.id) {
-                                                        Image(systemName: "checkmark")
-                                                            .font(.system(size: 12, weight: .bold))
-                                                            .foregroundColor(.white)
-                                                    }
-                                                }
-                                                
-                                                Text(member.name)
-                                                    .font(.system(size: 16, weight: .semibold))
-                                                    .foregroundColor(.white)
-                                                
-                                                Spacer()
-                                                
-                                                if localSelectedUsers.contains(member.id) {
-                                                    let splitAmount = amount / Double(localSelectedUsers.count)
-                                                    Text("\(group.currency.symbol)\(String(format: "%.2f", splitAmount))")
-                                                        .font(.system(size: 16, weight: .bold, design: .rounded))
-                                                        .foregroundColor(Theme.secondaryAccent)
-                                                }
-                                            }
-                                            .padding(16)
+                                        } else {
+                                            localSelectedUsers.insert(member.id)
                                         }
-                                    ),
-                                    cornerRadius: 16
-                                )
+                                    }
+                                }) {
+                                    HStack(spacing: 16) {
+                                        ZStack {
+                                            Circle()
+                                                .fill(localSelectedUsers.contains(member.id) ? Theme.primaryAccent : Color.white.opacity(0.1))
+                                                .frame(width: 24, height: 24)
+                                            if localSelectedUsers.contains(member.id) {
+                                                Image(systemName: "checkmark")
+                                                    .font(.system(size: 12, weight: .bold))
+                                                    .foregroundColor(.white)
+                                            }
+                                        }
+
+                                        GradientAvatar(name: member.name, size: 34)
+
+                                        Text(member.name)
+                                            .font(.system(size: 16, weight: .semibold))
+                                            .foregroundColor(.white)
+
+                                        Spacer()
+
+                                        if localSelectedUsers.contains(member.id) {
+                                            let splitAmount = amount / Double(localSelectedUsers.count)
+                                            Text("\(group.currency.symbol)\(String(format: "%.2f", splitAmount))")
+                                                .font(.system(size: 16, weight: .bold, design: .rounded))
+                                                .foregroundColor(Theme.secondaryAccent)
+                                        }
+                                    }
+                                    .padding(16)
+                                    .glassCard(cornerRadius: 16)
+                                }
+                                .buttonStyle(PressableButtonStyle())
                             }
                         } else {
                             Text("Enter exact amounts for each member. Total must equal \(group.currency.symbol)\(String(format: "%.2f", amount)).")
@@ -128,30 +118,27 @@ struct AdvancedSplitView: View {
                                 .multilineTextAlignment(.center)
                                 
                             ForEach(group.members) { member in
-                                Theme.applyGlassCard(
-                                    to: AnyView(
-                                        HStack(spacing: 16) {
-                                            Text(member.name)
-                                                .font(.system(size: 16, weight: .semibold))
-                                                .foregroundColor(.white)
-                                            
-                                            Spacer()
-                                            
-                                            Text(group.currency.symbol)
-                                                .foregroundColor(.white.opacity(0.4))
-                                            TextField("0.00", text: Binding(
-                                                get: { localCustomShares[member.id] ?? "" },
-                                                set: { localCustomShares[member.id] = $0 }
-                                            ))
-                                            .keyboardType(.decimalPad)
-                                            .multilineTextAlignment(.trailing)
-                                            .foregroundColor(.white)
-                                            .frame(width: 100)
-                                        }
-                                        .padding(16)
-                                    ),
-                                    cornerRadius: 16
-                                )
+                                HStack(spacing: 16) {
+                                    GradientAvatar(name: member.name, size: 34)
+                                    Text(member.name)
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundColor(.white)
+
+                                    Spacer()
+
+                                    Text(group.currency.symbol)
+                                        .foregroundColor(.white.opacity(0.4))
+                                    TextField("0.00", text: Binding(
+                                        get: { localCustomShares[member.id] ?? "" },
+                                        set: { localCustomShares[member.id] = $0 }
+                                    ))
+                                    .keyboardType(.decimalPad)
+                                    .multilineTextAlignment(.trailing)
+                                    .foregroundColor(.white)
+                                    .frame(width: 100)
+                                }
+                                .padding(16)
+                                .glassCard(cornerRadius: 16)
                             }
                         }
                     }

@@ -9,269 +9,325 @@ enum AuthMode {
 struct LoginView: View {
     @EnvironmentObject var viewModel: GroupViewModel
     @Environment(\.presentationMode) var presentationMode
-    
+
     @State private var mode: AuthMode = .login
     @State private var email = ""
     @State private var password = ""
-    
+
     @State private var name: String = ""
     @State private var paymentID: String = ""
     @State private var paymentType: String = "None"
     @State private var selectedCurrency: Currency? = nil
-    
+
     @State private var isAnimating: Bool = false
     @State private var errorMessage: String = ""
-    
+    @State private var segmentOffset: CGFloat = 0
+
     let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "None"]
-    
+
+    // Whether form is valid for the current step
+    var isStepValid: Bool {
+        switch mode {
+        case .login:         return !email.isEmpty && !password.isEmpty
+        case .registerStep1: return !name.isEmpty && !email.isEmpty && !password.isEmpty
+        case .registerStep2: return selectedCurrency != nil && !(paymentType != "None" && paymentID.isEmpty)
+        }
+    }
+
     var body: some View {
         ZStack {
             // Animated Background
-            LinearGradient(gradient: Gradient(colors: [Theme.primaryAccent, Theme.secondaryAccent, Theme.backgroundEnd]),
-                           startPoint: isAnimating ? .topLeading : .bottomTrailing,
-                           endPoint: isAnimating ? .bottomTrailing : .topLeading)
-                .ignoresSafeArea()
-                .animation(Animation.easeInOut(duration: 5.0).repeatForever(autoreverses: true), value: isAnimating)
-                .onAppear {
-                    isAnimating = true
-                }
-            
+            LinearGradient(
+                gradient: Gradient(colors: [Theme.primaryAccent, Theme.secondaryAccent, Theme.backgroundEnd]),
+                startPoint: isAnimating ? .topLeading : .bottomTrailing,
+                endPoint: isAnimating ? .bottomTrailing : .topLeading
+            )
+            .ignoresSafeArea()
+            .animation(Animation.easeInOut(duration: 5.0).repeatForever(autoreverses: true), value: isAnimating)
+            .onAppear { isAnimating = true }
+
+            // Particle blobs
+            GeometryReader { geo in
+                Circle()
+                    .fill(Color.white.opacity(0.06))
+                    .frame(width: 200, height: 200)
+                    .blur(radius: 50)
+                    .offset(x: isAnimating ? geo.size.width * 0.75 : geo.size.width * 0.5,
+                            y: isAnimating ? geo.size.height * 0.15 : geo.size.height * 0.25)
+                    .animation(.easeInOut(duration: 7.0).repeatForever(autoreverses: true), value: isAnimating)
+
+                Circle()
+                    .fill(Color.white.opacity(0.05))
+                    .frame(width: 150, height: 150)
+                    .blur(radius: 40)
+                    .offset(x: isAnimating ? geo.size.width * 0.05 : geo.size.width * 0.2,
+                            y: isAnimating ? geo.size.height * 0.65 : geo.size.height * 0.55)
+                    .animation(.easeInOut(duration: 9.0).repeatForever(autoreverses: true), value: isAnimating)
+            }
+            .ignoresSafeArea()
+
             VStack(spacing: 30) {
                 HStack {
                     Spacer()
-                    Button(action: {
-                        presentationMode.wrappedValue.dismiss()
-                    }) {
+                    Button(action: { presentationMode.wrappedValue.dismiss() }) {
                         Image(systemName: "xmark.circle.fill")
                             .font(.system(size: 24))
                             .foregroundColor(.white.opacity(0.7))
                     }
+                    .buttonStyle(PressableButtonStyle())
                 }
                 .padding(.horizontal, 25)
-                .padding(.top, 40) // Ensure it's not under the notch/dynamic island
-                
+                .padding(.top, 40)
+
                 Spacer()
-                
-                // Logo/Header
+
+                // Logo / Header
                 VStack(spacing: 15) {
-                    Image(systemName: "figure.sporting.court")
-                        .font(.system(size: 80))
-                        .foregroundColor(.white)
-                    
+                    ZStack {
+                        Circle()
+                            .fill(Color.white.opacity(0.12))
+                            .frame(width: 100, height: 100)
+                            .shadow(color: Color.white.opacity(0.3), radius: 25, x: 0, y: 10)
+                        Image(systemName: "figure.sporting.court")
+                            .font(.system(size: 54))
+                            .foregroundColor(.white)
+                    }
+
                     Text("MatchSplitter")
-                        .font(.largeTitle)
-                        .fontWeight(.heavy)
+                        .font(.system(size: 34, weight: .heavy, design: .rounded))
                         .foregroundColor(.white)
+                        .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
                 }
-                
-                // Glassmorphic Card
+
+                // Glass Card
                 VStack(spacing: 20) {
-                    Text(mode == .login ? "Login" : (mode == .registerStep1 ? "Register" : "Setup Payment"))
-                        .font(.title2)
-                        .fontWeight(.bold)
+                    Text(mode == .login ? "Welcome Back" : (mode == .registerStep1 ? "Create Account" : "Payment Setup"))
+                        .font(.system(size: 22, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
-                    
-                    // Auth Segmented Control
+
+                    // Segmented Control with animated sliding indicator
                     if mode != .registerStep2 {
-                        HStack {
-                            Button("Login") { mode = .login; errorMessage = "" }
-                                .padding(.vertical, 8)
-                                .frame(maxWidth: .infinity)
-                                .background(mode == .login ? Color.white.opacity(0.2) : Color.clear)
-                                .cornerRadius(10)
-                                .foregroundColor(mode == .login ? .white : .white.opacity(0.5))
-                            
-                            Button("Register") { mode = .registerStep1; errorMessage = "" }
-                                .padding(.vertical, 8)
-                                .frame(maxWidth: .infinity)
-                                .background(mode == .registerStep1 ? Color.white.opacity(0.2) : Color.clear)
-                                .cornerRadius(10)
-                                .foregroundColor(mode == .registerStep1 ? .white : .white.opacity(0.5))
-                        }
-                        .background(Color.white.opacity(0.1))
-                        .cornerRadius(12)
-                        .padding(.bottom, 10)
+                        animatedSegmentControl
                     }
-                    
+
+                    // Error Message
                     if !errorMessage.isEmpty {
-                        Text(errorMessage)
-                            .font(.caption)
-                            .foregroundColor(Theme.dangerColor)
-                            .padding(.bottom, 5)
+                        HStack(spacing: 6) {
+                            Image(systemName: "exclamationmark.circle")
+                                .font(.system(size: 13))
+                            Text(errorMessage)
+                                .font(.system(size: 13, weight: .medium))
+                        }
+                        .foregroundColor(Theme.dangerColor)
+                        .padding(.bottom, 2)
                     }
-                    
+
+                    // Form fields
                     if mode == .login {
-                        VStack(alignment: .leading, spacing: 15) {
-                            TextField("Email", text: $email)
-                                .keyboardType(.emailAddress)
-                                .autocapitalization(.none)
-                                .padding()
-                                .background(Color.white.opacity(0.2))
-                                .cornerRadius(10)
-                                .foregroundColor(.white)
-                            
-                            SecureField("Password", text: $password)
-                                .padding()
-                                .background(Color.white.opacity(0.2))
-                                .cornerRadius(10)
-                                .foregroundColor(.white)
-                        }
-                        
-                        Button(action: handleLogin) {
-                            Text("Login")
-                                .font(.headline)
-                                .foregroundColor(Theme.primaryAccent)
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(Color.white)
-                                .cornerRadius(15)
-                                .shadow(radius: 5)
-                        }
-                        .padding(.top, 10)
-                        .disabled(email.isEmpty || password.isEmpty)
-                        .opacity(email.isEmpty || password.isEmpty ? 0.6 : 1.0)
-                        
+                        loginFields
                     } else if mode == .registerStep1 {
-                        VStack(alignment: .leading, spacing: 15) {
-                            TextField("Your Name", text: $name)
-                                .padding()
-                                .background(Color.white.opacity(0.2))
-                                .cornerRadius(10)
-                                .foregroundColor(.white)
-                                
-                            TextField("Email", text: $email)
-                                .keyboardType(.emailAddress)
-                                .autocapitalization(.none)
-                                .padding()
-                                .background(Color.white.opacity(0.2))
-                                .cornerRadius(10)
-                                .foregroundColor(.white)
-                            
-                            SecureField("Password", text: $password)
-                                .padding()
-                                .background(Color.white.opacity(0.2))
-                                .cornerRadius(10)
-                                .foregroundColor(.white)
-                        }
-                        
-                        Button(action: {
-                            if viewModel.registeredUsers.contains(where: { $0.email == email }) {
-                                errorMessage = "Email already in use."
-                            } else {
-                                errorMessage = ""
-                                withAnimation { mode = .registerStep2 }
-                            }
-                        }) {
-                            Text("Next")
-                                .font(.headline)
-                                .foregroundColor(Theme.primaryAccent)
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(Color.white)
-                                .cornerRadius(15)
-                                .shadow(radius: 5)
-                        }
-                        .padding(.top, 10)
-                        .disabled(name.isEmpty || email.isEmpty || password.isEmpty)
-                        .opacity(name.isEmpty || email.isEmpty || password.isEmpty ? 0.6 : 1.0)
-                        
-                    } else if mode == .registerStep2 {
-                        VStack(alignment: .leading, spacing: 15) {
-                            Text("Payment Type")
-                                .foregroundColor(.white.opacity(0.8))
-                                .font(.caption)
-                            
-                            Menu {
-                                ForEach(paymentTypes, id: \.self) { type in
-                                    Button(type) { paymentType = type }
-                                }
-                            } label: {
-                                HStack {
-                                    Text(paymentType)
-                                    Spacer()
-                                    Image(systemName: "chevron.up.chevron.down")
-                                }
-                                .padding()
-                                .background(Color.white.opacity(0.2))
-                                .cornerRadius(10)
-                                .foregroundColor(.white)
-                            }
-                            
-                            if paymentType != "None" {
-                                Text("Payment ID / Details")
-                                    .foregroundColor(.white.opacity(0.8))
-                                    .font(.caption)
-                                TextField(placeholderFor(type: paymentType), text: $paymentID)
-                                    .padding()
-                                    .background(Color.white.opacity(0.2))
-                                    .cornerRadius(10)
-                                    .foregroundColor(.white)
-                            }
-                            
-                            Text("Default Currency")
-                                .foregroundColor(.white.opacity(0.8))
-                                .font(.caption)
-                            
-                            Menu {
-                                ForEach(Currency.allCases, id: \.self) { c in
-                                    Button("\(c.rawValue) (\(c.symbol))") { selectedCurrency = c }
-                                }
-                            } label: {
-                                HStack {
-                                    if let currency = selectedCurrency {
-                                        Text("\(currency.rawValue) (\(currency.symbol))")
-                                    } else {
-                                        Text("Select Currency")
-                                            .foregroundColor(.white.opacity(0.6))
-                                    }
-                                    Spacer()
-                                    Image(systemName: "chevron.up.chevron.down")
-                                }
-                                .padding()
-                                .background(Color.white.opacity(0.2))
-                                .cornerRadius(10)
-                                .foregroundColor(.white)
-                            }
-                        }
-                        
-                        Button(action: handleRegister) {
-                            Text("Finish & Register")
-                                .font(.headline)
-                                .foregroundColor(Theme.primaryAccent)
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(Color.white)
-                                .cornerRadius(15)
-                                .shadow(radius: 5)
-                        }
-                        .padding(.top, 10)
-                        .disabled((paymentType != "None" && paymentID.isEmpty) || selectedCurrency == nil)
-                        .opacity(((paymentType != "None" && paymentID.isEmpty) || selectedCurrency == nil) ? 0.6 : 1.0)
-                        
-                        Button(action: {
-                            withAnimation { mode = .registerStep1 }
-                        }) {
-                            Text("Back")
-                                .font(.subheadline)
-                                .foregroundColor(.white.opacity(0.7))
-                        }
-                        .padding(.top, 5)
+                        registerStep1Fields
+                    } else {
+                        registerStep2Fields
                     }
                 }
-                .padding(30)
+                .padding(28)
                 .background(
-                    RoundedRectangle(cornerRadius: 25)
-                        .fill(Color.white.opacity(0.15))
-                        .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 10)
+                    RoundedRectangle(cornerRadius: 28)
+                        .fill(Color.white.opacity(0.12))
+                        .background(
+                            BlurView(style: .systemUltraThinMaterialDark)
+                                .clipShape(RoundedRectangle(cornerRadius: 28))
+                        )
+                        .shadow(color: .black.opacity(0.25), radius: 20, x: 0, y: 10)
                 )
-                .background(BlurView(style: .systemUltraThinMaterialDark).cornerRadius(25))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 28)
+                        .stroke(Color.white.opacity(0.18), lineWidth: 1)
+                )
                 .padding(.horizontal, 20)
-                
+
                 Spacer()
             }
         }
     }
-    
+
+    // MARK: - Animated Segment Control
+    private var animatedSegmentControl: some View {
+        ZStack(alignment: .leading) {
+            // Track
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.white.opacity(0.08))
+                .frame(height: 40)
+
+            // Sliding pill
+            GeometryReader { geo in
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(Color.white.opacity(0.20))
+                    .frame(width: geo.size.width / 2, height: 34)
+                    .offset(x: mode == .login ? 3 : geo.size.width / 2 - 3, y: 3)
+                    .animation(.spring(response: 0.35, dampingFraction: 0.75), value: mode)
+            }
+
+            HStack(spacing: 0) {
+                Button("Login") { mode = .login; errorMessage = "" }
+                    .frame(maxWidth: .infinity)
+                    .font(.system(size: 15, weight: mode == .login ? .bold : .regular))
+                    .foregroundColor(mode == .login ? .white : .white.opacity(0.5))
+
+                Button("Register") { mode = .registerStep1; errorMessage = "" }
+                    .frame(maxWidth: .infinity)
+                    .font(.system(size: 15, weight: mode == .registerStep1 ? .bold : .regular))
+                    .foregroundColor(mode == .registerStep1 ? .white : .white.opacity(0.5))
+            }
+        }
+        .frame(height: 40)
+        .padding(.bottom, 4)
+    }
+
+    // MARK: - Login Fields
+    private var loginFields: some View {
+        VStack(spacing: 14) {
+            glassTextField(icon: "envelope.fill", iconColor: Theme.secondaryAccent, placeholder: "Email", text: $email, keyboard: .emailAddress)
+            glassTextField(icon: "lock.fill", iconColor: Theme.primaryAccent, placeholder: "Password", text: $password, isSecure: true)
+
+            GradientButton(label: "Login", isEnabled: isStepValid, action: handleLogin)
+                .padding(.top, 6)
+        }
+    }
+
+    // MARK: - Register Step 1 Fields
+    private var registerStep1Fields: some View {
+        VStack(spacing: 14) {
+            glassTextField(icon: "person.fill", iconColor: Theme.primaryAccent, placeholder: "Your Name", text: $name)
+            glassTextField(icon: "envelope.fill", iconColor: Theme.secondaryAccent, placeholder: "Email", text: $email, keyboard: .emailAddress)
+            glassTextField(icon: "lock.fill", iconColor: Theme.warmGold, placeholder: "Password", text: $password, isSecure: true)
+
+            GradientButton(label: "Next →", isEnabled: isStepValid) {
+                if viewModel.registeredUsers.contains(where: { $0.email == email }) {
+                    errorMessage = "Email already in use."
+                } else {
+                    errorMessage = ""
+                    withAnimation { mode = .registerStep2 }
+                }
+            }
+            .padding(.top, 6)
+        }
+    }
+
+    // MARK: - Register Step 2 Fields
+    private var registerStep2Fields: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            // Payment type picker styled as glass field
+            VStack(spacing: 0) {
+                HStack(spacing: 12) {
+                    IconBadge(systemName: "building.columns.fill", color: Theme.secondaryAccent, size: 36, iconSize: 14)
+                    Menu {
+                        ForEach(paymentTypes, id: \.self) { type in
+                            Button(type) { paymentType = type }
+                        }
+                    } label: {
+                        HStack {
+                            Text(paymentType)
+                                .foregroundColor(.white)
+                            Spacer()
+                            Image(systemName: "chevron.up.chevron.down")
+                                .foregroundColor(.white.opacity(0.6))
+                                .font(.system(size: 12))
+                        }
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+            }
+            .background(Color.white.opacity(0.12))
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+
+            if paymentType != "None" {
+                glassTextField(
+                    icon: "creditcard.fill",
+                    iconColor: Theme.secondaryAccent,
+                    placeholder: placeholderFor(type: paymentType),
+                    text: $paymentID
+                )
+            }
+
+            // Currency picker
+            VStack(spacing: 0) {
+                HStack(spacing: 12) {
+                    IconBadge(systemName: "banknote.fill", color: Theme.warmGold, size: 36, iconSize: 14)
+                    Menu {
+                        ForEach(Currency.allCases, id: \.self) { c in
+                            Button("\(c.rawValue) (\(c.symbol))") { selectedCurrency = c }
+                        }
+                    } label: {
+                        HStack {
+                            if let currency = selectedCurrency {
+                                Text("\(currency.rawValue) (\(currency.symbol))")
+                                    .foregroundColor(.white)
+                            } else {
+                                Text("Select Currency")
+                                    .foregroundColor(.white.opacity(0.5))
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.up.chevron.down")
+                                .foregroundColor(.white.opacity(0.6))
+                                .font(.system(size: 12))
+                        }
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+            }
+            .background(Color.white.opacity(0.12))
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+
+            GradientButton(label: "Finish & Register", isEnabled: isStepValid, action: handleRegister)
+                .padding(.top, 6)
+
+            Button(action: { withAnimation { mode = .registerStep1 } }) {
+                Text("← Back")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.white.opacity(0.65))
+                    .frame(maxWidth: .infinity)
+            }
+        }
+    }
+
+    // MARK: - Glass Text Field
+    private func glassTextField(
+        icon: String,
+        iconColor: Color,
+        placeholder: String,
+        text: Binding<String>,
+        keyboard: UIKeyboardType = .default,
+        isSecure: Bool = false
+    ) -> some View {
+        HStack(spacing: 12) {
+            IconBadge(systemName: icon, color: iconColor, size: 36, iconSize: 14)
+            if isSecure {
+                SecureField(placeholder, text: text)
+                    .font(.system(size: 15))
+                    .foregroundColor(.white)
+            } else {
+                TextField(placeholder, text: text)
+                    .keyboardType(keyboard)
+                    .autocapitalization(.none)
+                    .font(.system(size: 15))
+                    .foregroundColor(.white)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(Color.white.opacity(0.12))
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(Color.white.opacity(0.10), lineWidth: 1)
+        )
+    }
+
+    // MARK: - Handlers
     private func handleLogin() {
         if let user = viewModel.registeredUsers.first(where: { $0.email == email && $0.password == password }) {
             viewModel.login(user: user)
@@ -280,17 +336,17 @@ struct LoginView: View {
             errorMessage = "Invalid email or password."
         }
     }
-    
+
     private func handleRegister() {
         guard let currency = selectedCurrency else { return }
         let finalType = paymentType == "None" ? nil : paymentType
         let finalID = paymentType == "None" ? "" : paymentID
-        
+
         let newUser = User(name: name, email: email, password: password, paymentID: finalID, paymentType: finalType)
         viewModel.register(user: newUser, defaultCurrency: currency)
         presentationMode.wrappedValue.dismiss()
     }
-    
+
     func placeholderFor(type: String) -> String {
         switch type {
         case "PromptPay": return "e.g. 0812345678"
@@ -301,13 +357,14 @@ struct LoginView: View {
     }
 }
 
+// MARK: - Blur View
 struct BlurView: UIViewRepresentable {
     var style: UIBlurEffect.Style
-    
+
     func makeUIView(context: Context) -> UIVisualEffectView {
         return UIVisualEffectView(effect: UIBlurEffect(style: style))
     }
-    
+
     func updateUIView(_ uiView: UIVisualEffectView, context: Context) {
         uiView.effect = UIBlurEffect(style: style)
     }

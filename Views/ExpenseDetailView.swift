@@ -5,92 +5,108 @@ struct ExpenseDetailView: View {
     var group: Group
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject var viewModel: GroupViewModel
-    
+
     @State private var showingEditExpense = false
     @State private var showingDeleteConfirm = false
+
+    var categoryColor: Color {
+        switch expense.category {
+        case .food:          return Theme.warmGold
+        case .transport:     return Theme.secondaryAccent
+        case .rent:          return Theme.primaryAccent
+        case .entertainment: return Theme.dangerColor
+        case .travel:        return Theme.successColor
+        case .general:       return .white
+        }
+    }
 
     var body: some View {
         ZStack {
             Theme.backgroundGradient.ignoresSafeArea()
 
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 24) {
-                    // Header Card
-                    Theme.applyGlassCard(
-                        to: AnyView(
-                            VStack(spacing: 16) {
-                                ZStack {
-                                    Circle()
-                                        .fill(Theme.primaryAccent.opacity(0.2))
-                                        .frame(width: 80, height: 80)
-                                    Image(systemName: expense.category.iconName)
-                                        .font(.system(size: 32))
-                                        .foregroundColor(Theme.secondaryAccent)
-                                }
-                                
-                                VStack(spacing: 4) {
-                                    Text(expense.title)
-                                        .font(.system(size: 24, weight: .bold, design: .rounded))
-                                        .foregroundColor(.white)
-                                    
-                                    Text(expense.date, style: .date)
-                                        .font(.subheadline)
-                                        .foregroundColor(.white.opacity(0.5))
-                                }
-                                
-                                Text("\(group.currency.symbol)\(String(format: "%.2f", expense.amount))")
-                                    .font(.system(size: 48, weight: .heavy, design: .rounded))
-                                    .foregroundColor(.white)
-                                    .padding(.top, 8)
-                                
-                                Text("Paid by **\(expense.paidBy.name)**")
-                                    .font(.subheadline)
-                                    .foregroundColor(.white.opacity(0.8))
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 8)
-                                    .background(Color.white.opacity(0.1))
-                                    .clipShape(Capsule())
-                            }
-                            .padding(32)
-                            .frame(maxWidth: .infinity)
-                        ),
-                        cornerRadius: 32
-                    )
+            // Glow behind icon
+            Circle()
+                .fill(categoryColor.opacity(0.10))
+                .frame(width: 200, height: 200)
+                .blur(radius: 60)
+                .offset(y: -160)
+                .ignoresSafeArea()
 
-                    // Split Details
-                    VStack(alignment: .leading, spacing: 16) {
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 20) {
+
+                    // MARK: Header Card
+                    VStack(spacing: 16) {
+                        ZStack {
+                            Circle()
+                                .fill(categoryColor.opacity(0.18))
+                                .frame(width: 84, height: 84)
+                            Circle()
+                                .stroke(categoryColor.opacity(0.25), lineWidth: 1.5)
+                                .frame(width: 96, height: 96)
+                            Image(systemName: expense.category.iconName)
+                                .font(.system(size: 34))
+                                .foregroundColor(categoryColor)
+                        }
+
+                        VStack(spacing: 6) {
+                            Text(expense.title)
+                                .font(.system(size: 24, weight: .bold, design: .rounded))
+                                .foregroundColor(.white)
+
+                            Text(expense.date, style: .date)
+                                .font(.subheadline)
+                                .foregroundColor(.white.opacity(0.50))
+                        }
+
+                        Text("\(group.currency.symbol)\(String(format: "%.2f", expense.amount))")
+                            .font(.system(size: 48, weight: .heavy, design: .rounded))
+                            .foregroundColor(.white)
+                            .padding(.top, 4)
+
+                        Text("Paid by **\(expense.paidBy.name)**")
+                            .font(.subheadline)
+                            .foregroundColor(.white.opacity(0.80))
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(Color.white.opacity(0.10))
+                            .clipShape(Capsule())
+                    }
+                    .padding(32)
+                    .frame(maxWidth: .infinity)
+                    .glassCard(cornerRadius: 32)
+
+                    // MARK: Split Details
+                    VStack(alignment: .leading, spacing: 12) {
                         Text("SPLIT DETAILS")
                             .font(.caption.weight(.bold))
-                            .foregroundColor(.white.opacity(0.4))
+                            .foregroundColor(.white.opacity(0.40))
                             .textCase(.uppercase)
-                            .padding(.leading, 8)
+                            .padding(.leading, 4)
 
-                        Theme.applyGlassCard(
-                            to: AnyView(
-                                VStack(spacing: 0) {
-                                    if expense.splitType == .equal {
-                                        let splitAmount = expense.amount / Double(expense.splitAmong.count)
-                                        ForEach(Array(expense.splitAmong.enumerated()), id: \.element.id) { index, user in
-                                            SplitRowView(user: user, amount: splitAmount, currency: group.currency)
-                                            if index < expense.splitAmong.count - 1 {
-                                                Divider().background(Color.white.opacity(0.08))
-                                            }
-                                        }
-                                    } else if let customShares = expense.customShares {
-                                        ForEach(Array(customShares.enumerated()), id: \.element.user.id) { index, share in
-                                            SplitRowView(user: share.user, amount: share.exactAmount, currency: group.currency)
-                                            if index < customShares.count - 1 {
-                                                Divider().background(Color.white.opacity(0.08))
-                                            }
-                                        }
+                        VStack(spacing: 0) {
+                            if expense.splitType == .equal {
+                                let splitAmount = expense.amount / Double(expense.splitAmong.count)
+                                ForEach(Array(expense.splitAmong.enumerated()), id: \.element.id) { index, user in
+                                    SplitRowView(user: user, amount: splitAmount, currency: group.currency)
+                                    if index < expense.splitAmong.count - 1 {
+                                        Divider().background(Color.white.opacity(0.08))
                                     }
                                 }
-                            ),
-                            cornerRadius: 24
-                        )
+                            } else if let customShares = expense.customShares {
+                                ForEach(Array(customShares.enumerated()), id: \.element.user.id) { index, share in
+                                    SplitRowView(user: share.user, amount: share.exactAmount, currency: group.currency)
+                                    if index < customShares.count - 1 {
+                                        Divider().background(Color.white.opacity(0.08))
+                                    }
+                                }
+                            }
+                        }
+                        .glassCard(cornerRadius: 24)
                     }
                 }
                 .padding(20)
+                .padding(.bottom, 40)
             }
         }
         .navigationTitle("Details")
@@ -113,10 +129,6 @@ struct ExpenseDetailView: View {
         .sheet(isPresented: $showingEditExpense) {
             AddExpenseView(group: group, editingExpense: expense)
                 .onDisappear {
-                    // Update current view after edit?
-                    // Swift UI handles it automatically if `expense` state comes from viewmodel
-                    // BUT `expense` is a passed struct here. We should ideally dismiss or refresh.
-                    // For simplicity, we can let user go back and forth.
                     presentationMode.wrappedValue.dismiss()
                 }
         }
@@ -132,29 +144,22 @@ struct ExpenseDetailView: View {
     }
 }
 
+// MARK: - Split Row
 struct SplitRowView: View {
     var user: User
     var amount: Double
     var currency: Currency
-    
+
     var body: some View {
-        HStack {
-            ZStack {
-                Circle()
-                    .fill(Color.white.opacity(0.1))
-                    .frame(width: 40, height: 40)
-                Text(String(user.name.prefix(1)))
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
-                    .foregroundColor(.white)
-            }
-            
+        HStack(spacing: 14) {
+            GradientAvatar(name: user.name, size: 40)
+
             Text(user.name)
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(.white)
-                .padding(.leading, 8)
-            
+
             Spacer()
-            
+
             Text("\(currency.symbol)\(String(format: "%.2f", amount))")
                 .font(.system(size: 16, weight: .bold, design: .rounded))
                 .foregroundColor(.white)
