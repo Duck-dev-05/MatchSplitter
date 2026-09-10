@@ -74,11 +74,19 @@ struct MainTabView: View {
                 }
                 .tag(3)
                 
-            NavigationView { ProfileView() }
-                .tabItem {
-                    Label(groupViewModel.currentUser == nil ? "Login" : "Profile", systemImage: selectedTab == 4 ? "person.crop.circle.fill" : "person.crop.circle")
-                }
-                .tag(4)
+            if groupViewModel.currentUser == nil {
+                LoginView(isModal: false)
+                    .tabItem {
+                        Label("Login", systemImage: selectedTab == 4 ? "person.crop.circle.fill" : "person.crop.circle")
+                    }
+                    .tag(4)
+            } else {
+                NavigationView { ProfileView() }
+                    .tabItem {
+                        Label("Profile", systemImage: selectedTab == 4 ? "person.crop.circle.fill" : "person.crop.circle")
+                    }
+                    .tag(4)
+            }
         }
         .accentColor(Theme.secondaryAccent)
     }

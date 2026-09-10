@@ -27,6 +27,8 @@ struct LoginView: View {
 
     let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "None"]
 
+    var isModal: Bool = true
+
     // Whether form is valid for the current step
     var isStepValid: Bool {
         switch mode {
@@ -69,17 +71,21 @@ struct LoginView: View {
             .ignoresSafeArea()
 
             VStack(spacing: 30) {
-                HStack {
-                    Spacer()
-                    Button(action: { presentationMode.wrappedValue.dismiss() }) {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 24))
-                            .foregroundColor(.white.opacity(0.7))
+                if isModal {
+                    HStack {
+                        Spacer()
+                        Button(action: { presentationMode.wrappedValue.dismiss() }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 24))
+                                .foregroundColor(.white.opacity(0.7))
+                        }
+                        .buttonStyle(PressableButtonStyle())
                     }
-                    .buttonStyle(PressableButtonStyle())
+                    .padding(.horizontal, 25)
+                    .padding(.top, 40)
+                } else {
+                    Spacer().frame(height: 64)
                 }
-                .padding(.horizontal, 25)
-                .padding(.top, 40)
 
                 Spacer()
 

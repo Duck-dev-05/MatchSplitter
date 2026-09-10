@@ -4,7 +4,6 @@ struct ProfileView: View {
     @EnvironmentObject var viewModel: GroupViewModel
     @State private var showingEditProfile = false
     @State private var pulse = false
-    @State private var showingLogin = false
 
     var totalExpenses: Int {
         viewModel.groups.flatMap { $0.expenses }.count
@@ -16,22 +15,6 @@ struct ProfileView: View {
 
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 24) {
-
-                    // MARK: Not-logged-in banner
-                    if viewModel.currentUser == nil {
-                        HStack(spacing: 10) {
-                            Image(systemName: "exclamationmark.circle.fill")
-                                .foregroundColor(Theme.warmGold)
-                            Text("Log in or register to save your data and manage your expenses.")
-                                .font(.subheadline)
-                                .foregroundColor(.white)
-                            Spacer()
-                        }
-                        .padding(14)
-                        .glassCard(cornerRadius: 14)
-                        .padding(.horizontal, 20)
-                        .padding(.top, 20)
-                    }
 
                     // MARK: Avatar Hero
                     VStack(spacing: 16) {
@@ -71,45 +54,24 @@ struct ProfileView: View {
                                     }
                                 }
                                 .foregroundColor(.white.opacity(0.6))
-                            } else {
-                                Text("Member since \(formattedMemberSince())")
-                                    .font(.subheadline)
-                                    .foregroundColor(.white.opacity(0.6))
                             }
                         }
 
                         // CTA Button
-                        if viewModel.currentUser == nil {
-                            Button(action: { showingLogin = true }) {
-                                HStack(spacing: 6) {
-                                    Image(systemName: "person.crop.circle.badge.plus")
-                                    Text("Log In / Register")
-                                }
-                                .font(.headline.weight(.bold))
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 22)
-                                .padding(.vertical, 10)
-                                .background(Theme.primaryGradient)
-                                .clipShape(Capsule())
-                                .shadow(color: Theme.primaryAccent.opacity(0.2), radius: 10, x: 0, y: 5)
+                        Button(action: { showingEditProfile = true }) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "pencil")
+                                Text("Edit Profile")
                             }
-                            .buttonStyle(PressableButtonStyle())
-                        } else {
-                            Button(action: { showingEditProfile = true }) {
-                                HStack(spacing: 6) {
-                                    Image(systemName: "pencil")
-                                    Text("Edit Profile")
-                                }
-                                .font(.headline.weight(.bold))
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 22)
-                                .padding(.vertical, 10)
-                                .background(Color.white.opacity(0.10))
-                                .clipShape(Capsule())
-                                .overlay(Capsule().stroke(Color.white.opacity(0.2), lineWidth: 1))
-                            }
-                            .buttonStyle(PressableButtonStyle())
+                            .font(.headline.weight(.bold))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 22)
+                            .padding(.vertical, 10)
+                            .background(Color.white.opacity(0.10))
+                            .clipShape(Capsule())
+                            .overlay(Capsule().stroke(Color.white.opacity(0.2), lineWidth: 1))
                         }
+                        .buttonStyle(PressableButtonStyle())
                     }
                     .padding(.bottom, 8)
 
@@ -224,23 +186,10 @@ struct ProfileView: View {
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             pulse = true
-            if viewModel.currentUser == nil {
-                showingLogin = true
-            }
         }
         .sheet(isPresented: $showingEditProfile) {
             EditProfileView()
         }
-        .sheet(isPresented: $showingLogin) {
-            LoginView()
-        }
-    }
-
-    private func formattedMemberSince() -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMM yyyy"
-        return formatter.string(from: Date())
-    }
 }
 
 // MARK: - Setting Row
