@@ -23,6 +23,8 @@ targets:
     dependencies:
       - package: EFQRCode
       - package: GoogleSignIn
+      - package: GoogleSignIn
+        product: GoogleSignInSwift
     info:
       path: Info.plist
       properties:
