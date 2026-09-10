@@ -14,20 +14,6 @@ struct ProfileView: View {
         ZStack {
             Theme.backgroundGradient.ignoresSafeArea()
 
-            // Large radial glow behind avatar
-            Circle()
-                .fill(
-                    RadialGradient(
-                        gradient: Gradient(colors: [Theme.primaryAccent.opacity(0.22), .clear]),
-                        center: .center,
-                        startRadius: 0,
-                        endRadius: 200
-                    )
-                )
-                .frame(width: 400, height: 400)
-                .offset(y: -160)
-                .ignoresSafeArea()
-
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 24) {
 
@@ -37,7 +23,7 @@ struct ProfileView: View {
                             Image(systemName: "exclamationmark.circle.fill")
                                 .foregroundColor(Theme.warmGold)
                             Text("Log in or register to save your data and manage your expenses.")
-                                .font(.system(size: 14))
+                                .font(.subheadline)
                                 .foregroundColor(.white)
                             Spacer()
                         }
@@ -69,26 +55,26 @@ struct ProfileView: View {
 
                         VStack(spacing: 6) {
                             Text(viewModel.currentUser?.name ?? "You")
-                                .font(.system(size: 28, weight: .bold, design: .rounded))
+                                .font(.title.weight(.bold))
                                 .foregroundColor(.white)
 
                             if let pid = viewModel.currentUser?.paymentID, !pid.isEmpty {
                                 HStack(spacing: 5) {
                                     Image(systemName: "creditcard.fill")
-                                        .font(.system(size: 11))
+                                        .font(.caption)
                                     if let ptype = viewModel.currentUser?.paymentType, ptype != "None" {
                                         Text("\(ptype): \(pid)")
-                                            .font(.system(size: 13))
+                                            .font(.subheadline)
                                     } else {
                                         Text(pid)
-                                            .font(.system(size: 13))
+                                            .font(.subheadline)
                                     }
                                 }
-                                .foregroundColor(.white.opacity(0.45))
+                                .foregroundColor(.white.opacity(0.6))
                             } else {
                                 Text("Member since \(formattedMemberSince())")
-                                    .font(.system(size: 13))
-                                    .foregroundColor(.white.opacity(0.35))
+                                    .font(.subheadline)
+                                    .foregroundColor(.white.opacity(0.6))
                             }
                         }
 
@@ -99,13 +85,13 @@ struct ProfileView: View {
                                     Image(systemName: "person.crop.circle.badge.plus")
                                     Text("Log In / Register")
                                 }
-                                .font(.system(size: 14, weight: .bold))
+                                .font(.headline.weight(.bold))
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 22)
                                 .padding(.vertical, 10)
                                 .background(Theme.primaryGradient)
                                 .clipShape(Capsule())
-                                .shadow(color: Theme.primaryAccent.opacity(0.45), radius: 10, x: 0, y: 5)
+                                .shadow(color: Theme.primaryAccent.opacity(0.2), radius: 10, x: 0, y: 5)
                             }
                             .buttonStyle(PressableButtonStyle())
                         } else {
@@ -114,13 +100,13 @@ struct ProfileView: View {
                                     Image(systemName: "pencil")
                                     Text("Edit Profile")
                                 }
-                                .font(.system(size: 14, weight: .bold))
+                                .font(.headline.weight(.bold))
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 22)
                                 .padding(.vertical, 10)
                                 .background(Color.white.opacity(0.10))
                                 .clipShape(Capsule())
-                                .overlay(Capsule().stroke(Color.white.opacity(0.14), lineWidth: 1))
+                                .overlay(Capsule().stroke(Color.white.opacity(0.2), lineWidth: 1))
                             }
                             .buttonStyle(PressableButtonStyle())
                         }
@@ -186,19 +172,17 @@ struct ProfileView: View {
                                 HStack(spacing: 14) {
                                     IconBadge(systemName: "rectangle.portrait.and.arrow.right", color: Theme.warmGold)
                                     Text("Log Out")
-                                        .font(.system(size: 16, weight: .semibold))
+                                        .font(.headline)
                                         .foregroundColor(Theme.warmGold)
                                     Spacer()
                                     Image(systemName: "chevron.right")
-                                        .font(.system(size: 12, weight: .semibold))
+                                        .font(.caption.weight(.semibold))
                                         .foregroundColor(Theme.warmGold.opacity(0.40))
                                 }
                                 .padding(18)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 22, style: .continuous)
-                                        .fill(Theme.cardBackground)
-                                        .shadow(color: Color.black.opacity(0.35), radius: 20, x: 0, y: 10)
-                                )
+                                .background(Theme.cardBackground)
+                                .cornerRadius(22)
+                                .shadow(color: Color.black.opacity(0.2), radius: 10, x: 0, y: 5)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 22, style: .continuous)
                                         .stroke(Theme.warmGold.opacity(0.22), lineWidth: 1)
@@ -213,19 +197,17 @@ struct ProfileView: View {
                             HStack(spacing: 14) {
                                 IconBadge(systemName: "arrow.counterclockwise", color: Theme.dangerColor)
                                 Text("Reset App Data")
-                                    .font(.system(size: 16, weight: .semibold))
+                                    .font(.headline)
                                     .foregroundColor(Theme.dangerColor)
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                                    .font(.system(size: 12, weight: .semibold))
-                                    .foregroundColor(Theme.dangerColor.opacity(0.40))
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                        .font(.caption.weight(.semibold))
+                                        .foregroundColor(Theme.dangerColor.opacity(0.40))
                             }
                             .padding(18)
-                            .background(
-                                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                                    .fill(Theme.cardBackground)
-                                    .shadow(color: Color.black.opacity(0.35), radius: 20, x: 0, y: 10)
-                            )
+                            .background(Theme.cardBackground)
+                            .cornerRadius(22)
+                            .shadow(color: Color.black.opacity(0.2), radius: 10, x: 0, y: 5)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 22, style: .continuous)
                                     .stroke(Theme.dangerColor.opacity(0.30), lineWidth: 1)
@@ -234,7 +216,7 @@ struct ProfileView: View {
                         .buttonStyle(PressableButtonStyle())
                     }
                     .padding(.horizontal, 20)
-                    .padding(.bottom, 120)
+                    .padding(.bottom, 40)
                 }
             }
         }
@@ -272,11 +254,11 @@ struct ProfileSettingRow: View {
         HStack(spacing: 14) {
             IconBadge(systemName: icon, color: iconColor)
             Text(label)
-                .font(.system(size: 15))
+                .font(.headline)
                 .foregroundColor(.white.opacity(0.65))
             Spacer()
             Text(value)
-                .font(.system(size: 14, weight: .semibold))
+                .font(.subheadline.weight(.semibold))
                 .foregroundColor(.white)
                 .lineLimit(1)
         }

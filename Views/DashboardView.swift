@@ -27,21 +27,6 @@ struct DashboardView: View {
         ZStack {
             Theme.backgroundGradient.ignoresSafeArea()
 
-            // Background glow blobs
-            GeometryReader { geo in
-                Circle()
-                    .fill(Theme.primaryAccent.opacity(0.10))
-                    .frame(width: 320, height: 320)
-                    .blur(radius: 90)
-                    .offset(x: geo.size.width * 0.55, y: -80)
-                Circle()
-                    .fill(Theme.secondaryAccent.opacity(0.06))
-                    .frame(width: 260, height: 260)
-                    .blur(radius: 80)
-                    .offset(x: -50, y: geo.size.height * 0.52)
-            }
-            .ignoresSafeArea()
-
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 0) {
 
@@ -50,10 +35,10 @@ struct DashboardView: View {
                         HStack(alignment: .top) {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("Hello, \(viewModel.currentUser?.name.components(separatedBy: " ").first ?? "there") 👋")
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundColor(.white.opacity(0.55))
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundColor(.white.opacity(0.6))
                                 Text("MatchSplitter")
-                                    .font(.system(size: 32, weight: .heavy, design: .rounded))
+                                    .font(.largeTitle.weight(.heavy))
                                     .foregroundColor(.white)
                             }
                             Spacer()
@@ -94,22 +79,26 @@ struct DashboardView: View {
                         }
                     }
                     .padding(.horizontal, 20)
-                    .padding(.bottom, 120)
-                }
-            }
-
-            // Floating Add Button
-            VStack {
-                Spacer()
-                HStack {
-                    Spacer()
-                    fabButton
-                        .padding(.trailing, 24)
-                        .padding(.bottom, 100)
+                    .padding(.bottom, 40)
                 }
             }
         }
         .navigationBarHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: {
+                    if viewModel.currentUser == nil {
+                        showLoginAlert = true
+                    } else {
+                        showingAddGroup = true
+                    }
+                }) {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.title2)
+                        .foregroundColor(Theme.secondaryAccent)
+                }
+            }
+        }
         .sheet(isPresented: $showingAddGroup) {
             AddGroupSheet()
         }
@@ -120,9 +109,6 @@ struct DashboardView: View {
         }
         .onAppear {
             withAnimation { appear = true }
-            withAnimation(.easeInOut(duration: 1.6).repeatForever(autoreverses: true).delay(0.5)) {
-                fabPulse = true
-            }
         }
     }
 
@@ -130,8 +116,8 @@ struct DashboardView: View {
     private var heroBallanceCard: some View {
         VStack(spacing: 16) {
             Text("YOUR NET BALANCE")
-                .font(.system(size: 11, weight: .bold))
-                .foregroundColor(.white.opacity(0.55))
+                .font(.caption.weight(.bold))
+                .foregroundColor(.white.opacity(0.6))
                 .textCase(.uppercase)
 
             Text(netBalance >= 0
@@ -141,8 +127,8 @@ struct DashboardView: View {
                 .foregroundColor(.white)
 
             Text(netBalance >= 0 ? "People owe you overall" : "You owe overall")
-                .font(.system(size: 13, weight: .medium))
-                .foregroundColor(.white.opacity(0.55))
+                .font(.subheadline.weight(.medium))
+                .foregroundColor(.white.opacity(0.6))
 
             // Shimmer divider
             shimmerDivider
@@ -156,7 +142,7 @@ struct DashboardView: View {
                 )
                 Divider()
                     .frame(height: 40)
-                    .background(Color.white.opacity(0.10))
+                    .background(Color.white.opacity(0.2))
                 StatBadge(
                     icon: "receipt.fill",
                     label: "Expenses",
@@ -165,7 +151,7 @@ struct DashboardView: View {
                 )
                 Divider()
                     .frame(height: 40)
-                    .background(Color.white.opacity(0.10))
+                    .background(Color.white.opacity(0.2))
                 StatBadge(
                     icon: netBalance >= 0 ? "arrow.down.circle.fill" : "arrow.up.circle.fill",
                     label: netBalance >= 0 ? "Owed to You" : "You Owe",
@@ -184,7 +170,7 @@ struct DashboardView: View {
 
     private var shimmerDivider: some View {
         ZStack {
-            Divider().background(Color.white.opacity(0.12))
+            Divider().background(Color.white.opacity(0.2))
             GeometryReader { geo in
                 RoundedRectangle(cornerRadius: 1)
                     .fill(
@@ -204,34 +190,6 @@ struct DashboardView: View {
             }
             .frame(height: 1)
         }
-    }
-
-    // MARK: - FAB
-    private var fabButton: some View {
-        Button(action: {
-            if viewModel.currentUser == nil {
-                showLoginAlert = true
-            } else {
-                showingAddGroup = true
-            }
-        }) {
-            ZStack {
-                // Pulse ring
-                Circle()
-                    .stroke(Theme.primaryAccent.opacity(fabPulse ? 0 : 0.35), lineWidth: 2)
-                    .frame(width: 80, height: 80)
-                    .scaleEffect(fabPulse ? 1.3 : 1.0)
-
-                Circle()
-                    .fill(Theme.primaryGradient)
-                    .frame(width: 62, height: 62)
-                    .shadow(color: Theme.primaryAccent.opacity(0.55), radius: 18, x: 0, y: 8)
-                Image(systemName: "plus")
-                    .font(.system(size: 22, weight: .bold))
-                    .foregroundColor(.white)
-            }
-        }
-        .buttonStyle(PressableButtonStyle(scale: 0.93))
     }
 }
 
@@ -285,18 +243,18 @@ struct GroupCardView: View {
                         .frame(width: 52, height: 52)
                     Image(systemName: "person.3.fill")
                         .foregroundColor(accentColor)
-                        .font(.system(size: 20, weight: .semibold))
+                        .font(.title3.weight(.semibold))
                 }
 
                 VStack(alignment: .leading, spacing: 5) {
                     HStack {
                         Text(group.name)
-                            .font(.system(size: 17, weight: .bold, design: .rounded))
+                            .font(.headline.weight(.bold))
                             .foregroundColor(.white)
 
                         Text(isCreator ? "Creator" : "Member")
-                            .font(.system(size: 9, weight: .bold))
-                            .foregroundColor(isCreator ? Theme.secondaryAccent : .white.opacity(0.4))
+                            .font(.caption2.weight(.bold))
+                            .foregroundColor(isCreator ? Theme.secondaryAccent : .white.opacity(0.6))
                             .padding(.horizontal, 6)
                             .padding(.vertical, 3)
                             .background(isCreator ? Theme.secondaryAccent.opacity(0.15) : Color.white.opacity(0.1))
@@ -310,7 +268,7 @@ struct GroupCardView: View {
                                 Circle().fill(Theme.cardBackground).frame(width: 24, height: 24)
                                 Circle().fill(accentColor.opacity(0.25)).frame(width: 22, height: 22)
                                 Text(initial)
-                                    .font(.system(size: 9, weight: .bold))
+                                    .font(.caption2.weight(.bold))
                                     .foregroundColor(accentColor)
                             }
                         }
@@ -318,7 +276,7 @@ struct GroupCardView: View {
                             ZStack {
                                 Circle().fill(Color.white.opacity(0.10)).frame(width: 24, height: 24)
                                 Text("+\(group.members.count - 4)")
-                                    .font(.system(size: 8, weight: .bold))
+                                    .font(.system(size: 8, weight: .bold)) // Keeping this tiny
                                     .foregroundColor(.white.opacity(0.6))
                             }
                         }
@@ -329,16 +287,16 @@ struct GroupCardView: View {
 
                 VStack(alignment: .trailing, spacing: 5) {
                     Text(group.currency.symbol + String(format: "%.2f", totalSpent))
-                        .font(.system(size: 20, weight: .heavy, design: .rounded))
+                        .font(.title3.weight(.heavy))
                         .foregroundColor(.white)
                     Text("\(group.expenses.count) expenses")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(.white.opacity(0.40))
+                        .font(.caption.weight(.medium))
+                        .foregroundColor(.white.opacity(0.6))
                 }
 
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(.white.opacity(0.20))
+                    .font(.caption.weight(.bold))
+                    .foregroundColor(.white.opacity(0.3))
             }
             .padding(18)
 
@@ -374,11 +332,11 @@ struct EmptyGroupsView: View {
             .padding(.bottom, 8)
 
             Text("No Groups Yet")
-                .font(.system(size: 22, weight: .bold, design: .rounded))
+                .font(.title2.weight(.bold))
                 .foregroundColor(.white.opacity(0.85))
             Text("Tap the + button to create\nyour first expense group.")
                 .font(.subheadline)
-                .foregroundColor(.white.opacity(0.40))
+                .foregroundColor(.white.opacity(0.6))
                 .multilineTextAlignment(.center)
         }
     }
@@ -419,13 +377,13 @@ struct AddGroupSheet: View {
                             HStack(spacing: 14) {
                                 IconBadge(systemName: "person.3.fill", color: Theme.primaryAccent)
                                 TextField("Group Name", text: $groupName)
-                                    .font(.system(size: 15))
+                                    .font(.headline)
                                     .foregroundColor(.white)
                             }
                             .padding(.horizontal, 18)
                             .padding(.vertical, 14)
 
-                            Divider().background(Color.white.opacity(0.07))
+                            Divider().background(Color.white.opacity(0.2))
 
                             HStack(spacing: 14) {
                                 IconBadge(systemName: "banknote.fill", color: Theme.warmGold)
@@ -439,6 +397,7 @@ struct AddGroupSheet: View {
                                         Spacer()
                                         Image(systemName: "chevron.up.chevron.down")
                                     }
+                                    .font(.headline)
                                     .foregroundColor(.white)
                                 }
                                 Spacer()

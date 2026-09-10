@@ -83,12 +83,9 @@ struct GlassCardModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .background(
-                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .fill(Theme.cardBackground)
-                    .shadow(color: Color.black.opacity(0.35), radius: 20, x: 0, y: 10)
-                    .shadow(color: Theme.primaryAccent.opacity(0.08), radius: 12, x: 0, y: 4)
-            )
+            .background(Theme.cardBackground)
+            .cornerRadius(cornerRadius)
+            .shadow(color: Color.black.opacity(0.2), radius: 10, x: 0, y: 5)
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .stroke(Theme.cardBorder, lineWidth: 1)
@@ -103,16 +100,14 @@ struct AccentCardModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .background(
-                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [Theme.primaryAccent.opacity(0.35), Theme.secondaryAccent.opacity(0.18)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .shadow(color: Theme.primaryAccent.opacity(0.30), radius: 24, x: 0, y: 12)
+                LinearGradient(
+                    colors: [Theme.primaryAccent.opacity(0.35), Theme.secondaryAccent.opacity(0.18)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
             )
+            .cornerRadius(cornerRadius)
+            .shadow(color: Theme.primaryAccent.opacity(0.20), radius: 15, x: 0, y: 8)
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .stroke(Theme.cardBorderStrong, lineWidth: 1)
@@ -162,14 +157,14 @@ struct StatBadge: View {
     var body: some View {
         VStack(spacing: 6) {
             Image(systemName: icon)
-                .font(.system(size: 20, weight: .bold))
+                .font(.title3.weight(.bold))
                 .foregroundColor(color)
             Text(value)
-                .font(.system(size: 18, weight: .heavy, design: .rounded))
+                .font(.title3.weight(.heavy))
                 .foregroundColor(.white)
             Text(label)
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundColor(.white.opacity(0.45))
+                .font(.caption2.weight(.semibold))
+                .foregroundColor(.white.opacity(0.6))
                 .textCase(.uppercase)
         }
         .frame(maxWidth: .infinity)
@@ -187,9 +182,9 @@ struct GradientAvatar: View {
             Circle()
                 .fill(gradient)
                 .frame(width: size, height: size)
-                .shadow(color: Theme.primaryAccent.opacity(0.40), radius: size * 0.4, x: 0, y: size * 0.15)
+                .shadow(color: Theme.primaryAccent.opacity(0.20), radius: 8, x: 0, y: 4)
             Text(name.prefix(1).uppercased())
-                .font(.system(size: size * 0.40, weight: .heavy, design: .rounded))
+                .font(.headline.weight(.heavy))
                 .foregroundColor(.white)
         }
     }
@@ -203,8 +198,8 @@ struct SectionHeader: View {
     var body: some View {
         HStack {
             Text(title)
-                .font(.system(size: 13, weight: .bold))
-                .foregroundColor(.white.opacity(0.45))
+                .font(.subheadline.weight(.bold))
+                .foregroundColor(.white.opacity(0.6))
                 .textCase(.uppercase)
             Spacer()
             if let trailing = trailing {
@@ -219,7 +214,7 @@ struct SectionHeader: View {
 struct DragHandle: View {
     var body: some View {
         RoundedRectangle(cornerRadius: 3)
-            .fill(Color.white.opacity(0.22))
+            .fill(Color.white.opacity(0.3))
             .frame(width: 38, height: 5)
             .padding(.top, 14)
     }
@@ -238,16 +233,16 @@ struct SheetHeader: View {
     var body: some View {
         HStack {
             Button(leadingLabel, action: onLeading)
-                .foregroundColor(.white.opacity(0.55))
-                .font(.system(size: 16))
+                .foregroundColor(.white.opacity(0.6))
+                .font(.headline)
             Spacer()
             Text(title)
-                .font(.system(size: 18, weight: .bold))
+                .font(.title3.weight(.bold))
                 .foregroundColor(.white)
             Spacer()
             Button(trailingLabel, action: onTrailing)
-                .font(.system(size: 16, weight: .bold))
-                .foregroundColor(trailingEnabled ? trailingColor : Color.white.opacity(0.2))
+                .font(.headline.weight(.bold))
+                .foregroundColor(trailingEnabled ? trailingColor : Color.white.opacity(0.3))
                 .disabled(!trailingEnabled)
         }
         .padding(.horizontal, 24)

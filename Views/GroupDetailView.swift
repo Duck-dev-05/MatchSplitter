@@ -20,14 +20,6 @@ struct GroupDetailView: View {
         ZStack {
             Theme.backgroundGradient.ignoresSafeArea()
 
-            // Background glow
-            Circle()
-                .fill(Theme.primaryAccent.opacity(0.10))
-                .frame(width: 280, height: 280)
-                .blur(radius: 80)
-                .offset(x: 100, y: -80)
-                .ignoresSafeArea()
-
             VStack(spacing: 0) {
                 // MARK: Hero Panel
                 heroPanelView
@@ -96,8 +88,8 @@ struct GroupDetailView: View {
     private var heroPanelView: some View {
         VStack(spacing: 16) {
             Text("TOTAL SPENT")
-                .font(.system(size: 11, weight: .bold))
-                .foregroundColor(.white.opacity(0.55))
+                .font(.caption.weight(.bold))
+                .foregroundColor(.white.opacity(0.6))
                 .textCase(.uppercase)
 
             Text("\(currentGroup.currency.symbol)\(String(format: "%.2f", totalSpent))")
@@ -111,13 +103,13 @@ struct GroupDetailView: View {
                         Image(systemName: "arrow.left.arrow.right")
                         Text("Settle Up")
                     }
-                    .font(.system(size: 14, weight: .bold))
+                    .font(.headline)
                     .foregroundColor(.white)
                     .padding(.horizontal, 20)
                     .padding(.vertical, 11)
                     .background(Theme.primaryGradient)
                     .clipShape(Capsule())
-                    .shadow(color: Theme.primaryAccent.opacity(0.4), radius: 10, x: 0, y: 4)
+                    .shadow(color: Theme.primaryAccent.opacity(0.2), radius: 10, x: 0, y: 4)
                 }
                 .buttonStyle(PressableButtonStyle())
 
@@ -127,7 +119,7 @@ struct GroupDetailView: View {
                         Image(systemName: "person.2.fill")
                         Text("Members")
                     }
-                    .font(.system(size: 14, weight: .bold))
+                    .font(.headline)
                     .foregroundColor(.white.opacity(0.85))
                     .padding(.horizontal, 20)
                     .padding(.vertical, 11)
@@ -143,7 +135,7 @@ struct GroupDetailView: View {
                             .fill(Color.white.opacity(0.12))
                             .frame(width: 42, height: 42)
                         Image(systemName: "trophy.fill")
-                            .font(.system(size: 14, weight: .bold))
+                            .font(.headline)
                             .foregroundColor(.yellow)
                     }
                 }
@@ -161,10 +153,10 @@ struct GroupDetailView: View {
         Button(action: action) {
             ZStack {
                 Circle()
-                    .fill(Color.white.opacity(0.10))
+                    .fill(Color.white.opacity(0.15))
                     .frame(width: 34, height: 34)
                 Image(systemName: icon)
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.subheadline.weight(.semibold))
                     .foregroundColor(.white)
             }
         }
@@ -197,27 +189,27 @@ struct ExpenseRowView: View {
                     .frame(width: 48, height: 48)
                 Image(systemName: expense.category.iconName)
                     .foregroundColor(categoryColor)
-                    .font(.system(size: 19, weight: .semibold))
+                    .font(.title3.weight(.semibold))
             }
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(expense.title)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.headline.weight(.semibold))
                     .foregroundColor(.white)
                 Text("Paid by \(expense.paidBy.name)")
-                    .font(.system(size: 12))
-                    .foregroundColor(.white.opacity(0.45))
+                    .font(.subheadline)
+                    .foregroundColor(.white.opacity(0.6))
             }
 
             Spacer()
 
             VStack(alignment: .trailing, spacing: 5) {
                 Text("\(groupCurrency.symbol)\(String(format: "%.2f", expense.amount))")
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .font(.headline.weight(.bold))
                     .foregroundColor(.white)
 
                 Text(expense.category.rawValue)
-                    .font(.system(size: 10, weight: .bold))
+                    .font(.caption2.weight(.bold))
                     .foregroundColor(Theme.chipText)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
@@ -239,17 +231,17 @@ struct EmptyExpensesView: View {
                     .fill(Theme.primaryAccent.opacity(0.08))
                     .frame(width: 100, height: 100)
                 Image(systemName: "receipt")
-                    .font(.system(size: 42))
+                    .font(.largeTitle)
                     .foregroundColor(Theme.primaryAccent.opacity(0.40))
             }
             .padding(.bottom, 8)
 
             Text("No Expenses Yet")
-                .font(.system(size: 21, weight: .bold, design: .rounded))
+                .font(.title2.weight(.bold))
                 .foregroundColor(.white.opacity(0.85))
             Text("Tap + to add your first expense.")
                 .font(.subheadline)
-                .foregroundColor(.white.opacity(0.40))
+                .foregroundColor(.white.opacity(0.6))
         }
     }
 }
