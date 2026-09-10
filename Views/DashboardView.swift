@@ -34,15 +34,28 @@ struct DashboardView: View {
                     VStack(spacing: 0) {
                         HStack(alignment: .top) {
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("Hello, \(viewModel.currentUser?.name.components(separatedBy: " ").first ?? "there") 👋")
-                                    .font(.subheadline.weight(.semibold))
-                                    .foregroundColor(.white.opacity(0.6))
+                                if let name = viewModel.currentUser?.name {
+                                    Text("Hello, \(name.components(separatedBy: " ").first ?? "") 👋")
+                                        .font(.subheadline.weight(.semibold))
+                                        .foregroundColor(.white.opacity(0.6))
+                                } else {
+                                    Text("Welcome 👋")
+                                        .font(.subheadline.weight(.semibold))
+                                        .foregroundColor(.white.opacity(0.6))
+                                }
                                 Text("MatchSplitter")
                                     .font(.largeTitle.weight(.heavy))
                                     .foregroundColor(.white)
                             }
                             Spacer()
-                            GradientAvatar(name: viewModel.currentUser?.name ?? "Y", size: 46)
+                            
+                            if let name = viewModel.currentUser?.name {
+                                GradientAvatar(name: name, size: 46)
+                            } else {
+                                Image(systemName: "person.crop.circle.fill")
+                                    .font(.system(size: 46))
+                                    .foregroundColor(.white.opacity(0.3))
+                            }
                         }
                         .padding(.horizontal, 24)
                         .padding(.top, 16)
