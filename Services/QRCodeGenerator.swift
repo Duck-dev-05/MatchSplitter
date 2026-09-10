@@ -1,16 +1,30 @@
 import Foundation
 import CoreImage.CIFilterBuiltins
 import UIKit
+import EFQRCode
 
 class QRCodeGenerator {
     let context = CIContext()
     let filter = CIFilter.qrCodeGenerator()
     
     func generateQRCode(from string: String) -> UIImage {
+        // EFQRCode expects CGColor. Theme.primaryAccent is (r: 0.45, g: 0.22, b: 1.00)
+        let primaryColor = UIColor(red: 0.45, green: 0.22, blue: 1.00, alpha: 1.0).cgColor
+        let bgColor = UIColor.white.cgColor
+        
+        // Generate high-quality stylized QR code
+        if let cgImage = EFQRCode.generate(
+            for: string,
+            backgroundColor: bgColor,
+            foregroundColor: primaryColor
+        ) {
+            return UIImage(cgImage: cgImage)
+        }
+        
+        // Fallback to CoreImage
         filter.message = Data(string.utf8)
         
         if let outputImage = filter.outputImage {
-            // Scale the image up to be sharp
             let transform = CGAffineTransform(scaleX: 10, y: 10)
             let scaledImage = outputImage.transformed(by: transform)
             

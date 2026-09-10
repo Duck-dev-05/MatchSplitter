@@ -1,6 +1,10 @@
 name: MatchSplitter
 options:
   bundleIdPrefix: com.matchsplitter
+packages:
+  EFQRCode:
+    url: https://github.com/EFPrefix/EFQRCode.git
+    from: 6.2.2
 targets:
   MatchSplitter:
     type: application
@@ -13,6 +17,8 @@ targets:
       - ViewModels
       - Services
       - Assets.xcassets
+    dependencies:
+      - package: EFQRCode
     info:
       path: Info.plist
       properties:
