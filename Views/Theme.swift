@@ -288,13 +288,7 @@ struct GradientButton: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
                 .background(
-                    Group {
-                        if isEnabled {
-                            AnyView(Theme.primaryGradient)
-                        } else {
-                            AnyView(Color.white.opacity(0.10))
-                        }
-                    }
+                    isEnabled ? AnyView(Theme.primaryGradient) : AnyView(Color.white.opacity(0.10))
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                 .shadow(color: isEnabled ? Theme.primaryAccent.opacity(0.45) : .clear, radius: 12, x: 0, y: 6)
