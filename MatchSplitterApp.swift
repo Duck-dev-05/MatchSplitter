@@ -29,7 +29,7 @@ struct MainTabView: View {
     var body: some View {
         ZStack(alignment: .bottom) {
             // Page content
-            Group {
+            SwiftUI.Group {
                 switch selectedTab {
                 case 0: DashboardView()
                 case 1: FriendsView()
