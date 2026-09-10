@@ -190,6 +190,7 @@ struct ProfileView: View {
         .sheet(isPresented: $showingEditProfile) {
             EditProfileView()
         }
+    }
 }
 
 // MARK: - Setting Row
