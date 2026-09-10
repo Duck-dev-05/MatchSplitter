@@ -19,6 +19,7 @@ struct MatchSplitterApp: App {
 
 // MARK: - Main Tab View
 struct MainTabView: View {
+    @EnvironmentObject var groupViewModel: GroupViewModel
     @State private var selectedTab = 0
 
     init() {
