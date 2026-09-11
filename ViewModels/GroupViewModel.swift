@@ -5,7 +5,7 @@ class GroupViewModel: ObservableObject {
     @Published var groups: [Group] = []
     @Published var currentUser: User? = nil
     @Published var registeredUsers: [User] = []
-    @Published var defaultCurrency: Currency = .usd
+    @Published var defaultCurrency: Currency = .vnd
     
     init() {
         loadData()
@@ -17,6 +17,30 @@ class GroupViewModel: ObservableObject {
             self.currentUser = data.currentUser
             self.registeredUsers = data.registeredUsers ?? []
             self.defaultCurrency = data.defaultCurrency
+            
+            // Auto-migrate current user to VietQR and VND for testing
+            if var user = self.currentUser, user.paymentType != "VietQR" {
+                user.paymentType = "VietQR"
+                user.paymentID = "123456789" // Placeholder account number
+                user.bankBin = "970436" // Vietcombank BIN (default)
+                self.currentUser = user
+                
+                if let idx = self.registeredUsers.firstIndex(where: { $0.id == user.id }) {
+                    self.registeredUsers[idx] = user
+                }
+                
+                self.defaultCurrency = .vnd
+                
+                for i in 0..<self.groups.count {
+                    if self.groups[i].currency == .usd {
+                        self.groups[i].currency = .vnd
+                    }
+                    if let mIdx = self.groups[i].members.firstIndex(where: { $0.id == user.id }) {
+                        self.groups[i].members[mIdx] = user
+                    }
+                }
+                self.saveData()
+            }
         }
     }
     
@@ -57,7 +81,7 @@ class GroupViewModel: ObservableObject {
             login(user: existingUser)
         } else {
             let newUser = User(name: name, email: email, password: "GoogleSignInUser", paymentID: nil, paymentType: nil)
-            register(user: newUser, defaultCurrency: .usd) // Using default USD for new Google Sign-in users
+            register(user: newUser, defaultCurrency: .vnd) // Using default VND for new Google Sign-in users
             login(user: newUser)
         }
     }
