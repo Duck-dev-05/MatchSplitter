@@ -229,8 +229,12 @@ struct EditProfileView: View {
     @State private var bankBin: String = ""
     @State private var banks: [VietQRBank] = []
     @State private var isLoadingBanks = false
+    
+    @State private var payOSClientId: String = ""
+    @State private var payOSApiKey: String = ""
+    @State private var payOSChecksumKey: String = ""
 
-    let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "VietQR", "None"]
+    let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "VietQR", "PayOS", "None"]
 
     var body: some View {
         ZStack {
@@ -249,7 +253,15 @@ struct EditProfileView: View {
                         let finalType = paymentType == "None" ? nil : paymentType
                         let finalID = paymentType == "None" ? "" : paymentID
                         let finalBin = paymentType == "VietQR" ? bankBin : nil
-                        viewModel.updateCurrentUser(name: name, paymentID: finalID, paymentType: finalType, bankBin: finalBin)
+                        viewModel.updateCurrentUser(
+                            name: name,
+                            paymentID: finalID,
+                            paymentType: finalType,
+                            bankBin: finalBin,
+                            payOSClientId: paymentType == "PayOS" ? payOSClientId : nil,
+                            payOSApiKey: paymentType == "PayOS" ? payOSApiKey : nil,
+                            payOSChecksumKey: paymentType == "PayOS" ? payOSChecksumKey : nil
+                        )
                         viewModel.defaultCurrency = defaultCurrency
                         presentationMode.wrappedValue.dismiss()
                     }
@@ -312,6 +324,13 @@ struct EditProfileView: View {
                                     EditFieldRow(icon: "number", iconColor: Theme.secondaryAccent, placeholder: "Account Number", text: $paymentID)
                                         .keyboardType(.numberPad)
                                     Divider().background(Color.white.opacity(0.07))
+                                } else if paymentType == "PayOS" {
+                                    EditFieldRow(icon: "person.badge.key.fill", iconColor: Theme.secondaryAccent, placeholder: "Client ID", text: $payOSClientId)
+                                    Divider().background(Color.white.opacity(0.07))
+                                    EditFieldRow(icon: "key.fill", iconColor: Theme.secondaryAccent, placeholder: "API Key", text: $payOSApiKey)
+                                    Divider().background(Color.white.opacity(0.07))
+                                    EditFieldRow(icon: "lock.fill", iconColor: Theme.secondaryAccent, placeholder: "Checksum Key", text: $payOSChecksumKey)
+                                    Divider().background(Color.white.opacity(0.07))
                                 } else {
                                     EditFieldRow(icon: "creditcard.fill", iconColor: Theme.secondaryAccent, placeholder: "Payment Details / ID", text: $paymentID)
                                     Divider().background(Color.white.opacity(0.07))
@@ -348,6 +367,9 @@ struct EditProfileView: View {
             paymentType = viewModel.currentUser?.paymentType ?? "None"
             paymentID = viewModel.currentUser?.paymentID ?? ""
             bankBin = viewModel.currentUser?.bankBin ?? ""
+            payOSClientId = viewModel.currentUser?.payOSClientId ?? ""
+            payOSApiKey = viewModel.currentUser?.payOSApiKey ?? ""
+            payOSChecksumKey = viewModel.currentUser?.payOSChecksumKey ?? ""
             defaultCurrency = viewModel.defaultCurrency
             
             Task {

@@ -25,11 +25,15 @@ struct LoginView: View {
     @State private var banks: [VietQRBank] = []
     @State private var isLoadingBanks = false
 
+    @State private var payOSClientId: String = ""
+    @State private var payOSApiKey: String = ""
+    @State private var payOSChecksumKey: String = ""
+
     @State private var isAnimating: Bool = false
     @State private var errorMessage: String = ""
     @State private var segmentOffset: CGFloat = 0
 
-    let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "VietQR", "None"]
+    let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "VietQR", "PayOS", "None"]
 
     var isModal: Bool = true
 
@@ -41,6 +45,8 @@ struct LoginView: View {
         case .registerStep2: 
             if paymentType == "VietQR" {
                 return selectedCurrency != nil && !paymentID.isEmpty && !bankBin.isEmpty
+            } else if paymentType == "PayOS" {
+                return selectedCurrency != nil && !payOSClientId.isEmpty && !payOSApiKey.isEmpty && !payOSChecksumKey.isEmpty
             }
             return selectedCurrency != nil && !(paymentType != "None" && paymentID.isEmpty)
         }
@@ -308,6 +314,10 @@ struct LoginView: View {
                         text: $paymentID,
                         keyboard: .numberPad
                     )
+                } else if paymentType == "PayOS" {
+                    glassTextField(icon: "person.badge.key.fill", iconColor: Theme.secondaryAccent, placeholder: "Client ID", text: $payOSClientId)
+                    glassTextField(icon: "key.fill", iconColor: Theme.secondaryAccent, placeholder: "API Key", text: $payOSApiKey)
+                    glassTextField(icon: "lock.fill", iconColor: Theme.secondaryAccent, placeholder: "Checksum Key", text: $payOSChecksumKey)
                 } else {
                     glassTextField(
                         icon: "creditcard.fill",
@@ -451,8 +461,21 @@ struct LoginView: View {
         let finalType = paymentType == "None" ? nil : paymentType
         let finalID = paymentType == "None" ? "" : paymentID
         let finalBin = paymentType == "VietQR" ? bankBin : nil
+        let finalClientId = paymentType == "PayOS" ? payOSClientId : nil
+        let finalApiKey = paymentType == "PayOS" ? payOSApiKey : nil
+        let finalChecksumKey = paymentType == "PayOS" ? payOSChecksumKey : nil
 
-        let newUser = User(name: name, email: email, password: password, paymentID: finalID, paymentType: finalType, bankBin: finalBin)
+        let newUser = User(
+            name: name, 
+            email: email, 
+            password: password, 
+            paymentID: finalID, 
+            paymentType: finalType, 
+            bankBin: finalBin,
+            payOSClientId: finalClientId,
+            payOSApiKey: finalApiKey,
+            payOSChecksumKey: finalChecksumKey
+        )
         viewModel.register(user: newUser, defaultCurrency: currency)
         presentationMode.wrappedValue.dismiss()
     }

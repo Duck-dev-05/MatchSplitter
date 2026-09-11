@@ -67,7 +67,7 @@ struct SettlementView: View {
             }
         }
         .sheet(item: $selectedSettlement) { settlement in
-            QRCodePaymentView(settlement: settlement, currency: group.currency)
+            QRCodePaymentView(group: group, settlement: settlement, currency: group.currency)
                 .halfSheetIfAvailable()
         }
         .onAppear { withAnimation { appear = true } }
@@ -190,14 +190,17 @@ struct AvatarBubble: View {
 
 // MARK: - QR Payment View
 struct QRCodePaymentView: View {
+    var group: Group
     var settlement: Settlement
     var currency: Currency
     let generator = QRCodeGenerator()
     @Environment(\.presentationMode) var presentationMode
+    @EnvironmentObject var viewModel: GroupViewModel
     
     @State private var qrPayload: String = ""
     @State private var isLoadingQR: Bool = true
     @State private var qrError: String? = nil
+    @State private var isPaymentSuccess: Bool = false
 
     var body: some View {
         ZStack {
@@ -284,6 +287,16 @@ struct QRCodePaymentView: View {
                                 .foregroundColor(.gray)
                         }
                         .frame(width: 240, height: 240)
+                    } else if isPaymentSuccess {
+                        VStack(spacing: 16) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 64))
+                                .foregroundColor(Theme.successColor)
+                            Text("Payment Received!")
+                                .font(.headline)
+                                .foregroundColor(Theme.successColor)
+                        }
+                        .frame(width: 240, height: 240)
                     } else {
                         Image(uiImage: generator.generateQRCode(from: qrPayload))
                             .interpolation(.none)
@@ -315,7 +328,59 @@ struct QRCodePaymentView: View {
             }
         }
         .onAppear {
-            if currency == .vnd, settlement.toUser.paymentType == "VietQR", let bin = settlement.toUser.bankBin, let accountNo = settlement.toUser.paymentID {
+            if settlement.toUser.paymentType == "PayOS",
+               let clientId = settlement.toUser.payOSClientId,
+               let apiKey = settlement.toUser.payOSApiKey,
+               let checksumKey = settlement.toUser.payOSChecksumKey {
+                Task {
+                    do {
+                        // Generate a unique order code less than 9007199254740991 (PayOS limit)
+                        // Int(Date().timeIntervalSince1970) is around 1.7 billion, perfectly fine.
+                        let orderCode = Int(Date().timeIntervalSince1970) + Int.random(in: 1...1000)
+                        let info = "MatchSplitter"
+                        let data = try await PayOSService.shared.createPaymentLink(
+                            clientId: clientId, apiKey: apiKey, checksumKey: checksumKey,
+                            amount: Int(settlement.amount), description: info, orderCode: orderCode
+                        )
+                        
+                        await MainActor.run {
+                            if let qr = data.qrCode {
+                                self.qrPayload = qr
+                            }
+                            self.isLoadingQR = false
+                        }
+                        
+                        // Start polling
+                        var isPaid = false
+                        for _ in 0..<120 { // 120 * 3 = 6 minutes timeout
+                            try await Task.sleep(nanoseconds: 3_000_000_000) // 3 seconds
+                            let info = try await PayOSService.shared.getPaymentInfo(clientId: clientId, apiKey: apiKey, orderCode: orderCode)
+                            if info.status == "PAID" {
+                                isPaid = true
+                                break
+                            }
+                        }
+                        
+                        if isPaid {
+                            await MainActor.run {
+                                withAnimation {
+                                    self.isPaymentSuccess = true
+                                }
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                                    viewModel.addPayment(to: group, fromUser: settlement.fromUser, toUser: settlement.toUser, amount: settlement.amount)
+                                    presentationMode.wrappedValue.dismiss()
+                                }
+                            }
+                        }
+                    } catch {
+                        await MainActor.run {
+                            self.qrError = "Failed to load PayOS QR"
+                            self.qrPayload = generator.generatePaymentPayload(paymentID: settlement.toUser.paymentID ?? "Unknown", amount: settlement.amount)
+                            self.isLoadingQR = false
+                        }
+                    }
+                }
+            } else if currency == .vnd, settlement.toUser.paymentType == "VietQR", let bin = settlement.toUser.bankBin, let accountNo = settlement.toUser.paymentID {
                 Task {
                     do {
                         let info = "MatchSplitter Settlement"

@@ -86,9 +86,9 @@ class GroupViewModel: ObservableObject {
         }
     }
     
-    func updateCurrentUser(name: String, paymentID: String, paymentType: String? = nil, bankBin: String? = nil) {
+    func updateCurrentUser(name: String, paymentID: String, paymentType: String? = nil, bankBin: String? = nil, payOSClientId: String? = nil, payOSApiKey: String? = nil, payOSChecksumKey: String? = nil) {
         if let current = currentUser {
-            let updatedUser = User(id: current.id, name: name, paymentID: paymentID.isEmpty ? nil : paymentID, paymentType: paymentType, bankBin: bankBin)
+            let updatedUser = User(id: current.id, name: name, paymentID: paymentID.isEmpty ? nil : paymentID, paymentType: paymentType, bankBin: bankBin, payOSClientId: payOSClientId, payOSApiKey: payOSApiKey, payOSChecksumKey: payOSChecksumKey)
             currentUser = updatedUser
             
             // Also update this user's name across all groups they belong to
@@ -127,6 +127,32 @@ class GroupViewModel: ObservableObject {
         if let index = groups.firstIndex(where: { $0.id == group.id }) {
             groups[index].members.append(User(name: name, paymentID: paymentID.isEmpty ? nil : paymentID, paymentType: paymentType))
             saveData()
+        }
+    }
+    
+    func updateMember(in group: Group, memberId: UUID, name: String, paymentID: String, paymentType: String? = nil, bankBin: String? = nil, payOSClientId: String? = nil, payOSApiKey: String? = nil, payOSChecksumKey: String? = nil) {
+        if let groupIndex = groups.firstIndex(where: { $0.id == group.id }) {
+            if let memberIndex = groups[groupIndex].members.firstIndex(where: { $0.id == memberId }) {
+                let currentMember = groups[groupIndex].members[memberIndex]
+                let updatedMember = User(
+                    id: currentMember.id,
+                    name: name,
+                    email: currentMember.email,
+                    password: currentMember.password,
+                    paymentID: paymentID.isEmpty ? nil : paymentID,
+                    paymentType: paymentType,
+                    bankBin: bankBin,
+                    payOSClientId: payOSClientId,
+                    payOSApiKey: payOSApiKey,
+                    payOSChecksumKey: payOSChecksumKey
+                )
+                groups[groupIndex].members[memberIndex] = updatedMember
+                
+                // Note: the updated member is now in the group's members list.
+                // Any QR codes generated from SettlementView pull directly from group.members,
+                // so they will automatically reflect these new payment details!
+                saveData()
+            }
         }
     }
     
