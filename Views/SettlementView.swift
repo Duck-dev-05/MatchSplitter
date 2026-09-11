@@ -194,6 +194,10 @@ struct QRCodePaymentView: View {
     var currency: Currency
     let generator = QRCodeGenerator()
     @Environment(\.presentationMode) var presentationMode
+    
+    @State private var qrPayload: String = ""
+    @State private var isLoadingQR: Bool = true
+    @State private var qrError: String? = nil
 
     var body: some View {
         ZStack {
@@ -264,12 +268,6 @@ struct QRCodePaymentView: View {
                 }
                 .padding(.bottom, 32)
 
-                // QR Card with decorative corner brackets
-                let payload = generator.generatePaymentPayload(
-                    paymentID: settlement.toUser.paymentID ?? "Unknown",
-                    amount: settlement.amount
-                )
-
                 ZStack {
                     // White card
                     RoundedRectangle(cornerRadius: 28, style: .continuous)
@@ -277,11 +275,22 @@ struct QRCodePaymentView: View {
                         .shadow(color: Theme.primaryAccent.opacity(0.45), radius: 40, x: 0, y: 18)
                         .frame(width: 290, height: 290)
 
-                    Image(uiImage: generator.generateQRCode(from: payload))
-                        .interpolation(.none)
-                        .resizable()
-                        .scaledToFit()
+                    if isLoadingQR {
+                        VStack(spacing: 12) {
+                            ProgressView()
+                                .scaleEffect(1.5)
+                            Text("Generating QR...")
+                                .font(.caption.weight(.semibold))
+                                .foregroundColor(.gray)
+                        }
                         .frame(width: 240, height: 240)
+                    } else {
+                        Image(uiImage: generator.generateQRCode(from: qrPayload))
+                            .interpolation(.none)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 240, height: 240)
+                    }
 
                     // Decorative corner brackets
                     qrCornerBrackets
@@ -303,6 +312,35 @@ struct QRCodePaymentView: View {
                 }
 
                 Spacer()
+            }
+        }
+        .onAppear {
+            if currency == .vnd, settlement.toUser.paymentType == "VietQR", let bin = settlement.toUser.bankBin, let accountNo = settlement.toUser.paymentID {
+                Task {
+                    do {
+                        let info = "MatchSplitter Settlement"
+                        let payload = try await VietQRService.shared.generatePayload(
+                            accountNo: accountNo, 
+                            accountName: settlement.toUser.name.uppercased(), 
+                            bin: bin, 
+                            amount: settlement.amount, 
+                            info: info
+                        )
+                        await MainActor.run {
+                            self.qrPayload = payload
+                            self.isLoadingQR = false
+                        }
+                    } catch {
+                        await MainActor.run {
+                            self.qrError = "Failed to load VietQR"
+                            self.qrPayload = generator.generatePaymentPayload(paymentID: settlement.toUser.paymentID ?? "Unknown", amount: settlement.amount)
+                            self.isLoadingQR = false
+                        }
+                    }
+                }
+            } else {
+                self.qrPayload = generator.generatePaymentPayload(paymentID: settlement.toUser.paymentID ?? "Unknown", amount: settlement.amount)
+                self.isLoadingQR = false
             }
         }
     }
@@ -348,10 +386,7 @@ struct QRCodePaymentView: View {
                 .font(.system(size: 40, weight: .heavy))
                 .foregroundColor(.white)
 
-            Image(uiImage: generator.generateQRCode(from: generator.generatePaymentPayload(
-                paymentID: settlement.toUser.paymentID ?? "",
-                amount: settlement.amount
-            )))
+            Image(uiImage: generator.generateQRCode(from: qrPayload))
             .interpolation(.none)
             .resizable()
             .scaledToFit()

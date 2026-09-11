@@ -62,9 +62,9 @@ class GroupViewModel: ObservableObject {
         }
     }
     
-    func updateCurrentUser(name: String, paymentID: String, paymentType: String? = nil) {
+    func updateCurrentUser(name: String, paymentID: String, paymentType: String? = nil, bankBin: String? = nil) {
         if let current = currentUser {
-            let updatedUser = User(id: current.id, name: name, paymentID: paymentID.isEmpty ? nil : paymentID, paymentType: paymentType)
+            let updatedUser = User(id: current.id, name: name, paymentID: paymentID.isEmpty ? nil : paymentID, paymentType: paymentType, bankBin: bankBin)
             currentUser = updatedUser
             
             // Also update this user's name across all groups they belong to

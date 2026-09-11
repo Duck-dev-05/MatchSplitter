@@ -226,8 +226,11 @@ struct EditProfileView: View {
     @State private var paymentType: String = "None"
     @State private var paymentID: String = ""
     @State private var defaultCurrency: Currency = .usd
+    @State private var bankBin: String = ""
+    @State private var banks: [VietQRBank] = []
+    @State private var isLoadingBanks = false
 
-    let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "None"]
+    let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "VietQR", "None"]
 
     var body: some View {
         ZStack {
@@ -245,7 +248,8 @@ struct EditProfileView: View {
                     onTrailing: {
                         let finalType = paymentType == "None" ? nil : paymentType
                         let finalID = paymentType == "None" ? "" : paymentID
-                        viewModel.updateCurrentUser(name: name, paymentID: finalID, paymentType: finalType)
+                        let finalBin = paymentType == "VietQR" ? bankBin : nil
+                        viewModel.updateCurrentUser(name: name, paymentID: finalID, paymentType: finalType, bankBin: finalBin)
                         viewModel.defaultCurrency = defaultCurrency
                         presentationMode.wrappedValue.dismiss()
                     }
@@ -277,8 +281,41 @@ struct EditProfileView: View {
                             Divider().background(Color.white.opacity(0.07))
 
                             if paymentType != "None" {
-                                EditFieldRow(icon: "creditcard.fill", iconColor: Theme.secondaryAccent, placeholder: "Payment Details / ID", text: $paymentID)
-                                Divider().background(Color.white.opacity(0.07))
+                                if paymentType == "VietQR" {
+                                    HStack(spacing: 14) {
+                                        IconBadge(systemName: "building.2.fill", color: Theme.secondaryAccent)
+                                        if isLoadingBanks {
+                                            ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                            Spacer()
+                                        } else {
+                                            Menu {
+                                                ForEach(banks) { bank in
+                                                    Button("\(bank.shortName) - \(bank.name)") {
+                                                        bankBin = bank.bin
+                                                    }
+                                                }
+                                            } label: {
+                                                HStack {
+                                                    Text(banks.first(where: { $0.bin == bankBin })?.shortName ?? "Select Bank")
+                                                        .foregroundColor(bankBin.isEmpty ? .white.opacity(0.5) : .white)
+                                                    Spacer()
+                                                    Image(systemName: "chevron.up.chevron.down")
+                                                }
+                                                .foregroundColor(.white)
+                                            }
+                                        }
+                                    }
+                                    .padding(.horizontal, 18)
+                                    .padding(.vertical, 14)
+                                    Divider().background(Color.white.opacity(0.07))
+                                    
+                                    EditFieldRow(icon: "number", iconColor: Theme.secondaryAccent, placeholder: "Account Number", text: $paymentID)
+                                        .keyboardType(.numberPad)
+                                    Divider().background(Color.white.opacity(0.07))
+                                } else {
+                                    EditFieldRow(icon: "creditcard.fill", iconColor: Theme.secondaryAccent, placeholder: "Payment Details / ID", text: $paymentID)
+                                    Divider().background(Color.white.opacity(0.07))
+                                }
                             }
 
                             HStack(spacing: 14) {
@@ -310,7 +347,18 @@ struct EditProfileView: View {
             name = viewModel.currentUser?.name ?? ""
             paymentType = viewModel.currentUser?.paymentType ?? "None"
             paymentID = viewModel.currentUser?.paymentID ?? ""
+            bankBin = viewModel.currentUser?.bankBin ?? ""
             defaultCurrency = viewModel.defaultCurrency
+            
+            Task {
+                isLoadingBanks = true
+                do {
+                    banks = try await VietQRService.shared.fetchBanks()
+                } catch {
+                    print("Error fetching VietQR banks: \(error)")
+                }
+                isLoadingBanks = false
+            }
         }
     }
 }
