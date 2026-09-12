@@ -24,28 +24,23 @@ struct ExpenseDetailView: View {
         ZStack {
             Theme.backgroundGradient.ignoresSafeArea()
 
-            // Glow behind icon
-            Circle()
-                .fill(categoryColor.opacity(0.10))
-                .frame(width: 200, height: 200)
-                .blur(radius: 60)
-                .offset(y: -160)
+            AmbientGlob(color: categoryColor, size: 220, blurRadius: 80, opacity: 0.12, offsetX: 60, offsetY: -100)
                 .ignoresSafeArea()
 
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 20) {
 
                     // MARK: Header Card
-                    VStack(spacing: 16) {
+                    VStack(spacing: 18) {
                         ZStack {
                             Circle()
-                                .fill(categoryColor.opacity(0.18))
-                                .frame(width: 84, height: 84)
+                                .fill(categoryColor.opacity(0.14))
+                                .frame(width: 90, height: 90)
                             Circle()
-                                .stroke(categoryColor.opacity(0.25), lineWidth: 1.5)
-                                .frame(width: 96, height: 96)
+                                .stroke(categoryColor.opacity(0.22), lineWidth: 1.5)
+                                .frame(width: 104, height: 104)
                             Image(systemName: expense.category.iconName)
-                                .font(.system(size: 34))
+                                .font(.system(size: 36))
                                 .foregroundColor(categoryColor)
                         }
 
@@ -55,34 +50,74 @@ struct ExpenseDetailView: View {
                                 .foregroundColor(.white)
 
                             Text(expense.date, style: .date)
-                                .font(.subheadline)
-                                .foregroundColor(.white.opacity(0.50))
+                                .font(.system(size: 13))
+                                .foregroundColor(.white.opacity(0.45))
                         }
 
                         Text("\(group.currency.symbol)\(String(format: "%.2f", expense.amount))")
-                            .font(.system(size: 48, weight: .heavy, design: .rounded))
+                            .font(.system(size: 50, weight: .heavy, design: .rounded))
                             .foregroundColor(.white)
                             .padding(.top, 4)
 
-                        Text("Paid by **\(expense.paidBy.name)**")
-                            .font(.subheadline)
-                            .foregroundColor(.white.opacity(0.80))
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
-                            .background(Color.white.opacity(0.10))
-                            .clipShape(Capsule())
+                        // Paid by chip
+                        HStack(spacing: 8) {
+                            GradientAvatar(
+                                name: expense.paidBy.name,
+                                avatarURL: expense.paidBy.avatarURL,
+                                size: 24,
+                                gradient: LinearGradient(
+                                    colors: [Theme.successColor, Theme.successColor.opacity(0.6)],
+                                    startPoint: .topLeading, endPoint: .bottomTrailing
+                                )
+                            )
+                            Text("Paid by")
+                                .font(.system(size: 13))
+                                .foregroundColor(.white.opacity(0.60))
+                            Text(expense.paidBy.name)
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundColor(.white)
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 9)
+                        .background(Color.white.opacity(0.09))
+                        .clipShape(Capsule())
+                        .overlay(Capsule().stroke(Color.white.opacity(0.12), lineWidth: 1))
+
+                        // Category badge
+                        HStack(spacing: 5) {
+                            Image(systemName: expense.category.iconName)
+                                .font(.system(size: 10))
+                            Text(expense.category.rawValue)
+                                .font(.system(size: 11, weight: .bold))
+                        }
+                        .foregroundColor(categoryColor)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 5)
+                        .background(categoryColor.opacity(0.14))
+                        .clipShape(Capsule())
                     }
                     .padding(32)
                     .frame(maxWidth: .infinity)
                     .glassCard(cornerRadius: 32)
 
                     // MARK: Split Details
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("SPLIT DETAILS")
-                            .font(.caption.weight(.bold))
-                            .foregroundColor(.white.opacity(0.40))
-                            .textCase(.uppercase)
-                            .padding(.leading, 4)
+                    VStack(alignment: .leading, spacing: 14) {
+                        HStack {
+                            Text("SPLIT DETAILS")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(.white.opacity(0.40))
+                                .kerning(1.2)
+                            Spacer()
+                            // Split type badge
+                            Text(expense.splitType == .equal ? "Equal Split" : "Custom Split")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundColor(Theme.primaryAccent)
+                                .padding(.horizontal, 9)
+                                .padding(.vertical, 4)
+                                .background(Theme.primaryAccent.opacity(0.14))
+                                .clipShape(Capsule())
+                        }
+                        .padding(.leading, 4)
 
                         VStack(spacing: 0) {
                             if expense.splitType == .equal {
@@ -90,19 +125,19 @@ struct ExpenseDetailView: View {
                                 ForEach(Array(expense.splitAmong.enumerated()), id: \.element.id) { index, user in
                                     SplitRowView(user: user, amount: splitAmount, currency: group.currency)
                                     if index < expense.splitAmong.count - 1 {
-                                        Divider().background(Color.white.opacity(0.08))
+                                        Divider().background(Color.white.opacity(0.07))
                                     }
                                 }
                             } else if let customShares = expense.customShares {
                                 ForEach(Array(customShares.enumerated()), id: \.element.user.id) { index, share in
                                     SplitRowView(user: share.user, amount: share.exactAmount, currency: group.currency)
                                     if index < customShares.count - 1 {
-                                        Divider().background(Color.white.opacity(0.08))
+                                        Divider().background(Color.white.opacity(0.07))
                                     }
                                 }
                             }
                         }
-                        .glassCard(cornerRadius: 24)
+                        .glassCard(cornerRadius: 22)
                     }
                 }
                 .padding(20)
@@ -123,6 +158,7 @@ struct ExpenseDetailView: View {
                 } label: {
                     Image(systemName: "ellipsis.circle")
                         .foregroundColor(.white)
+                        .font(.system(size: 18))
                 }
             }
         }
@@ -152,18 +188,19 @@ struct SplitRowView: View {
 
     var body: some View {
         HStack(spacing: 14) {
-            GradientAvatar(name: user.name, size: 40)
+            GradientAvatar(name: user.name, avatarURL: user.avatarURL, size: 40)
 
             Text(user.name)
-                .font(.system(size: 16, weight: .semibold))
+                .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(.white)
 
             Spacer()
 
             Text("\(currency.symbol)\(String(format: "%.2f", amount))")
-                .font(.system(size: 16, weight: .bold, design: .rounded))
+                .font(.system(size: 15, weight: .bold, design: .rounded))
                 .foregroundColor(.white)
         }
-        .padding(16)
+        .padding(.horizontal, 18)
+        .padding(.vertical, 14)
     }
 }

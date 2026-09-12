@@ -46,12 +46,7 @@ struct ActivityFeedView: View {
             ZStack {
                 Theme.backgroundGradient.ignoresSafeArea()
 
-                // Glow blob
-                Circle()
-                    .fill(Theme.primaryAccent.opacity(0.08))
-                    .frame(width: 240, height: 240)
-                    .blur(radius: 80)
-                    .offset(x: 100, y: -50)
+                AmbientGlob(color: Theme.primaryAccent, size: 240, blurRadius: 80, opacity: 0.09, offsetX: 100, offsetY: -50)
                     .ignoresSafeArea()
 
                 if activities.isEmpty {
@@ -59,21 +54,33 @@ struct ActivityFeedView: View {
                 } else {
                     ScrollView(showsIndicators: false) {
                         VStack(spacing: 0) {
-                            // Page Header
-                            HStack {
+                            // Page Header with live count chip
+                            HStack(alignment: .bottom) {
                                 VStack(alignment: .leading, spacing: 4) {
-                                    Text("Recent Activity")
-                                        .font(.system(size: 30, weight: .heavy, design: .rounded))
+                                    Text("Activity")
+                                        .font(.system(size: 32, weight: .heavy, design: .rounded))
                                         .foregroundColor(.white)
-                                    Text("\(activities.count) transactions")
+                                    Text("All group transactions")
                                         .font(.system(size: 13, weight: .medium))
                                         .foregroundColor(.white.opacity(0.40))
                                 }
                                 Spacer()
+                                // Live count chip
+                                HStack(spacing: 5) {
+                                    PulseDot()
+                                    Text("\(activities.count)")
+                                        .font(.system(size: 13, weight: .bold))
+                                        .foregroundColor(.white)
+                                }
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 7)
+                                .background(Color.white.opacity(0.09))
+                                .clipShape(Capsule())
+                                .overlay(Capsule().stroke(Color.white.opacity(0.14), lineWidth: 1))
                             }
                             .padding(.horizontal, 24)
                             .padding(.top, 16)
-                            .padding(.bottom, 20)
+                            .padding(.bottom, 22)
 
                             // Grouped sections
                             ForEach(grouped, id: \.bucket) { section in
@@ -92,11 +99,20 @@ struct ActivityFeedView: View {
                                             )
                                     }
                                 }
-                                .padding(.bottom, 16)
+                                .padding(.bottom, 20)
                             }
+
+                            // Bottom fade hint
+                            LinearGradient(
+                                colors: [.clear, Theme.backgroundEnd.opacity(0.6)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                            .frame(height: 40)
+                            .allowsHitTesting(false)
                         }
                         .padding(.horizontal, 20)
-                        .padding(.bottom, 120)
+                        .padding(.bottom, 100)
                     }
                 }
             }
@@ -106,21 +122,25 @@ struct ActivityFeedView: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 18) {
             ZStack {
                 Circle()
-                    .fill(Color.white.opacity(0.05))
-                    .frame(width: 100, height: 100)
+                    .fill(Theme.primaryAccent.opacity(0.07))
+                    .frame(width: 110, height: 110)
+                Circle()
+                    .fill(Theme.primaryAccent.opacity(0.12))
+                    .frame(width: 80, height: 80)
                 Image(systemName: "bell.slash.fill")
-                    .font(.system(size: 40))
-                    .foregroundColor(.white.opacity(0.2))
+                    .font(.system(size: 36))
+                    .foregroundColor(.white.opacity(0.25))
             }
-            Text("No Activity")
+            Text("No Activity Yet")
                 .font(.system(size: 22, weight: .bold, design: .rounded))
-                .foregroundColor(.white.opacity(0.8))
+                .foregroundColor(.white.opacity(0.80))
             Text("Your recent group activity will appear here.")
                 .font(.subheadline)
-                .foregroundColor(.white.opacity(0.4))
+                .foregroundColor(.white.opacity(0.40))
+                .multilineTextAlignment(.center)
         }
     }
 }
@@ -136,7 +156,7 @@ struct ActivityRow: View {
 
     var timeAgo: String {
         let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .full
+        formatter.unitsStyle = .abbreviated
         return formatter.localizedString(for: expense.date, relativeTo: Date())
     }
 
@@ -152,55 +172,62 @@ struct ActivityRow: View {
     }
 
     var body: some View {
-        HStack(spacing: 16) {
-            ZStack {
-                Circle()
-                    .fill(categoryColor.opacity(0.14))
-                    .frame(width: 48, height: 48)
-                Image(systemName: expense.category.iconName)
-                    .foregroundColor(categoryColor)
-                    .font(.system(size: 18))
+        HStack(spacing: 14) {
+            // Category icon + pulse dot
+            ZStack(alignment: .topTrailing) {
+                ZStack {
+                    Circle()
+                        .fill(categoryColor.opacity(0.14))
+                        .frame(width: 46, height: 46)
+                    Image(systemName: expense.category.iconName)
+                        .foregroundColor(categoryColor)
+                        .font(.system(size: 17, weight: .semibold))
+                }
 
-                // Live pulse dot for recent activities
                 if isRecent {
                     PulseDot()
-                        .offset(x: 16, y: -16)
+                        .offset(x: 3, y: -3)
                 }
             }
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 5) {
                 HStack(spacing: 4) {
                     Text(expense.paidBy.name)
                         .fontWeight(.bold)
                         .foregroundColor(.white)
                     Text("paid for")
-                        .foregroundColor(.white.opacity(0.6))
+                        .foregroundColor(.white.opacity(0.55))
                     Text(expense.title)
                         .fontWeight(.bold)
                         .foregroundColor(.white)
                 }
-                .font(.system(size: 15))
-                .lineLimit(2)
+                .font(.system(size: 14))
+                .lineLimit(1)
 
-                HStack {
-                    Text("in **\(group.name)**")
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.5))
+                HStack(spacing: 6) {
+                    // Group chip
+                    Text(group.name)
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(Theme.primaryAccent)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 2)
+                        .background(Theme.primaryAccent.opacity(0.14))
+                        .clipShape(Capsule())
+
                     Spacer()
+
                     Text(timeAgo)
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.4))
+                        .font(.system(size: 11))
+                        .foregroundColor(.white.opacity(0.35))
                 }
             }
 
-            Spacer()
-
             Text("\(group.currency.symbol)\(String(format: "%.0f", expense.amount))")
-                .font(.system(size: 16, weight: .bold, design: .rounded))
+                .font(.system(size: 15, weight: .bold, design: .rounded))
                 .foregroundColor(Theme.secondaryAccent)
         }
         .padding(16)
-        .glassCard(cornerRadius: 20)
+        .glassCard(cornerRadius: 18)
     }
 }
 
@@ -211,9 +238,9 @@ struct PulseDot: View {
     var body: some View {
         ZStack {
             Circle()
-                .fill(Theme.successColor.opacity(pulse ? 0 : 0.4))
+                .fill(Theme.successColor.opacity(pulse ? 0 : 0.35))
                 .frame(width: 12, height: 12)
-                .scaleEffect(pulse ? 1.6 : 1.0)
+                .scaleEffect(pulse ? 1.7 : 1.0)
             Circle()
                 .fill(Theme.successColor)
                 .frame(width: 7, height: 7)

@@ -450,8 +450,9 @@ struct LoginView: View {
             
             let name = profile.name
             let email = profile.email
+            let avatarURL = profile.imageURL(withDimension: 320)?.absoluteString
             
-            viewModel.loginOrRegisterWithGoogle(name: name, email: email)
+            viewModel.loginOrRegisterWithGoogle(name: name, email: email, avatarURL: avatarURL)
             presentationMode.wrappedValue.dismiss()
         }
     }

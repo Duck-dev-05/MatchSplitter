@@ -109,6 +109,7 @@ struct SettlementCardView: View {
             // From avatar
             GradientAvatar(
                 name: settlement.fromUser.name,
+                avatarURL: settlement.fromUser.avatarURL,
                 size: 46,
                 gradient: LinearGradient(
                     colors: [Theme.dangerColor, Theme.dangerColor.opacity(0.6)],
@@ -132,6 +133,7 @@ struct SettlementCardView: View {
             // To avatar
             GradientAvatar(
                 name: settlement.toUser.name,
+                avatarURL: settlement.toUser.avatarURL,
                 size: 46,
                 gradient: LinearGradient(
                     colors: [Theme.successColor, Theme.successColor.opacity(0.6)],
@@ -245,7 +247,7 @@ struct QRCodePaymentView: View {
 
                     HStack(spacing: 12) {
                         GradientAvatar(
-                            name: settlement.fromUser.name, size: 36,
+                            name: settlement.fromUser.name, avatarURL: settlement.fromUser.avatarURL, size: 36,
                             gradient: LinearGradient(
                                 colors: [Theme.dangerColor, Theme.dangerColor.opacity(0.7)],
                                 startPoint: .topLeading, endPoint: .bottomTrailing
@@ -254,7 +256,7 @@ struct QRCodePaymentView: View {
                         Image(systemName: "arrow.right")
                             .foregroundColor(Theme.secondaryAccent.opacity(0.70))
                         GradientAvatar(
-                            name: settlement.toUser.name, size: 36,
+                            name: settlement.toUser.name, avatarURL: settlement.toUser.avatarURL, size: 36,
                             gradient: LinearGradient(
                                 colors: [Theme.successColor, Theme.successColor.opacity(0.7)],
                                 startPoint: .topLeading, endPoint: .bottomTrailing
@@ -375,7 +377,7 @@ struct QRCodePaymentView: View {
                     } catch {
                         await MainActor.run {
                             self.qrError = "Failed to load PayOS QR"
-                            self.qrPayload = generator.generatePaymentPayload(paymentID: settlement.toUser.paymentID ?? "Unknown", amount: settlement.amount)
+                            self.qrPayload = generator.generatePaymentPayload(paymentType: settlement.toUser.paymentType, paymentID: settlement.toUser.paymentID ?? "Unknown", amount: settlement.amount, currency: currency)
                             self.isLoadingQR = false
                         }
                     }
@@ -398,13 +400,13 @@ struct QRCodePaymentView: View {
                     } catch {
                         await MainActor.run {
                             self.qrError = "Failed to load VietQR"
-                            self.qrPayload = generator.generatePaymentPayload(paymentID: settlement.toUser.paymentID ?? "Unknown", amount: settlement.amount)
+                            self.qrPayload = generator.generatePaymentPayload(paymentType: settlement.toUser.paymentType, paymentID: settlement.toUser.paymentID ?? "Unknown", amount: settlement.amount, currency: currency)
                             self.isLoadingQR = false
                         }
                     }
                 }
             } else {
-                self.qrPayload = generator.generatePaymentPayload(paymentID: settlement.toUser.paymentID ?? "Unknown", amount: settlement.amount)
+                self.qrPayload = generator.generatePaymentPayload(paymentType: settlement.toUser.paymentType, paymentID: settlement.toUser.paymentID ?? "Unknown", amount: settlement.amount, currency: currency)
                 self.isLoadingQR = false
             }
         }

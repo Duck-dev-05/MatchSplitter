@@ -46,56 +46,41 @@ struct AnalyticsView: View {
             ZStack {
                 Theme.backgroundGradient.ignoresSafeArea()
 
-                Circle()
-                    .fill(Theme.primaryAccent.opacity(0.09))
-                    .frame(width: 260, height: 260)
-                    .blur(radius: 80)
-                    .offset(x: -80, y: 40)
+                AmbientGlob(color: Theme.primaryAccent, size: 280, blurRadius: 90, opacity: 0.09, offsetX: -80, offsetY: 40)
+                    .ignoresSafeArea()
+                AmbientGlob(color: Theme.secondaryAccent, size: 200, blurRadius: 80, opacity: 0.06, offsetX: 120, offsetY: 400)
                     .ignoresSafeArea()
 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 24) {
 
                         // MARK: Page Header
-                        HStack {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Analytics")
-                                    .font(.system(size: 30, weight: .heavy, design: .rounded))
-                                    .foregroundColor(.white)
-                                Text("Spending breakdown across groups")
-                                    .font(.system(size: 13, weight: .medium))
-                                    .foregroundColor(.white.opacity(0.40))
-                            }
-                            Spacer()
-                        }
-                        .padding(.horizontal, 24)
-                        .padding(.top, 16)
+                        PageHeader(
+                            title: "Analytics",
+                            subtitle: "Spending breakdown across groups"
+                        )
 
-                        // MARK: Stats Row
-                        HStack(spacing: 0) {
-                            StatBadge(
+                        // MARK: Stats Row — 3 individual cards
+                        HStack(spacing: 10) {
+                            analyticsStatCard(
                                 icon: "banknote.fill",
                                 label: "Total Spent",
                                 value: "\(viewModel.defaultCurrency.symbol)\(String(format: "%.0f", totalSpent))",
                                 color: Theme.secondaryAccent
                             )
-                            Divider().frame(height: 44).background(Color.white.opacity(0.10))
-                            StatBadge(
+                            analyticsStatCard(
                                 icon: "arrow.down.circle.fill",
                                 label: "Owed to You",
                                 value: "\(viewModel.defaultCurrency.symbol)\(String(format: "%.0f", overallBalance > 0 ? overallBalance : 0))",
                                 color: Theme.successColor
                             )
-                            Divider().frame(height: 44).background(Color.white.opacity(0.10))
-                            StatBadge(
+                            analyticsStatCard(
                                 icon: "arrow.up.circle.fill",
                                 label: "You Owe",
                                 value: "\(viewModel.defaultCurrency.symbol)\(String(format: "%.0f", abs(totalOwed)))",
                                 color: Theme.dangerColor
                             )
                         }
-                        .padding(.vertical, 20)
-                        .accentCard(cornerRadius: 24)
                         .padding(.horizontal, 20)
 
                         // MARK: Chart
@@ -103,15 +88,22 @@ struct AnalyticsView: View {
                             VStack(spacing: 16) {
                                 ZStack {
                                     Circle()
-                                        .fill(Theme.primaryAccent.opacity(0.08))
-                                        .frame(width: 100, height: 100)
+                                        .fill(Theme.primaryAccent.opacity(0.07))
+                                        .frame(width: 110, height: 110)
+                                    Circle()
+                                        .fill(Theme.primaryAccent.opacity(0.12))
+                                        .frame(width: 78, height: 78)
                                     Image(systemName: "chart.pie.fill")
-                                        .font(.system(size: 44))
-                                        .foregroundColor(Theme.primaryAccent.opacity(0.35))
+                                        .font(.system(size: 36))
+                                        .foregroundColor(Theme.primaryAccent.opacity(0.50))
                                 }
                                 Text("No spending data yet.")
-                                    .foregroundColor(.white.opacity(0.45))
-                                    .font(.subheadline)
+                                    .foregroundColor(.white.opacity(0.40))
+                                    .font(.system(size: 15, weight: .medium))
+                                Text("Add expenses to groups to see your breakdown here.")
+                                    .foregroundColor(.white.opacity(0.30))
+                                    .font(.caption)
+                                    .multilineTextAlignment(.center)
                             }
                             .padding(.top, 30)
                         } else {
@@ -129,6 +121,34 @@ struct AnalyticsView: View {
             .onAppear { withAnimation(.easeOut(duration: 0.6)) { appear = true } }
         }
     }
+
+    // MARK: - Analytics Stat Card
+    private func analyticsStatCard(icon: String, label: String, value: String, color: Color) -> some View {
+        VStack(spacing: 10) {
+            ZStack {
+                Circle()
+                    .fill(color.opacity(0.15))
+                    .frame(width: 40, height: 40)
+                Image(systemName: icon)
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(color)
+            }
+            Text(value)
+                .font(.system(size: 16, weight: .heavy, design: .rounded))
+                .foregroundColor(.white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+            Text(label)
+                .font(.system(size: 10, weight: .bold))
+                .foregroundColor(.white.opacity(0.45))
+                .textCase(.uppercase)
+                .kerning(0.6)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 18)
+        .premiumCard(cornerRadius: 18, accentColor: color)
+    }
 }
 
 // MARK: - iOS 15 Custom Chart
@@ -136,55 +156,73 @@ struct iOS15ChartView: View {
     let categoryData: [(category: String, amount: Double, icon: String, color: Color)]
     var appear: Bool
 
+    var totalAmount: Double { categoryData.map { $0.amount }.reduce(0, +) }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
-            Text("Spending by Category")
-                .font(.system(size: 17, weight: .bold))
-                .foregroundColor(.white)
+            HStack {
+                Text("Spending by Category")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(.white)
+                Spacer()
+                Text("\(categoryData.count) categories")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.white.opacity(0.40))
+            }
 
             let maxAmount = categoryData.map { $0.amount }.max() ?? 1.0
 
-            VStack(spacing: 18) {
+            VStack(spacing: 14) {
                 ForEach(Array(categoryData.enumerated()), id: \.element.category) { index, item in
                     HStack(spacing: 12) {
-                        IconBadge(systemName: item.icon, color: item.color, size: 34, iconSize: 13)
+                        IconBadge(systemName: item.icon, color: item.color, size: 36, iconSize: 13)
 
-                        VStack(alignment: .leading, spacing: 5) {
+                        VStack(alignment: .leading, spacing: 6) {
                             HStack {
                                 Text(item.category)
                                     .font(.system(size: 13, weight: .semibold))
-                                    .foregroundColor(.white.opacity(0.80))
+                                    .foregroundColor(.white.opacity(0.85))
                                 Spacer()
-                                Text(String(format: "%.0f", item.amount))
-                                    .font(.system(size: 13, weight: .bold, design: .rounded))
-                                    .foregroundColor(.white.opacity(0.60))
+                                HStack(spacing: 6) {
+                                    Text(String(format: "%.0f", item.amount))
+                                        .font(.system(size: 13, weight: .bold, design: .rounded))
+                                        .foregroundColor(.white)
+                                    // Percentage chip
+                                    Text(String(format: "%.0f%%", (item.amount / totalAmount) * 100))
+                                        .font(.system(size: 10, weight: .bold))
+                                        .foregroundColor(item.color)
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(item.color.opacity(0.15))
+                                        .clipShape(Capsule())
+                                }
                             }
 
                             GeometryReader { geo in
                                 ZStack(alignment: .leading) {
-                                    RoundedRectangle(cornerRadius: 5)
+                                    RoundedRectangle(cornerRadius: 6)
                                         .fill(Color.white.opacity(0.06))
                                         .frame(maxWidth: .infinity)
-                                        .frame(height: 8)
-                                    RoundedRectangle(cornerRadius: 5)
+                                        .frame(height: 10)
+                                    RoundedRectangle(cornerRadius: 6)
                                         .fill(LinearGradient(
-                                            colors: [item.color, item.color.opacity(0.5)],
+                                            colors: [item.color, item.color.opacity(0.55)],
                                             startPoint: .leading, endPoint: .trailing
                                         ))
                                         .frame(
                                             width: appear
-                                                ? max(CGFloat(item.amount / maxAmount) * geo.size.width, 8)
+                                                ? max(CGFloat(item.amount / maxAmount) * geo.size.width, 10)
                                                 : 0,
-                                            height: 8
+                                            height: 10
                                         )
                                         .animation(
-                                            .spring(response: 0.6, dampingFraction: 0.8)
+                                            .spring(response: 0.65, dampingFraction: 0.78)
                                             .delay(Double(index) * 0.08),
                                             value: appear
                                         )
                                 }
                             }
-                            .frame(height: 8)
+                            .frame(height: 10)
                         }
                     }
                 }
@@ -204,9 +242,15 @@ struct iOS16ChartView: View {
     var body: some View {
         #if canImport(Charts)
         VStack(alignment: .leading, spacing: 18) {
-            Text("Spending by Category")
-                .font(.system(size: 17, weight: .bold))
-                .foregroundColor(.white)
+            HStack {
+                Text("Spending by Category")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(.white)
+                Spacer()
+                Text("\(categoryData.count) categories")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.white.opacity(0.40))
+            }
 
             Chart {
                 ForEach(categoryData, id: \.category) { item in
@@ -215,19 +259,20 @@ struct iOS16ChartView: View {
                         y: .value("Category", item.category)
                     )
                     .foregroundStyle(Theme.primaryGradient)
-                    .cornerRadius(6)
+                    .cornerRadius(8)
                 }
             }
-            .frame(height: CGFloat(categoryData.count) * 46 + 20)
+            .frame(height: CGFloat(categoryData.count) * 50 + 20)
             .chartXAxis {
                 AxisMarks(values: .automatic) {
-                    AxisValueLabel().foregroundStyle(Color.white.opacity(0.45))
+                    AxisValueLabel().foregroundStyle(Color.white.opacity(0.40))
+                    AxisGridLine().foregroundStyle(Color.white.opacity(0.06))
                 }
             }
             .chartYAxis {
                 AxisMarks {
                     AxisValueLabel()
-                        .foregroundStyle(Color.white)
+                        .foregroundStyle(Color.white.opacity(0.80))
                         .font(.system(size: 12, weight: .medium))
                 }
             }

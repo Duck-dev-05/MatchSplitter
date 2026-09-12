@@ -9,8 +9,8 @@ struct Theme {
 
     // Card surfaces — frosted glass feel
     static let cardBackground    = Color(red: 0.12, green: 0.11, blue: 0.22)
-    static let cardBorder        = Color.white.opacity(0.10)
-    static let cardBorderStrong  = Color.white.opacity(0.18)
+    static let cardBorder        = Color.white.opacity(0.09)
+    static let cardBorderStrong  = Color.white.opacity(0.16)
 
     // Electric violet accent
     static let primaryAccent     = Color(red: 0.45, green: 0.22, blue: 1.00)
@@ -22,6 +22,10 @@ struct Theme {
     static let successColor      = Color(red: 0.18, green: 0.88, blue: 0.62)
     // Warm gold for currency/logout
     static let warmGold          = Color(red: 1.0, green: 0.65, blue: 0.15)
+    // Amber
+    static let amber             = Color(red: 1.0, green: 0.75, blue: 0.10)
+    // Electric purple (slightly lighter than primary)
+    static let electricPurple    = Color(red: 0.60, green: 0.35, blue: 1.00)
 
     // Chip (tag) colors
     static let chipBackground    = Color(red: 0.45, green: 0.22, blue: 1.00).opacity(0.18)
@@ -38,7 +42,7 @@ struct Theme {
 
     static var primaryGradient: LinearGradient {
         LinearGradient(
-            colors: [primaryAccent, secondaryAccent.opacity(0.85)],
+            colors: [primaryAccent, electricPurple, secondaryAccent.opacity(0.80)],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )
@@ -46,7 +50,7 @@ struct Theme {
 
     static var roseGradient: LinearGradient {
         LinearGradient(
-            colors: [dangerColor, Color(red: 1.0, green: 0.55, blue: 0.30)],
+            colors: [dangerColor, Color(red: 1.0, green: 0.45, blue: 0.35)],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )
@@ -60,7 +64,23 @@ struct Theme {
         )
     }
 
-    // MARK: - Legacy helpers (kept for compatibility — prefer .glassCard() / .accentCard() modifiers)
+    static var goldGradient: LinearGradient {
+        LinearGradient(
+            colors: [amber, warmGold],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+
+    static var cyanGradient: LinearGradient {
+        LinearGradient(
+            colors: [secondaryAccent, Color(red: 0.05, green: 0.65, blue: 0.90)],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+
+    // MARK: - Legacy helpers (kept for compatibility)
     static func applyGlassCard(to view: AnyView, cornerRadius: CGFloat = 20) -> some View {
         view.glassCard(cornerRadius: cornerRadius)
     }
@@ -83,13 +103,23 @@ struct GlassCardModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .background(Theme.cardBackground)
-            .cornerRadius(cornerRadius)
-            .shadow(color: Color.black.opacity(0.2), radius: 10, x: 0, y: 5)
-            .overlay(
+            .background(
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .stroke(Theme.cardBorder, lineWidth: 1)
+                    .fill(Theme.cardBackground)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                            .stroke(
+                                LinearGradient(
+                                    colors: [Color.white.opacity(0.14), Color.white.opacity(0.04)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 1
+                            )
+                    )
+                    .shadow(color: Color.black.opacity(0.28), radius: 12, x: 0, y: 6)
             )
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
     }
 }
 
@@ -100,18 +130,60 @@ struct AccentCardModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .background(
-                LinearGradient(
-                    colors: [Theme.primaryAccent.opacity(0.35), Theme.secondaryAccent.opacity(0.18)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
+                ZStack {
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Theme.primaryAccent.opacity(0.28),
+                                    Theme.secondaryAccent.opacity(0.12),
+                                    Theme.primaryAccent.opacity(0.08)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                        .stroke(
+                            LinearGradient(
+                                colors: [Theme.primaryAccent.opacity(0.45), Theme.secondaryAccent.opacity(0.25)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1
+                        )
+                }
             )
-            .cornerRadius(cornerRadius)
-            .shadow(color: Theme.primaryAccent.opacity(0.20), radius: 15, x: 0, y: 8)
-            .overlay(
-                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .stroke(Theme.cardBorderStrong, lineWidth: 1)
+            .shadow(color: Theme.primaryAccent.opacity(0.22), radius: 18, x: 0, y: 10)
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+    }
+}
+
+// MARK: - Premium Card Modifier (stronger glow, gradient border)
+struct PremiumCardModifier: ViewModifier {
+    var cornerRadius: CGFloat
+    var accentColor: Color
+
+    func body(content: Content) -> some View {
+        content
+            .background(
+                ZStack {
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                        .fill(Theme.cardBackground)
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                        .stroke(
+                            LinearGradient(
+                                colors: [accentColor.opacity(0.55), accentColor.opacity(0.15), Color.clear],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1.2
+                        )
+                }
             )
+            .shadow(color: accentColor.opacity(0.18), radius: 16, x: 0, y: 8)
+            .shadow(color: Color.black.opacity(0.3), radius: 8, x: 0, y: 4)
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
     }
 }
 
@@ -122,8 +194,8 @@ struct PressableButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .scaleEffect(configuration.isPressed ? scale : 1.0)
-            .opacity(configuration.isPressed ? 0.90 : 1.0)
-            .animation(.spring(response: 0.25, dampingFraction: 0.7), value: configuration.isPressed)
+            .opacity(configuration.isPressed ? 0.88 : 1.0)
+            .animation(.spring(response: 0.22, dampingFraction: 0.65), value: configuration.isPressed)
     }
 }
 
@@ -137,6 +209,10 @@ extension View {
         modifier(AccentCardModifier(cornerRadius: cornerRadius))
     }
 
+    func premiumCard(cornerRadius: CGFloat = 20, accentColor: Color = Theme.primaryAccent) -> some View {
+        modifier(PremiumCardModifier(cornerRadius: cornerRadius, accentColor: accentColor))
+    }
+
     @ViewBuilder
     func halfSheetIfAvailable() -> some View {
         if #available(iOS 16.0, *) {
@@ -144,6 +220,35 @@ extension View {
         } else {
             self
         }
+    }
+}
+
+// MARK: - Page Header
+struct PageHeader: View {
+    var title: String
+    var subtitle: String? = nil
+    var trailing: AnyView? = nil
+
+    var body: some View {
+        HStack(alignment: .bottom) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.system(size: 32, weight: .heavy, design: .rounded))
+                    .foregroundColor(.white)
+                if let subtitle = subtitle {
+                    Text(subtitle)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(.white.opacity(0.40))
+                }
+            }
+            Spacer()
+            if let trailing = trailing {
+                trailing
+            }
+        }
+        .padding(.horizontal, 24)
+        .padding(.top, 16)
+        .padding(.bottom, 6)
     }
 }
 
@@ -155,16 +260,21 @@ struct StatBadge: View {
     var color: Color = Theme.primaryAccent
 
     var body: some View {
-        VStack(spacing: 6) {
-            Image(systemName: icon)
-                .font(.title3.weight(.bold))
-                .foregroundColor(color)
+        VStack(spacing: 7) {
+            ZStack {
+                Circle()
+                    .fill(color.opacity(0.15))
+                    .frame(width: 36, height: 36)
+                Image(systemName: icon)
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundColor(color)
+            }
             Text(value)
-                .font(.title3.weight(.heavy))
+                .font(.system(size: 17, weight: .heavy, design: .rounded))
                 .foregroundColor(.white)
             Text(label)
                 .font(.caption2.weight(.semibold))
-                .foregroundColor(.white.opacity(0.6))
+                .foregroundColor(.white.opacity(0.5))
                 .textCase(.uppercase)
         }
         .frame(maxWidth: .infinity)
@@ -174,17 +284,42 @@ struct StatBadge: View {
 // MARK: - Gradient Avatar
 struct GradientAvatar: View {
     var name: String
+    var avatarURL: String? = nil
     var size: CGFloat = 50
     var gradient: LinearGradient = Theme.primaryGradient
 
     var body: some View {
+        if let urlString = avatarURL, let url = URL(string: urlString) {
+            AsyncImage(url: url) { phase in
+                if let image = phase.image {
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: size, height: size)
+                        .clipShape(Circle())
+                        .shadow(color: Theme.primaryAccent.opacity(0.20), radius: 8, x: 0, y: 4)
+                } else if phase.error != nil {
+                    fallbackView
+                } else {
+                    ZStack {
+                        Circle().fill(Theme.cardBackground).frame(width: size, height: size)
+                        ProgressView().tint(Theme.secondaryAccent)
+                    }
+                }
+            }
+        } else {
+            fallbackView
+        }
+    }
+
+    private var fallbackView: some View {
         ZStack {
             Circle()
                 .fill(gradient)
                 .frame(width: size, height: size)
-                .shadow(color: Theme.primaryAccent.opacity(0.20), radius: 8, x: 0, y: 4)
+                .shadow(color: Theme.primaryAccent.opacity(0.22), radius: 8, x: 0, y: 4)
             Text(name.prefix(1).uppercased())
-                .font(.headline.weight(.heavy))
+                .font(.system(size: size * 0.38, weight: .heavy, design: .rounded))
                 .foregroundColor(.white)
         }
     }
@@ -198,8 +333,9 @@ struct SectionHeader: View {
     var body: some View {
         HStack {
             Text(title)
-                .font(.subheadline.weight(.bold))
-                .foregroundColor(.white.opacity(0.6))
+                .font(.system(size: 11, weight: .bold))
+                .foregroundColor(.white.opacity(0.50))
+                .kerning(1.2)
                 .textCase(.uppercase)
             Spacer()
             if let trailing = trailing {
@@ -214,8 +350,8 @@ struct SectionHeader: View {
 struct DragHandle: View {
     var body: some View {
         RoundedRectangle(cornerRadius: 3)
-            .fill(Color.white.opacity(0.3))
-            .frame(width: 38, height: 5)
+            .fill(Color.white.opacity(0.25))
+            .frame(width: 36, height: 5)
             .padding(.top, 14)
     }
 }
@@ -233,7 +369,7 @@ struct SheetHeader: View {
     var body: some View {
         HStack {
             Button(leadingLabel, action: onLeading)
-                .foregroundColor(.white.opacity(0.6))
+                .foregroundColor(.white.opacity(0.55))
                 .font(.headline)
             Spacer()
             Text(title)
@@ -242,7 +378,7 @@ struct SheetHeader: View {
             Spacer()
             Button(trailingLabel, action: onTrailing)
                 .font(.headline.weight(.bold))
-                .foregroundColor(trailingEnabled ? trailingColor : Color.white.opacity(0.3))
+                .foregroundColor(trailingEnabled ? trailingColor : Color.white.opacity(0.25))
                 .disabled(!trailingEnabled)
         }
         .padding(.horizontal, 24)
@@ -260,8 +396,12 @@ struct IconBadge: View {
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: size * 0.27, style: .continuous)
-                .fill(color.opacity(0.15))
+                .fill(color.opacity(0.14))
                 .frame(width: size, height: size)
+                .overlay(
+                    RoundedRectangle(cornerRadius: size * 0.27, style: .continuous)
+                        .stroke(color.opacity(0.25), lineWidth: 0.8)
+                )
             Image(systemName: systemName)
                 .font(.system(size: iconSize, weight: .semibold))
                 .foregroundColor(color)
@@ -283,12 +423,42 @@ struct GradientButton: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
                 .background(
-                    isEnabled ? AnyView(Theme.primaryGradient) : AnyView(Color.white.opacity(0.10))
+                    Group {
+                        if isEnabled {
+                            AnyView(Theme.primaryGradient)
+                        } else {
+                            AnyView(Color.white.opacity(0.08))
+                        }
+                    }
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .shadow(color: isEnabled ? Theme.primaryAccent.opacity(0.45) : .clear, radius: 12, x: 0, y: 6)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(Color.white.opacity(isEnabled ? 0.18 : 0.0), lineWidth: 1)
+                )
+                .shadow(color: isEnabled ? Theme.primaryAccent.opacity(0.45) : .clear, radius: 14, x: 0, y: 7)
         }
         .disabled(!isEnabled)
         .animation(.easeInOut(duration: 0.2), value: isEnabled)
+        .buttonStyle(PressableButtonStyle())
+    }
+}
+
+// MARK: - Ambient Glow Blob
+struct AmbientGlob: View {
+    var color: Color = Theme.primaryAccent
+    var size: CGFloat = 240
+    var blurRadius: CGFloat = 80
+    var opacity: Double = 0.09
+    var offsetX: CGFloat = 0
+    var offsetY: CGFloat = 0
+
+    var body: some View {
+        Circle()
+            .fill(color.opacity(opacity))
+            .frame(width: size, height: size)
+            .blur(radius: blurRadius)
+            .offset(x: offsetX, y: offsetY)
+            .allowsHitTesting(false)
     }
 }

@@ -90,7 +90,7 @@ struct AdvancedSplitView: View {
                                             }
                                         }
 
-                                        GradientAvatar(name: member.name, size: 34)
+                                        GradientAvatar(name: member.name, avatarURL: member.avatarURL, size: 34)
 
                                         Text(member.name)
                                             .font(.system(size: 16, weight: .semibold))
@@ -119,7 +119,7 @@ struct AdvancedSplitView: View {
                                 
                             ForEach(group.members) { member in
                                 HStack(spacing: 16) {
-                                    GradientAvatar(name: member.name, size: 34)
+                                    GradientAvatar(name: member.name, avatarURL: member.avatarURL, size: 34)
                                     Text(member.name)
                                         .font(.system(size: 16, weight: .semibold))
                                         .foregroundColor(.white)

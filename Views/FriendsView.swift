@@ -21,11 +21,9 @@ struct FriendsView: View {
             ZStack {
                 Theme.backgroundGradient.ignoresSafeArea()
 
-                Circle()
-                    .fill(Theme.secondaryAccent.opacity(0.07))
-                    .frame(width: 260, height: 260)
-                    .blur(radius: 80)
-                    .offset(x: 120, y: -60)
+                AmbientGlob(color: Theme.secondaryAccent, size: 260, blurRadius: 90, opacity: 0.07, offsetX: 110, offsetY: -50)
+                    .ignoresSafeArea()
+                AmbientGlob(color: Theme.dangerColor, size: 180, blurRadius: 70, opacity: 0.06, offsetX: -80, offsetY: 300)
                     .ignoresSafeArea()
 
                 if globalBalances.isEmpty {
@@ -33,43 +31,46 @@ struct FriendsView: View {
                 } else {
                     ScrollView(showsIndicators: false) {
                         VStack(spacing: 0) {
-                            // Page Title
-                            HStack {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text("Friends")
-                                        .font(.system(size: 30, weight: .heavy, design: .rounded))
-                                        .foregroundColor(.white)
-                                    Text("\(globalBalances.count) contacts")
-                                        .font(.system(size: 13, weight: .medium))
-                                        .foregroundColor(.white.opacity(0.40))
-                                }
-                                Spacer()
-                            }
-                            .padding(.horizontal, 24)
-                            .padding(.top, 16)
+                            // Page Header
+                            PageHeader(
+                                title: "Friends",
+                                subtitle: "\(globalBalances.count) contacts",
+                                trailing: AnyView(
+                                    ZStack {
+                                        Circle()
+                                            .fill(Theme.secondaryAccent.opacity(0.14))
+                                            .frame(width: 38, height: 38)
+                                        Image(systemName: "person.2.fill")
+                                            .font(.system(size: 14, weight: .bold))
+                                            .foregroundColor(Theme.secondaryAccent)
+                                    }
+                                )
+                            )
                             .padding(.bottom, 18)
 
                             // Summary Strip
                             HStack(spacing: 12) {
-                                summaryCard(
-                                    title: "Owed To You",
+                                balanceSummaryCard(
+                                    title: "Owed to You",
                                     value: "+\(viewModel.defaultCurrency.symbol)\(String(format: "%.2f", totalOwedToMe))",
-                                    color: Theme.successColor
+                                    color: Theme.successColor,
+                                    icon: "arrow.down.circle.fill"
                                 )
-                                summaryCard(
+                                balanceSummaryCard(
                                     title: "You Owe",
                                     value: "\(viewModel.defaultCurrency.symbol)\(String(format: "%.2f", abs(totalIOwe)))",
-                                    color: totalIOwe < -0.01 ? Theme.dangerColor : .white.opacity(0.5)
+                                    color: totalIOwe < -0.01 ? Theme.dangerColor : .white.opacity(0.5),
+                                    icon: "arrow.up.circle.fill"
                                 )
                             }
                             .padding(.horizontal, 20)
-                            .padding(.bottom, 24)
+                            .padding(.bottom, 28)
 
-                            // Friends List
+                            // Balances list
                             SectionHeader(title: "Balances")
                                 .padding(.bottom, 14)
 
-                            VStack(spacing: 12) {
+                            VStack(spacing: 10) {
                                 ForEach(Array(globalBalances.keys.sorted(by: { $0.name < $1.name }).enumerated()), id: \.element.id) { index, friend in
                                     if let balances = globalBalances[friend] {
                                         FriendRowView(friend: friend, balances: balances)
@@ -94,15 +95,46 @@ struct FriendsView: View {
         }
     }
 
-    private var emptyState: some View {
-        VStack(spacing: 16) {
+    // MARK: - Balance Summary Card
+    private func balanceSummaryCard(title: String, value: String, color: Color, icon: String) -> some View {
+        HStack(spacing: 12) {
             ZStack {
                 Circle()
-                    .fill(Theme.primaryAccent.opacity(0.08))
+                    .fill(color.opacity(0.15))
+                    .frame(width: 40, height: 40)
+                Image(systemName: icon)
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(color)
+            }
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.white.opacity(0.50))
+                    .textCase(.uppercase)
+                    .kerning(0.8)
+                Text(value)
+                    .font(.system(size: 20, weight: .heavy, design: .rounded))
+                    .foregroundColor(color)
+            }
+            Spacer()
+        }
+        .padding(16)
+        .premiumCard(cornerRadius: 18, accentColor: color)
+    }
+
+    // MARK: - Empty State
+    private var emptyState: some View {
+        VStack(spacing: 18) {
+            ZStack {
+                Circle()
+                    .fill(Theme.primaryAccent.opacity(0.07))
                     .frame(width: 110, height: 110)
+                Circle()
+                    .fill(Theme.primaryAccent.opacity(0.12))
+                    .frame(width: 80, height: 80)
                 Image(systemName: "person.2.slash.fill")
-                    .font(.system(size: 44))
-                    .foregroundColor(Theme.primaryAccent.opacity(0.35))
+                    .font(.system(size: 38))
+                    .foregroundColor(Theme.primaryAccent.opacity(0.45))
             }
             Text("No Friends Yet")
                 .font(.system(size: 22, weight: .bold, design: .rounded))
@@ -112,31 +144,6 @@ struct FriendsView: View {
                 .foregroundColor(.white.opacity(0.40))
                 .multilineTextAlignment(.center)
         }
-    }
-
-    private func summaryCard(title: String, value: String, color: Color) -> some View {
-        VStack(spacing: 8) {
-            Text(title)
-                .font(.system(size: 10, weight: .bold))
-                .foregroundColor(.white.opacity(0.55))
-                .textCase(.uppercase)
-            Text(value)
-                .font(.system(size: 22, weight: .heavy, design: .rounded))
-                .foregroundColor(color)
-
-            // Mini sparkline (decorative bars)
-            HStack(spacing: 3) {
-                ForEach([0.4, 0.7, 0.5, 1.0, 0.6, 0.8, 0.9], id: \.self) { ratio in
-                    RoundedRectangle(cornerRadius: 2)
-                        .fill(color.opacity(0.45))
-                        .frame(width: 4, height: 16 * CGFloat(ratio))
-                }
-            }
-            .frame(height: 16)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 18)
-        .accentCard(cornerRadius: 20)
     }
 }
 
@@ -153,62 +160,87 @@ struct FriendRowView: View {
         balances.values.reduce(0, +)
     }
 
+    var statusColor: Color {
+        if isSettledUp { return Theme.successColor }
+        return netAmount > 0 ? Theme.successColor : Theme.dangerColor
+    }
+
     var body: some View {
-        HStack(spacing: 14) {
-            GradientAvatar(
-                name: friend.name,
-                size: 48,
-                gradient: netAmount > 0.01
-                    ? LinearGradient(colors: [Theme.successColor, Theme.successColor.opacity(0.6)], startPoint: .topLeading, endPoint: .bottomTrailing)
-                    : (netAmount < -0.01
-                       ? LinearGradient(colors: [Theme.dangerColor, Theme.dangerColor.opacity(0.6)], startPoint: .topLeading, endPoint: .bottomTrailing)
-                       : Theme.primaryGradient)
-            )
+        HStack(spacing: 0) {
+            // Left colour indicator bar
+            RoundedRectangle(cornerRadius: 2)
+                .fill(
+                    LinearGradient(
+                        colors: [statusColor, statusColor.opacity(0.3)],
+                        startPoint: .top, endPoint: .bottom
+                    )
+                )
+                .frame(width: 3)
+                .padding(.vertical, 14)
+                .padding(.leading, 12)
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text(friend.name)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.white)
-                if let pid = friend.paymentID, !pid.isEmpty {
-                    Text(pid)
-                        .font(.system(size: 12))
-                        .foregroundColor(.white.opacity(0.40))
+            HStack(spacing: 14) {
+                GradientAvatar(
+                    name: friend.name,
+                    avatarURL: friend.avatarURL,
+                    size: 46,
+                    gradient: isSettledUp
+                        ? Theme.primaryGradient
+                        : (netAmount > 0.01
+                           ? LinearGradient(colors: [Theme.successColor, Theme.successColor.opacity(0.6)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                           : LinearGradient(colors: [Theme.dangerColor, Theme.dangerColor.opacity(0.6)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                )
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(friend.name)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(.white)
+                    if let pid = friend.paymentID, !pid.isEmpty {
+                        HStack(spacing: 4) {
+                            Image(systemName: "creditcard.fill")
+                                .font(.system(size: 9))
+                            Text(pid)
+                                .font(.system(size: 11))
+                        }
+                        .foregroundColor(.white.opacity(0.35))
+                    }
                 }
-            }
 
-            Spacer()
+                Spacer()
 
-            if isSettledUp {
-                HStack(spacing: 5) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 13))
-                    Text("Settled")
-                }
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(Theme.successColor)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(Theme.successColor.opacity(0.12))
-                .clipShape(Capsule())
-            } else {
-                VStack(alignment: .trailing, spacing: 4) {
-                    ForEach(balances.keys.sorted(by: { $0.rawValue < $1.rawValue }), id: \.self) { currency in
-                        let amount = balances[currency] ?? 0
-                        if abs(amount) >= 0.01 {
-                            VStack(alignment: .trailing, spacing: 2) {
-                                Text(amount > 0 ? "owes you" : "you owe")
-                                    .font(.system(size: 10))
-                                    .foregroundColor(.white.opacity(0.45))
-                                Text("\(currency.symbol)\(String(format: "%.2f", abs(amount)))")
-                                    .font(.system(size: 16, weight: .bold, design: .rounded))
-                                    .foregroundColor(amount > 0 ? Theme.successColor : Theme.dangerColor)
+                if isSettledUp {
+                    HStack(spacing: 5) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 12))
+                        Text("Settled")
+                    }
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(Theme.successColor)
+                    .padding(.horizontal, 11)
+                    .padding(.vertical, 5)
+                    .background(Theme.successColor.opacity(0.12))
+                    .clipShape(Capsule())
+                } else {
+                    VStack(alignment: .trailing, spacing: 4) {
+                        ForEach(balances.keys.sorted(by: { $0.rawValue < $1.rawValue }), id: \.self) { currency in
+                            let amount = balances[currency] ?? 0
+                            if abs(amount) >= 0.01 {
+                                VStack(alignment: .trailing, spacing: 2) {
+                                    Text(amount > 0 ? "owes you" : "you owe")
+                                        .font(.system(size: 10))
+                                        .foregroundColor(.white.opacity(0.40))
+                                    Text("\(currency.symbol)\(String(format: "%.2f", abs(amount)))")
+                                        .font(.system(size: 15, weight: .bold, design: .rounded))
+                                        .foregroundColor(amount > 0 ? Theme.successColor : Theme.dangerColor)
+                                }
                             }
                         }
                     }
                 }
             }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 16)
         }
-        .padding(16)
         .glassCard(cornerRadius: 18)
     }
 }

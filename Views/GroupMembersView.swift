@@ -12,58 +12,51 @@ struct GroupMembersView: View {
         viewModel.groups.first(where: { $0.id == group.id }) ?? group
     }
 
-    let avatarColors: [Color] = [
-        Theme.primaryAccent,
-        Color(red: 0.13, green: 0.67, blue: 0.89),
-        Color(red: 0.95, green: 0.37, blue: 0.54),
-        Color(red: 0.20, green: 0.80, blue: 0.60),
-        Color(red: 0.98, green: 0.60, blue: 0.20)
+    let avatarGradients: [LinearGradient] = [
+        LinearGradient(colors: [Theme.primaryAccent, Theme.electricPurple], startPoint: .topLeading, endPoint: .bottomTrailing),
+        LinearGradient(colors: [Theme.secondaryAccent, Color(red: 0.05, green: 0.65, blue: 0.90)], startPoint: .topLeading, endPoint: .bottomTrailing),
+        LinearGradient(colors: [Theme.dangerColor, Color(red: 1.0, green: 0.45, blue: 0.35)], startPoint: .topLeading, endPoint: .bottomTrailing),
+        LinearGradient(colors: [Theme.successColor, Color(red: 0.10, green: 0.82, blue: 0.55)], startPoint: .topLeading, endPoint: .bottomTrailing),
+        LinearGradient(colors: [Theme.warmGold, Theme.amber], startPoint: .topLeading, endPoint: .bottomTrailing),
     ]
 
     var body: some View {
         ZStack {
             Theme.backgroundGradient.ignoresSafeArea()
+            AmbientGlob(color: Theme.primaryAccent, size: 240, blurRadius: 80, opacity: 0.08, offsetX: -60, offsetY: 80)
+                .ignoresSafeArea()
 
             ScrollView(showsIndicators: false) {
-                VStack(spacing: 16) {
+                VStack(spacing: 12) {
                     ForEach(Array(currentGroup.members.enumerated()), id: \.element.id) { (index, member) in
                         NavigationLink(destination: InvoicesView(group: currentGroup, user: member)) {
                             MemberRowView(
                                 member: member,
-                                color: avatarColors[index % avatarColors.count],
+                                gradient: avatarGradients[index % avatarGradients.count],
                                 onEdit: { memberToEdit = member }
                             )
                         }
                         .buttonStyle(PressableButtonStyle())
                     }
                 }
-                .padding(24)
+                .padding(20)
+                .padding(.bottom, 40)
             }
         }
         .navigationTitle("Members")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                HStack(spacing: 16) {
+                HStack(spacing: 14) {
                     NavigationLink(destination: TeamQRInviteView(group: currentGroup)) {
-                        ZStack {
-                            Circle()
-                                .fill(Color.white.opacity(0.12))
-                                .frame(width: 32, height: 32)
-                            Image(systemName: "qrcode")
-                                .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(.white)
-                        }
+                        Image(systemName: "qrcode")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.80))
                     }
                     Button(action: { showingAddMember = true }) {
-                        ZStack {
-                            Circle()
-                                .fill(Color.white.opacity(0.12))
-                                .frame(width: 32, height: 32)
-                            Image(systemName: "person.badge.plus")
-                                .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(.white)
-                        }
+                        Image(systemName: "person.badge.plus")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(Theme.secondaryAccent)
                     }
                 }
             }
@@ -91,58 +84,94 @@ struct GroupMembersView: View {
     }
 }
 
+// MARK: - Member Row
 struct MemberRowView: View {
     var member: User
-    var color: Color
+    var gradient: LinearGradient
     var onEdit: () -> Void
 
     var body: some View {
         HStack(spacing: 16) {
-            GradientAvatar(
-                name: member.name,
-                size: 50,
-                gradient: LinearGradient(
-                    colors: [color, color.opacity(0.6)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            )
+            // Avatar with gradient ring
+            ZStack {
+                Circle()
+                    .fill(gradient)
+                    .frame(width: 56, height: 56)
+                    .overlay(Circle().stroke(Color.white.opacity(0.15), lineWidth: 1.5))
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text(member.name)
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.white)
-                if let pid = member.paymentID, !pid.isEmpty {
-                    HStack(spacing: 6) {
-                        Image(systemName: "creditcard.fill")
-                            .font(.system(size: 12))
-                        Text(pid)
-                            .font(.subheadline)
+                if let urlString = member.avatarURL, let url = URL(string: urlString) {
+                    AsyncImage(url: url) { phase in
+                        if let image = phase.image {
+                            image.resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .frame(width: 56, height: 56)
+                                .clipShape(Circle())
+                        } else {
+                            initialsView
+                        }
                     }
-                    .foregroundColor(.white.opacity(0.5))
                 } else {
-                    Text("No payment ID")
-                        .font(.subheadline)
-                        .foregroundColor(.white.opacity(0.3))
+                    initialsView
+                }
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text(member.name)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.white)
+
+                HStack(spacing: 6) {
+                    if let ptype = member.paymentType, ptype != "None" {
+                        // Payment type badge
+                        HStack(spacing: 4) {
+                            Image(systemName: "creditcard.fill")
+                                .font(.system(size: 9))
+                            Text(ptype)
+                                .font(.system(size: 10, weight: .bold))
+                        }
+                        .foregroundColor(Theme.secondaryAccent)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(Theme.secondaryAccent.opacity(0.14))
+                        .clipShape(Capsule())
+                    }
+
+                    if let pid = member.paymentID, !pid.isEmpty {
+                        Text(pid)
+                            .font(.system(size: 11))
+                            .foregroundColor(.white.opacity(0.40))
+                            .lineLimit(1)
+                    } else if member.paymentType == nil || member.paymentType == "None" {
+                        Text("No payment method")
+                            .font(.system(size: 11))
+                            .foregroundColor(.white.opacity(0.30))
+                    }
                 }
             }
 
             Spacer()
 
-            Button(action: onEdit) {
-                Image(systemName: "pencil.circle.fill")
-                    .font(.system(size: 26))
-                    .foregroundColor(Theme.secondaryAccent.opacity(0.8))
-            }
-            .buttonStyle(PlainButtonStyle())
+            HStack(spacing: 14) {
+                Button(action: onEdit) {
+                    Image(systemName: "pencil.circle.fill")
+                        .font(.system(size: 24))
+                        .foregroundColor(Theme.secondaryAccent.opacity(0.75))
+                }
+                .buttonStyle(PlainButtonStyle())
 
-            Image(systemName: "chevron.right")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(.white.opacity(0.22))
-                .padding(.leading, 8)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.20))
+            }
         }
-        .padding(16)
+        .padding(18)
         .glassCard(cornerRadius: 20)
+    }
+
+    private var initialsView: some View {
+        Text(member.name.prefix(1).uppercased())
+            .font(.system(size: 22, weight: .heavy, design: .rounded))
+            .foregroundColor(.white)
     }
 }
 
@@ -159,7 +188,7 @@ struct EditMemberView: View {
     @State private var bankBin: String = ""
     @State private var banks: [VietQRBank] = []
     @State private var isLoadingBanks = false
-    
+
     @State private var payOSClientId: String = ""
     @State private var payOSApiKey: String = ""
     @State private var payOSChecksumKey: String = ""
@@ -184,11 +213,11 @@ struct EditMemberView: View {
                         let finalID = paymentType == "None" ? "" : paymentID
                         let finalBin = paymentType == "VietQR" ? bankBin : nil
                         viewModel.updateMember(
-                            in: group, 
-                            memberId: member.id, 
-                            name: name, 
-                            paymentID: finalID, 
-                            paymentType: finalType, 
+                            in: group,
+                            memberId: member.id,
+                            name: name,
+                            paymentID: finalID,
+                            paymentType: finalType,
                             bankBin: finalBin,
                             payOSClientId: paymentType == "PayOS" ? payOSClientId : nil,
                             payOSApiKey: paymentType == "PayOS" ? payOSApiKey : nil,
@@ -208,8 +237,8 @@ struct EditMemberView: View {
                                 IconBadge(systemName: "building.columns.fill", color: Theme.secondaryAccent)
                                 Menu {
                                     ForEach(paymentTypes, id: \.self) { type in
-                                        Button(type) { 
-                                            paymentType = type 
+                                        Button(type) {
+                                            paymentType = type
                                             if type == "VietQR" && banks.isEmpty {
                                                 Task { await loadBanks() }
                                             }
@@ -256,7 +285,7 @@ struct EditMemberView: View {
                                     .padding(.horizontal, 18)
                                     .padding(.vertical, 14)
                                     Divider().background(Color.white.opacity(0.07))
-                                    
+
                                     EditFieldRow(icon: "number.circle.fill", iconColor: Theme.secondaryAccent, placeholder: "Account Number", text: $paymentID)
                                         .keyboardType(.numberPad)
                                     Divider().background(Color.white.opacity(0.07))
@@ -287,13 +316,13 @@ struct EditMemberView: View {
             payOSClientId = member.payOSClientId ?? ""
             payOSApiKey = member.payOSApiKey ?? ""
             payOSChecksumKey = member.payOSChecksumKey ?? ""
-            
+
             if paymentType == "VietQR" {
                 Task { await loadBanks() }
             }
         }
     }
-    
+
     private func loadBanks() async {
         isLoadingBanks = true
         do {

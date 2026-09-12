@@ -36,8 +36,18 @@ class QRCodeGenerator {
         return UIImage(systemName: "xmark.circle") ?? UIImage()
     }
     
-    // Simple placeholder for generating payment payload
-    func generatePaymentPayload(paymentID: String, amount: Double) -> String {
+    func generatePaymentPayload(paymentType: String?, paymentID: String, amount: Double, currency: Currency? = nil) -> String {
+        if paymentType == "PayPal" {
+            let currString = currency?.rawValue ?? "USD"
+            // Ensure no spaces in the URL
+            let formattedAmount = String(format: "%.2f", amount)
+            let cleanPaymentID = paymentID.trimmingCharacters(in: .whitespacesAndNewlines)
+            return "https://paypal.me/\(cleanPaymentID)/\(formattedAmount)\(currString)"
+        } else if paymentType == "Stripe" {
+            let cleanPaymentID = paymentID.trimmingCharacters(in: .whitespacesAndNewlines)
+            return cleanPaymentID.hasPrefix("http") ? cleanPaymentID : "https://\(cleanPaymentID)"
+        }
+        
         // In a real app, this would generate EMVCo payload (e.g., PromptPay)
         // For now, it creates a readable string that could be caught by deep links
         return "PAYMENT|\(paymentID)|\(String(format: "%.2f", amount))"
