@@ -122,16 +122,16 @@ struct ExpenseDetailView: View {
                         VStack(spacing: 0) {
                             if expense.splitType == .equal {
                                 let splitAmount = expense.amount / Double(expense.splitAmong.count)
-                                ForEach(Array(expense.splitAmong.enumerated()), id: \.element.id) { index, user in
-                                    SplitRowView(user: user, amount: splitAmount, currency: group.currency)
-                                    if index < expense.splitAmong.count - 1 {
+                                ForEach(expense.splitAmong.indexed) { indexed in
+                                    SplitRowView(user: indexed.item, amount: splitAmount, currency: group.currency)
+                                    if indexed.index < expense.splitAmong.count - 1 {
                                         Divider().background(Color.white.opacity(0.07))
                                     }
                                 }
                             } else if let customShares = expense.customShares {
-                                ForEach(Array(customShares.enumerated()), id: \.element.user.id) { index, share in
-                                    SplitRowView(user: share.user, amount: share.exactAmount, currency: group.currency)
-                                    if index < customShares.count - 1 {
+                                ForEach(customShares.indexed) { indexed in
+                                    SplitRowView(user: indexed.item.user, amount: indexed.item.exactAmount, currency: group.currency)
+                                    if indexed.index < customShares.count - 1 {
                                         Divider().background(Color.white.opacity(0.07))
                                     }
                                 }

@@ -4,24 +4,30 @@ struct ActivityFeedView: View {
     @EnvironmentObject var viewModel: GroupViewModel
     @State private var appear = false
 
+    struct ActivityItem: Identifiable {
+        let group: Group
+        let expense: Expense
+        var id: String { expense.id.uuidString }
+    }
+
     // Extract expenses from all groups, sorted by date.
-    var activities: [(group: Group, expense: Expense)] {
-        var all: [(Group, Expense)] = []
+    var activities: [ActivityItem] {
+        var all: [ActivityItem] = []
         for group in viewModel.groups {
             for exp in group.expenses {
-                all.append((group, exp))
+                all.append(ActivityItem(group: group, expense: exp))
             }
         }
-        return all.sorted { $0.1.date > $1.1.date }
+        return all.sorted { $0.expense.date > $1.expense.date }
     }
 
     // Group by date bucket
-    var grouped: [(bucket: String, items: [(group: Group, expense: Expense)])] {
+    var grouped: [(bucket: String, items: [ActivityItem])] {
         let now = Date()
         let calendar = Calendar.current
-        var todayItems: [(Group, Expense)] = []
-        var yesterdayItems: [(Group, Expense)] = []
-        var olderItems: [(Group, Expense)] = []
+        var todayItems: [ActivityItem] = []
+        var yesterdayItems: [ActivityItem] = []
+        var olderItems: [ActivityItem] = []
 
         for item in activities {
             if calendar.isDateInToday(item.expense.date) {
@@ -34,7 +40,7 @@ struct ActivityFeedView: View {
             }
         }
 
-        var result: [(String, [(Group, Expense)])] = []
+        var result: [(String, [ActivityItem])] = []
         if !todayItems.isEmpty     { result.append(("Today", todayItems)) }
         if !yesterdayItems.isEmpty { result.append(("Yesterday", yesterdayItems)) }
         if !olderItems.isEmpty     { result.append(("Older", olderItems)) }
@@ -88,13 +94,13 @@ struct ActivityFeedView: View {
                                     SectionHeader(title: section.bucket)
                                         .padding(.bottom, 8)
 
-                                    ForEach(Array(section.items.enumerated()), id: \.element.expense.id) { index, item in
-                                        ActivityRow(group: item.group, expense: item.expense)
+                                    ForEach(section.items.indexed) { indexed in
+                                        ActivityRow(group: indexed.item.group, expense: indexed.item.expense)
                                             .offset(y: appear ? 0 : 18)
                                             .opacity(appear ? 1 : 0)
                                             .animation(
                                                 .spring(response: 0.45, dampingFraction: 0.75)
-                                                .delay(Double(index) * 0.06),
+                                                .delay(Double(indexed.index) * 0.06),
                                                 value: appear
                                             )
                                     }

@@ -7,7 +7,15 @@ struct AnalyticsView: View {
     @EnvironmentObject var viewModel: GroupViewModel
     @State private var appear = false
 
-    var categoryData: [(category: String, amount: Double, icon: String, color: Color)] {
+    struct CategoryStat: Identifiable {
+        let category: String
+        let amount: Double
+        let icon: String
+        let color: Color
+        var id: String { category }
+    }
+
+    var categoryData: [CategoryStat] {
         var totals: [ExpenseCategory: Double] = [:]
         for group in viewModel.groups {
             for expense in group.expenses {
@@ -24,7 +32,7 @@ struct AnalyticsView: View {
             case .travel:        color = Theme.successColor
             case .general:       color = Color.white.opacity(0.5)
             }
-            return (category: key.rawValue, amount: val, icon: key.iconName, color: color)
+            return CategoryStat(category: key.rawValue, amount: val, icon: key.iconName, color: color)
         }
         .sorted { $0.amount > $1.amount }
     }
@@ -108,7 +116,7 @@ struct AnalyticsView: View {
                             .padding(.top, 30)
                         } else {
                             if #available(iOS 16.0, *) {
-                                iOS16ChartView(categoryData: categoryData.map { ($0.category, $0.amount) })
+                                iOS16ChartView(categoryData: categoryData)
                             } else {
                                 iOS15ChartView(categoryData: categoryData, appear: appear)
                             }
@@ -153,7 +161,7 @@ struct AnalyticsView: View {
 
 // MARK: - iOS 15 Custom Chart
 struct iOS15ChartView: View {
-    let categoryData: [(category: String, amount: Double, icon: String, color: Color)]
+    let categoryData: [AnalyticsView.CategoryStat]
     var appear: Bool
 
     var totalAmount: Double { categoryData.map { $0.amount }.reduce(0, +) }
@@ -173,7 +181,7 @@ struct iOS15ChartView: View {
             let maxAmount = categoryData.map { $0.amount }.max() ?? 1.0
 
             VStack(spacing: 14) {
-                ForEach(Array(categoryData.enumerated()), id: \.element.category) { index, item in
+                ForEach(Array(categoryData.enumerated()), id: \.element.id) { index, item in
                     HStack(spacing: 12) {
                         IconBadge(systemName: item.icon, color: item.color, size: 36, iconSize: 13)
 
@@ -237,7 +245,7 @@ struct iOS15ChartView: View {
 // MARK: - iOS 16+ Chart
 @available(iOS 16.0, *)
 struct iOS16ChartView: View {
-    let categoryData: [(category: String, amount: Double)]
+    let categoryData: [AnalyticsView.CategoryStat]
 
     var body: some View {
         #if canImport(Charts)

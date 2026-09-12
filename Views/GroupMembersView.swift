@@ -28,12 +28,12 @@ struct GroupMembersView: View {
 
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 12) {
-                    ForEach(Array(currentGroup.members.enumerated()), id: \.element.id) { (index, member) in
-                        NavigationLink(destination: InvoicesView(group: currentGroup, user: member)) {
+                    ForEach(currentGroup.members.indexed) { indexed in
+                        NavigationLink(destination: InvoicesView(group: currentGroup, user: indexed.item)) {
                             MemberRowView(
-                                member: member,
-                                gradient: avatarGradients[index % avatarGradients.count],
-                                onEdit: { memberToEdit = member }
+                                member: indexed.item,
+                                gradient: avatarGradients[indexed.index % avatarGradients.count],
+                                onEdit: { memberToEdit = indexed.item }
                             )
                         }
                         .buttonStyle(PressableButtonStyle())

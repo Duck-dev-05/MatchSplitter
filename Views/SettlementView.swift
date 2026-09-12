@@ -47,16 +47,16 @@ struct SettlementView: View {
                 } else {
                     ScrollView(showsIndicators: false) {
                         VStack(spacing: 12) {
-                            ForEach(Array(settlements.enumerated()), id: \.element.id) { index, settlement in
-                                Button(action: { selectedSettlement = settlement }) {
-                                    SettlementCardView(settlement: settlement, currency: group.currency)
+                            ForEach(settlements.indexed) { indexed in
+                                Button(action: { selectedSettlement = indexed.item }) {
+                                    SettlementCardView(settlement: indexed.item, currency: group.currency)
                                 }
                                 .buttonStyle(PressableButtonStyle())
                                 .offset(y: appear ? 0 : 20)
                                 .opacity(appear ? 1 : 0)
                                 .animation(
                                     .spring(response: 0.45, dampingFraction: 0.75)
-                                    .delay(Double(index) * 0.07),
+                                    .delay(Double(indexed.index) * 0.07),
                                     value: appear
                                 )
                             }

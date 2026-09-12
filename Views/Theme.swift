@@ -199,6 +199,19 @@ struct PressableButtonStyle: ButtonStyle {
     }
 }
 
+// MARK: - Indexed Item Helper
+struct IndexedItem<T: Identifiable>: Identifiable {
+    let index: Int
+    let item: T
+    var id: T.ID { item.id }
+}
+
+extension Array where Element: Identifiable {
+    var indexed: [IndexedItem<Element>] {
+        self.enumerated().map { IndexedItem(index: $0.offset, item: $0.element) }
+    }
+}
+
 // MARK: - View Extensions
 extension View {
     func glassCard(cornerRadius: CGFloat = 20) -> some View {

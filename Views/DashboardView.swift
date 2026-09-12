@@ -61,16 +61,16 @@ struct DashboardView: View {
                             EmptyGroupsView()
                                 .padding(.top, 40)
                         } else {
-                            ForEach(Array(viewModel.groups.enumerated()), id: \.element.id) { (index, group) in
-                                NavigationLink(destination: GroupDetailView(group: group)) {
-                                    GroupCardView(group: group)
+                            ForEach(viewModel.groups.indexed) { indexed in
+                                NavigationLink(destination: GroupDetailView(group: indexed.item)) {
+                                    GroupCardView(group: indexed.item)
                                 }
                                 .buttonStyle(PressableButtonStyle())
                                 .offset(y: appear ? 0 : 30)
                                 .opacity(appear ? 1 : 0)
                                 .animation(
                                     .spring(response: 0.5, dampingFraction: 0.78)
-                                    .delay(Double(index) * 0.07),
+                                    .delay(Double(indexed.index) * 0.07),
                                     value: appear
                                 )
                             }
