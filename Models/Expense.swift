@@ -26,7 +26,8 @@ enum SplitType: String, Codable {
     case exact = "Exact Amounts"
 }
 
-struct SplitShare: Codable {
+struct SplitShare: Codable, Identifiable {
+    var id: UUID { user.id }
     var user: User
     var exactAmount: Double
 }

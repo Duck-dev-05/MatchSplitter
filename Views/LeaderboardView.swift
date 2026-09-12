@@ -234,15 +234,15 @@ struct iOS16LeaderboardGrid: View {
 
             Divider().background(Color.white.opacity(0.08))
 
-            ForEach(Array(group.members.enumerated()), id: \.element.id) { index, member in
-                let totalPaid = group.expenses.filter { $0.paidBy.id == member.id }.reduce(0) { $0 + $1.amount }
-                let totalOwed = group.expenses.filter { $0.splitAmong.contains(where: { $0.id == member.id }) }.reduce(0) { $0 + ($1.amount / Double($1.splitAmong.count)) }
+            ForEach(group.members.indexed) { indexed in
+                let totalPaid = group.expenses.filter { $0.paidBy.id == indexed.item.id }.reduce(0) { $0 + $1.amount }
+                let totalOwed = group.expenses.filter { $0.splitAmong.contains(where: { $0.id == indexed.item.id }) }.reduce(0) { $0 + ($1.amount / Double($1.splitAmong.count)) }
 
                 HStack {
                     HStack(spacing: 10) {
                         GradientAvatar(
-                            name: member.name,
-                            avatarURL: member.avatarURL,
+                            name: indexed.item.name,
+                            avatarURL: indexed.item.avatarURL,
                             size: 34,
                             gradient: LinearGradient(
                                 colors: [Theme.primaryAccent, Theme.electricPurple],
@@ -250,8 +250,8 @@ struct iOS16LeaderboardGrid: View {
                                 endPoint: .bottomTrailing
                             )
                         )
-                        Text(member.name)
-                            .font(.system(size: 14, weight: .semibold))
+                        Text(indexed.item.name)
+                            .font(.system(size: 15, weight: .semibold))
                             .foregroundColor(.white)
                     }
                     Spacer()

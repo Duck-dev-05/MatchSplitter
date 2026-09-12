@@ -280,10 +280,10 @@ struct GroupCardView: View {
 
                     // Member avatars row
                     HStack(spacing: -10) {
-                        ForEach(Array(group.members.prefix(4).enumerated()), id: \.offset) { index, member in
+                        ForEach(Array(group.members.prefix(4)).indexed) { indexed in
                             GradientAvatar(
-                                name: member.name,
-                                avatarURL: member.avatarURL,
+                                name: indexed.item.name,
+                                avatarURL: indexed.item.avatarURL,
                                 size: 24,
                                 gradient: LinearGradient(
                                     colors: [accentColor, accentColor.opacity(0.6)],

@@ -21,8 +21,14 @@ struct ActivityFeedView: View {
         return all.sorted { $0.expense.date > $1.expense.date }
     }
 
+    struct GroupedSection: Identifiable {
+        let bucket: String
+        let items: [ActivityItem]
+        var id: String { bucket }
+    }
+
     // Group by date bucket
-    var grouped: [(bucket: String, items: [ActivityItem])] {
+    var grouped: [GroupedSection] {
         let now = Date()
         let calendar = Calendar.current
         var todayItems: [ActivityItem] = []
@@ -40,10 +46,10 @@ struct ActivityFeedView: View {
             }
         }
 
-        var result: [(String, [ActivityItem])] = []
-        if !todayItems.isEmpty     { result.append(("Today", todayItems)) }
-        if !yesterdayItems.isEmpty { result.append(("Yesterday", yesterdayItems)) }
-        if !olderItems.isEmpty     { result.append(("Older", olderItems)) }
+        var result: [GroupedSection] = []
+        if !todayItems.isEmpty     { result.append(GroupedSection(bucket: "Today", items: todayItems)) }
+        if !yesterdayItems.isEmpty { result.append(GroupedSection(bucket: "Yesterday", items: yesterdayItems)) }
+        if !olderItems.isEmpty     { result.append(GroupedSection(bucket: "Older", items: olderItems)) }
         return result
     }
 
@@ -89,7 +95,7 @@ struct ActivityFeedView: View {
                             .padding(.bottom, 22)
 
                             // Grouped sections
-                            ForEach(grouped, id: \.bucket) { section in
+                            ForEach(grouped) { section in
                                 VStack(spacing: 10) {
                                     SectionHeader(title: section.bucket)
                                         .padding(.bottom, 8)

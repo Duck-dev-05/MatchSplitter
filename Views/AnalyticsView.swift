@@ -181,27 +181,27 @@ struct iOS15ChartView: View {
             let maxAmount = categoryData.map { $0.amount }.max() ?? 1.0
 
             VStack(spacing: 14) {
-                ForEach(Array(categoryData.enumerated()), id: \.element.id) { index, item in
+                ForEach(categoryData.indexed) { indexed in
                     HStack(spacing: 12) {
-                        IconBadge(systemName: item.icon, color: item.color, size: 36, iconSize: 13)
+                        IconBadge(systemName: indexed.item.icon, color: indexed.item.color, size: 36, iconSize: 13)
 
                         VStack(alignment: .leading, spacing: 6) {
                             HStack {
-                                Text(item.category)
+                                Text(indexed.item.category)
                                     .font(.system(size: 13, weight: .semibold))
                                     .foregroundColor(.white.opacity(0.85))
                                 Spacer()
                                 HStack(spacing: 6) {
-                                    Text(String(format: "%.0f", item.amount))
+                                    Text(String(format: "%.0f", indexed.item.amount))
                                         .font(.system(size: 13, weight: .bold, design: .rounded))
                                         .foregroundColor(.white)
                                     // Percentage chip
-                                    Text(String(format: "%.0f%%", (item.amount / totalAmount) * 100))
+                                    Text(String(format: "%.0f%%", (indexed.item.amount / totalAmount) * 100))
                                         .font(.system(size: 10, weight: .bold))
-                                        .foregroundColor(item.color)
+                                        .foregroundColor(indexed.item.color)
                                         .padding(.horizontal, 6)
                                         .padding(.vertical, 2)
-                                        .background(item.color.opacity(0.15))
+                                        .background(indexed.item.color.opacity(0.15))
                                         .clipShape(Capsule())
                                 }
                             }
@@ -214,18 +214,18 @@ struct iOS15ChartView: View {
                                         .frame(height: 10)
                                     RoundedRectangle(cornerRadius: 6)
                                         .fill(LinearGradient(
-                                            colors: [item.color, item.color.opacity(0.55)],
+                                            colors: [indexed.item.color, indexed.item.color.opacity(0.55)],
                                             startPoint: .leading, endPoint: .trailing
                                         ))
                                         .frame(
                                             width: appear
-                                                ? max(CGFloat(item.amount / maxAmount) * geo.size.width, 10)
+                                                ? max(CGFloat(indexed.item.amount / maxAmount) * geo.size.width, 10)
                                                 : 0,
                                             height: 10
                                         )
                                         .animation(
                                             .spring(response: 0.65, dampingFraction: 0.78)
-                                            .delay(Double(index) * 0.08),
+                                            .delay(Double(indexed.index) * 0.08),
                                             value: appear
                                         )
                                 }
