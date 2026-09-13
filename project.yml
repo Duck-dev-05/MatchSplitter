@@ -8,12 +8,15 @@ packages:
   GoogleSignIn:
     url: https://github.com/google/GoogleSignIn-iOS.git
     from: 8.0.0
+  Supabase:
+    url: https://github.com/supabase/supabase-swift.git
+    from: 2.0.0
 targets:
   MatchSplitter:
     type: application
     platform: iOS
     deploymentTarget: "15.0"
-    sources:
+      sources:
       - MatchSplitterApp.swift
       - Models
       - Views
@@ -25,6 +28,7 @@ targets:
       - package: GoogleSignIn
       - package: GoogleSignIn
         product: GoogleSignInSwift
+      - package: Supabase
     info:
       path: Info.plist
       properties:
