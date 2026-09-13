@@ -18,7 +18,7 @@ class ReportGenerator {
             let category = expense.category.rawValue
             let paidBy = expense.paidBy.name
             let amount = String(format: "%.2f", expense.amount)
-            let currency = group.currency.code
+            let currency = group.currency.rawValue
             
             csvString += "\(date),\(title),\(category),\(paidBy),\(amount),\(currency)\n"
         }

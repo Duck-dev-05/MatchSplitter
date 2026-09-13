@@ -95,7 +95,6 @@ class ReceiptScanner {
         let regex = try? NSRegularExpression(pattern: pattern)
 
         for line in textLines {
-            let lowerLine = line.lowercased()
             // Extract all numbers
             if let regex = regex {
                 let nsString = line as NSString
