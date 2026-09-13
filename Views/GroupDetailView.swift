@@ -56,14 +56,14 @@ struct GroupDetailView: View {
                         } else {
                             ForEach(Array(currentGroup.expenses.enumerated()), id: \.offset) { index, expense in
                                 NavigationLink(destination: ExpenseDetailView(expense: expense, group: currentGroup)) {
-                                    ExpenseRowView(expense: expense, currency: currentGroup.currency)
+                                    ExpenseRowView(expense: expense, groupCurrency: currentGroup.currency)
                                 }
                                 .buttonStyle(PressableButtonStyle())
                                 .offset(y: appear ? 0 : 20)
                                 .opacity(appear ? 1 : 0)
                                 .animation(
                                     .spring(response: 0.5, dampingFraction: 0.78)
-                                    .delay(Double(indexed.index) * 0.05),
+                                    .delay(Double(index) * 0.05),
                                     value: appear
                                 )
                             }

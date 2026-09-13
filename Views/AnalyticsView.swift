@@ -196,12 +196,12 @@ struct iOS15ChartView: View {
                                         .font(.system(size: 13, weight: .bold, design: .rounded))
                                         .foregroundColor(.white)
                                     // Percentage chip
-                                    Text(String(format: "%.0f%%", (indexed.item.amount / totalAmount) * 100))
+                                    Text(String(format: "%.0f%%", (item.amount / totalAmount) * 100))
                                         .font(.system(size: 10, weight: .bold))
-                                        .foregroundColor(indexed.item.color)
+                                        .foregroundColor(item.color)
                                         .padding(.horizontal, 6)
                                         .padding(.vertical, 2)
-                                        .background(indexed.item.color.opacity(0.15))
+                                        .background(item.color.opacity(0.15))
                                         .clipShape(Capsule())
                                 }
                             }
@@ -214,18 +214,18 @@ struct iOS15ChartView: View {
                                         .frame(height: 10)
                                     RoundedRectangle(cornerRadius: 6)
                                         .fill(LinearGradient(
-                                            colors: [indexed.item.color, indexed.item.color.opacity(0.55)],
+                                            colors: [item.color, item.color.opacity(0.55)],
                                             startPoint: .leading, endPoint: .trailing
                                         ))
                                         .frame(
                                             width: appear
-                                                ? max(CGFloat(indexed.item.amount / maxAmount) * geo.size.width, 10)
+                                                ? max(CGFloat(item.amount / maxAmount) * geo.size.width, 10)
                                                 : 0,
                                             height: 10
                                         )
                                         .animation(
                                             .spring(response: 0.65, dampingFraction: 0.78)
-                                            .delay(Double(indexed.index) * 0.08),
+                                            .delay(Double(index) * 0.08),
                                             value: appear
                                         )
                                 }
