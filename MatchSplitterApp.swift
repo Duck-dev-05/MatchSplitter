@@ -24,20 +24,7 @@ struct MainTabView: View {
     @State private var selectedTab = 0
 
     init() {
-        // Customize the native TabBar appearance
-        let appearance = UITabBarAppearance()
-        appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = UIColor(Theme.backgroundStart)
-        
-        // Define colors for unselected and selected items
-        appearance.stackedLayoutAppearance.normal.iconColor = UIColor.white.withAlphaComponent(0.4)
-        appearance.stackedLayoutAppearance.normal.titleTextAttributes = [.foregroundColor: UIColor.white.withAlphaComponent(0.4)]
-        
-        appearance.stackedLayoutAppearance.selected.iconColor = UIColor(Theme.secondaryAccent)
-        appearance.stackedLayoutAppearance.selected.titleTextAttributes = [.foregroundColor: UIColor(Theme.secondaryAccent)]
-        
-        UITabBar.appearance().standardAppearance = appearance
-        UITabBar.appearance().scrollEdgeAppearance = appearance
+        UITabBar.appearance().isHidden = true
         
         // Navigation bar appearance
         let navBarAppearance = UINavigationBarAppearance()
@@ -50,45 +37,31 @@ struct MainTabView: View {
     }
 
     var body: some View {
-        TabView(selection: $selectedTab) {
-            DashboardView()
-                .tabItem {
-                    Label("Groups", systemImage: selectedTab == 0 ? "person.3.fill" : "person.3")
+        ZStack(alignment: .bottom) {
+            TabView(selection: $selectedTab) {
+                DashboardView()
+                    .tag(0)
+                    
+                FriendsView()
+                    .tag(1)
+                    
+                AnalyticsView()
+                    .tag(2)
+                    
+                ActivityFeedView()
+                    .tag(3)
+                    
+                if groupViewModel.currentUser == nil {
+                    LoginView(isModal: false)
+                        .tag(4)
+                } else {
+                    NavigationView { ProfileView() }
+                        .tag(4)
                 }
-                .tag(0)
-                
-            FriendsView()
-                .tabItem {
-                    Label("Friends", systemImage: selectedTab == 1 ? "person.2.fill" : "person.2")
-                }
-                .tag(1)
-                
-            AnalyticsView()
-                .tabItem {
-                    Label("Analytics", systemImage: selectedTab == 2 ? "chart.bar.fill" : "chart.bar")
-                }
-                .tag(2)
-                
-            ActivityFeedView()
-                .tabItem {
-                    Label("Activity", systemImage: selectedTab == 3 ? "bell.fill" : "bell")
-                }
-                .tag(3)
-                
-            if groupViewModel.currentUser == nil {
-                LoginView(isModal: false)
-                    .tabItem {
-                        Label("Login", systemImage: selectedTab == 4 ? "person.crop.circle.fill" : "person.crop.circle")
-                    }
-                    .tag(4)
-            } else {
-                NavigationView { ProfileView() }
-                    .tabItem {
-                        Label("Profile", systemImage: selectedTab == 4 ? "person.crop.circle.fill" : "person.crop.circle")
-                    }
-                    .tag(4)
             }
+            .accentColor(Theme.secondaryAccent)
+            
+            CustomTabBar(selectedTab: $selectedTab)
         }
-        .accentColor(Theme.secondaryAccent)
     }
 }

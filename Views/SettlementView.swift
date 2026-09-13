@@ -200,6 +200,7 @@ struct QRCodePaymentView: View {
     @EnvironmentObject var viewModel: GroupViewModel
     
     @State private var qrPayload: String = ""
+    @State private var qrImageBase64: String? = nil
     @State private var isLoadingQR: Bool = true
     @State private var qrError: String? = nil
     @State private var isPaymentSuccess: Bool = false
@@ -299,6 +300,13 @@ struct QRCodePaymentView: View {
                                 .foregroundColor(Theme.successColor)
                         }
                         .frame(width: 240, height: 240)
+                    } else if let base64 = qrImageBase64,
+                              let data = Data(base64Encoded: base64),
+                              let uiImage = UIImage(data: data) {
+                        Image(uiImage: uiImage)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 240, height: 240)
                     } else {
                         Image(uiImage: generator.generateQRCode(from: qrPayload))
                             .interpolation(.none)
@@ -395,7 +403,8 @@ struct QRCodePaymentView: View {
                             info: info
                         )
                         await MainActor.run {
-                            self.qrPayload = payload
+                            self.qrPayload = payload.qrCode
+                            self.qrImageBase64 = payload.qrDataURL.replacingOccurrences(of: "data:image/png;base64,", with: "")
                             self.isLoadingQR = false
                         }
                     } catch {

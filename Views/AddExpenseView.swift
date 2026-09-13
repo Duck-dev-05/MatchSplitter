@@ -16,6 +16,10 @@ struct AddExpenseView: View {
     @State private var customShares: [SplitShare] = []
     @State private var selectedSplitUsers: Set<UUID> = []
 
+    // Scanner
+    @State private var showingImagePicker = false
+    @State private var isScanning = false
+
     var editingExpense: Expense?
 
     var isFormValid: Bool {
@@ -108,6 +112,26 @@ struct AddExpenseView: View {
                 customShares: $customShares
             )
         }
+        .sheet(isPresented: $showingImagePicker) {
+            ImagePicker(sourceType: .camera) { image in
+                isScanning = true
+                Task {
+                    do {
+                        if let total = try await ReceiptScanner.shared.scanForTotalAmount(in: image) {
+                            await MainActor.run {
+                                self.amountString = String(format: "%.2f", total)
+                                self.isScanning = false
+                            }
+                        } else {
+                            await MainActor.run { self.isScanning = false }
+                        }
+                    } catch {
+                        await MainActor.run { self.isScanning = false }
+                    }
+                }
+            }
+            .ignoresSafeArea()
+        }
     }
 
     // MARK: - Amount Hero
@@ -140,6 +164,27 @@ struct AddExpenseView: View {
                 .frame(height: 2)
                 .padding(.horizontal, 40)
                 .padding(.top, 4)
+                
+            Button(action: { showingImagePicker = true }) {
+                HStack {
+                    if isScanning {
+                        ProgressView().tint(.white)
+                            .scaleEffect(0.8)
+                        Text("Scanning...")
+                    } else {
+                        Image(systemName: "camera.viewfinder")
+                        Text("Scan Receipt")
+                    }
+                }
+                .font(.system(size: 14, weight: .bold))
+                .foregroundColor(Theme.secondaryAccent)
+                .padding(.vertical, 8)
+                .padding(.horizontal, 16)
+                .background(Theme.secondaryAccent.opacity(0.15))
+                .clipShape(Capsule())
+            }
+            .padding(.top, 12)
+            .disabled(isScanning)
         }
         .padding(.vertical, 28)
         .frame(maxWidth: .infinity)

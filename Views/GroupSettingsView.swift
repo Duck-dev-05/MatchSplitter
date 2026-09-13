@@ -8,6 +8,8 @@ struct GroupSettingsView: View {
     @State private var groupName: String
     @State private var selectedCurrency: Currency
     @State private var showingDeleteConfirm = false
+    @State private var showingShareSheet = false
+    @State private var shareSheetURL: URL?
 
     init(group: Group) {
         self.group = group
@@ -70,6 +72,29 @@ struct GroupSettingsView: View {
                         }
                         .glassCard(cornerRadius: 24)
 
+                        // Export Button
+                        Button(action: {
+                            if let url = ReportGenerator.shared.generateCSV(for: group) {
+                                shareSheetURL = url
+                                showingShareSheet = true
+                            }
+                        }) {
+                            HStack(spacing: 16) {
+                                IconBadge(systemName: "doc.text.fill", color: Theme.successColor)
+                                Text("Export CSV Report")
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(.white)
+                                Spacer()
+                            }
+                            .padding(20)
+                            .background(
+                                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                    .fill(Theme.cardBackground)
+                                    .shadow(color: Color.black.opacity(0.30), radius: 16, x: 0, y: 8)
+                            )
+                        }
+                        .buttonStyle(PressableButtonStyle())
+
                         // Delete Button
                         Button(action: { showingDeleteConfirm = true }) {
                             HStack(spacing: 16) {
@@ -94,6 +119,11 @@ struct GroupSettingsView: View {
                     }
                     .padding(24)
                 }
+            }
+        }
+        .sheet(isPresented: $showingShareSheet) {
+            if let url = shareSheetURL {
+                ShareSheet(items: [url])
             }
         }
         .alert("Delete Group", isPresented: $showingDeleteConfirm) {

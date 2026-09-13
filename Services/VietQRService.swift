@@ -57,7 +57,7 @@ class VietQRService {
         return bankResponse.data
     }
     
-    func generatePayload(accountNo: String, accountName: String, bin: String, amount: Double, info: String) async throws -> String {
+    func generatePayload(accountNo: String, accountName: String, bin: String, amount: Double, info: String) async throws -> (qrCode: String, qrDataURL: String) {
         guard let url = URL(string: "https://api.vietqr.io/v2/generate") else {
             throw URLError(.badURL)
         }
@@ -89,6 +89,6 @@ class VietQRService {
             throw NSError(domain: "VietQR", code: Int(generateResponse.code) ?? -1, userInfo: [NSLocalizedDescriptionKey: generateResponse.desc])
         }
         
-        return generateResponse.data.qrCode
+        return (generateResponse.data.qrCode, generateResponse.data.qrDataURL)
     }
 }
