@@ -181,18 +181,18 @@ struct iOS15ChartView: View {
             let maxAmount = categoryData.map { $0.amount }.max() ?? 1.0
 
             VStack(spacing: 14) {
-                ForEach(categoryData.indexed) { indexed in
+                ForEach(Array(categoryData.enumerated()), id: \.offset) { index, item in
                     HStack(spacing: 12) {
-                        IconBadge(systemName: indexed.item.icon, color: indexed.item.color, size: 36, iconSize: 13)
+                        IconBadge(systemName: item.icon, color: item.color, size: 36, iconSize: 13)
 
                         VStack(alignment: .leading, spacing: 6) {
                             HStack {
-                                Text(indexed.item.category)
+                                Text(item.category)
                                     .font(.system(size: 13, weight: .semibold))
                                     .foregroundColor(.white.opacity(0.85))
                                 Spacer()
                                 HStack(spacing: 6) {
-                                    Text(String(format: "%.0f", indexed.item.amount))
+                                    Text(String(format: "%.0f", item.amount))
                                         .font(.system(size: 13, weight: .bold, design: .rounded))
                                         .foregroundColor(.white)
                                     // Percentage chip

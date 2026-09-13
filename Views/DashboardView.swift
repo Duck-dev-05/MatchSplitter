@@ -67,16 +67,16 @@ struct DashboardView: View {
                             })
                             .padding(.top, 40)
                         } else {
-                            ForEach(viewModel.groups.indexed) { indexed in
-                                NavigationLink(destination: GroupDetailView(group: indexed.item)) {
-                                    GroupCardView(group: indexed.item)
+                            ForEach(Array(viewModel.groups.enumerated()), id: \.offset) { index, group in
+                                NavigationLink(destination: GroupDetailView(group: group)) {
+                                    GroupCardView(group: group)
                                 }
                                 .buttonStyle(PressableButtonStyle())
                                 .offset(y: appear ? 0 : 30)
                                 .opacity(appear ? 1 : 0)
                                 .animation(
                                     .spring(response: 0.5, dampingFraction: 0.78)
-                                    .delay(Double(indexed.index) * 0.07),
+                                    .delay(Double(index) * 0.07),
                                     value: appear
                                 )
                             }
@@ -287,10 +287,10 @@ struct GroupCardView: View {
 
                     // Member avatars row
                     HStack(spacing: -10) {
-                        ForEach(Array(group.members.prefix(4)).indexed) { indexed in
+                        ForEach(Array(group.members.prefix(4).enumerated()), id: \.offset) { index, member in
                             GradientAvatar(
-                                name: indexed.item.name,
-                                avatarURL: indexed.item.avatarURL,
+                                name: member.name,
+                                avatarURL: member.avatarURL,
                                 size: 24,
                                 gradient: LinearGradient(
                                     colors: [accentColor, accentColor.opacity(0.6)],

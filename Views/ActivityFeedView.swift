@@ -100,13 +100,13 @@ struct ActivityFeedView: View {
                                     SectionHeader(title: section.bucket)
                                         .padding(.bottom, 8)
 
-                                    ForEach(section.items.indexed) { indexed in
-                                        ActivityRow(group: indexed.item.group, expense: indexed.item.expense)
+                                    ForEach(Array(section.items.enumerated()), id: \.offset) { index, item in
+                                        ActivityRow(group: item.group, expense: item.expense)
                                             .offset(y: appear ? 0 : 18)
                                             .opacity(appear ? 1 : 0)
                                             .animation(
                                                 .spring(response: 0.45, dampingFraction: 0.75)
-                                                .delay(Double(indexed.index) * 0.06),
+                                                .delay(Double(index) * 0.06),
                                                 value: appear
                                             )
                                     }

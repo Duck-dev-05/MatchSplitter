@@ -71,14 +71,14 @@ struct FriendsView: View {
                                 .padding(.bottom, 14)
 
                             VStack(spacing: 10) {
-                                ForEach(globalBalances.keys.sorted(by: { $0.name < $1.name }).indexed) { indexed in
-                                    if let balances = globalBalances[indexed.item] {
-                                        FriendRowView(friend: indexed.item, balances: balances)
+                                ForEach(Array(globalBalances.keys.sorted(by: { $0.name < $1.name }).enumerated()), id: \.offset) { index, friend in
+                                    if let balances = globalBalances[friend] {
+                                        FriendRowView(friend: friend, balances: balances)
                                             .offset(y: appear ? 0 : 20)
                                             .opacity(appear ? 1 : 0)
                                             .animation(
                                                 .spring(response: 0.45, dampingFraction: 0.75)
-                                                .delay(Double(indexed.index) * 0.07),
+                                                .delay(Double(index) * 0.07),
                                                 value: appear
                                             )
                                     }
