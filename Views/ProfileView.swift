@@ -262,6 +262,8 @@ struct EditProfileView: View {
     @State private var payOSApiKey: String = ""
     @State private var payOSChecksumKey: String = ""
 
+    @AppStorage("selectedAppTheme") var selectedTheme: AppTheme = .dark
+
     let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "Stripe", "VietQR", "PayOS", "None"]
 
     var body: some View {
@@ -380,6 +382,26 @@ struct EditProfileView: View {
                                 } label: {
                                     HStack {
                                         Text("\(defaultCurrency.rawValue) (\(defaultCurrency.symbol))")
+                                        Spacer()
+                                        Image(systemName: "chevron.up.chevron.down")
+                                    }
+                                    .foregroundColor(.white)
+                                }
+                            }
+                            .padding(.horizontal, 18)
+                            .padding(.vertical, 14)
+                            
+                            Divider().background(Color.white.opacity(0.07))
+                            
+                            HStack(spacing: 14) {
+                                IconBadge(systemName: "paintpalette.fill", color: Theme.successColor)
+                                Menu {
+                                    ForEach(AppTheme.allCases) { theme in
+                                        Button(theme.rawValue) { selectedTheme = theme }
+                                    }
+                                } label: {
+                                    HStack {
+                                        Text(selectedTheme.rawValue)
                                         Spacer()
                                         Image(systemName: "chevron.up.chevron.down")
                                     }

@@ -8,8 +8,11 @@ struct Group: Identifiable, Codable {
     var payments: [Payment]
     var currency: Currency
     var creatorID: UUID
+    var paymentBankBin: String?
+    var paymentAccountNo: String?
+    var paymentAccountName: String?
     
-    init(id: UUID = UUID(), name: String, members: [User] = [], expenses: [Expense] = [], payments: [Payment] = [], currency: Currency = .thb, creatorID: UUID) {
+    init(id: UUID = UUID(), name: String, members: [User] = [], expenses: [Expense] = [], payments: [Payment] = [], currency: Currency = .thb, creatorID: UUID, paymentBankBin: String? = nil, paymentAccountNo: String? = nil, paymentAccountName: String? = nil) {
         self.id = id
         self.name = name
         self.members = members
@@ -17,10 +20,14 @@ struct Group: Identifiable, Codable {
         self.payments = payments
         self.currency = currency
         self.creatorID = creatorID
+        self.paymentBankBin = paymentBankBin
+        self.paymentAccountNo = paymentAccountNo
+        self.paymentAccountName = paymentAccountName
     }
     
     enum CodingKeys: String, CodingKey {
         case id, name, members, expenses, payments, currency, creatorID
+        case paymentBankBin, paymentAccountNo, paymentAccountName
     }
     
     init(from decoder: Decoder) throws {
@@ -32,5 +39,8 @@ struct Group: Identifiable, Codable {
         payments = try container.decodeIfPresent([Payment].self, forKey: .payments) ?? []
         currency = try container.decode(Currency.self, forKey: .currency)
         creatorID = try container.decode(UUID.self, forKey: .creatorID)
+        paymentBankBin = try container.decodeIfPresent(String.self, forKey: .paymentBankBin)
+        paymentAccountNo = try container.decodeIfPresent(String.self, forKey: .paymentAccountNo)
+        paymentAccountName = try container.decodeIfPresent(String.self, forKey: .paymentAccountName)
     }
 }

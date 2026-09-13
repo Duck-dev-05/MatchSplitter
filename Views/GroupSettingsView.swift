@@ -10,11 +10,21 @@ struct GroupSettingsView: View {
     @State private var showingDeleteConfirm = false
     @State private var showingShareSheet = false
     @State private var shareSheetURL: URL?
+    
+    @State private var bankBin: String
+    @State private var paymentAccountNo: String
+    @State private var bankAccountName: String
+    @State private var showingBankSelection = false
+    @State private var banks: [VietQRBank] = []
+    @State private var isLoadingBanks = false
 
     init(group: Group) {
         self.group = group
         self._groupName = State(initialValue: group.name)
         self._selectedCurrency = State(initialValue: group.currency)
+        self._bankBin = State(initialValue: group.paymentBankBin ?? "")
+        self._paymentAccountNo = State(initialValue: group.paymentAccountNo ?? "")
+        self._bankAccountName = State(initialValue: group.paymentAccountName ?? "")
     }
 
     var body: some View {
@@ -32,7 +42,14 @@ struct GroupSettingsView: View {
                     trailingColor: Theme.primaryAccent,
                     onLeading: { presentationMode.wrappedValue.dismiss() },
                     onTrailing: {
-                        viewModel.updateGroup(id: group.id, name: groupName, currency: selectedCurrency)
+                        viewModel.updateGroup(
+                            id: group.id, 
+                            name: groupName, 
+                            currency: selectedCurrency,
+                            paymentBankBin: bankBin.isEmpty ? nil : bankBin,
+                            paymentAccountNo: paymentAccountNo.isEmpty ? nil : paymentAccountNo,
+                            paymentAccountName: bankAccountName.isEmpty ? nil : bankAccountName
+                        )
                         presentationMode.wrappedValue.dismiss()
                     }
                 )
@@ -71,6 +88,59 @@ struct GroupSettingsView: View {
                             .padding(20)
                         }
                         .glassCard(cornerRadius: 24)
+
+                        // Group Payment Info (VietQR)
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("GROUP PAYMENT QR (VIETQR)")
+                                .kerning(1.2)
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(.white.opacity(0.50))
+                                .padding(.leading, 8)
+                            
+                            VStack(spacing: 0) {
+                                Button(action: { showingBankSelection = true }) {
+                                    HStack(spacing: 16) {
+                                        IconBadge(systemName: "building.2.fill", color: Theme.secondaryAccent)
+                                        if isLoadingBanks {
+                                            ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                            Spacer()
+                                        } else {
+                                            HStack {
+                                                Text(banks.first(where: { $0.bin == bankBin })?.shortName ?? "Select Bank")
+                                                    .foregroundColor(bankBin.isEmpty ? .white.opacity(0.5) : .white)
+                                                Spacer()
+                                                Image(systemName: "chevron.right")
+                                                    .font(.system(size: 12, weight: .semibold))
+                                                    .foregroundColor(.white.opacity(0.3))
+                                            }
+                                        }
+                                    }
+                                    .padding(20)
+                                }
+                                
+                                Divider().background(Color.white.opacity(0.08))
+                                
+                                HStack(spacing: 16) {
+                                    IconBadge(systemName: "number", color: Theme.secondaryAccent)
+                                    TextField("Account Number", text: $paymentAccountNo)
+                                        .keyboardType(.numberPad)
+                                        .font(.system(size: 16, weight: .medium))
+                                        .foregroundColor(.white)
+                                }
+                                .padding(20)
+                                
+                                Divider().background(Color.white.opacity(0.08))
+                                
+                                HStack(spacing: 16) {
+                                    IconBadge(systemName: "person.text.rectangle", color: Theme.secondaryAccent)
+                                    TextField("Account Name (Optional)", text: $bankAccountName)
+                                        .font(.system(size: 16, weight: .medium))
+                                        .foregroundColor(.white)
+                                }
+                                .padding(20)
+                            }
+                            .glassCard(cornerRadius: 24)
+                        }
 
                         // Export Button
                         Button(action: {
@@ -125,6 +195,20 @@ struct GroupSettingsView: View {
             if let url = shareSheetURL {
                 ShareSheet(items: [url])
             }
+        }
+        .onAppear {
+            Task {
+                isLoadingBanks = true
+                do {
+                    banks = try await VietQRService.shared.fetchBanks()
+                } catch {
+                    print("Error fetching VietQR banks: \(error)")
+                }
+                isLoadingBanks = false
+            }
+        }
+        .sheet(isPresented: $showingBankSelection) {
+            BankSelectionView(banks: banks, selectedBankBin: $bankBin)
         }
         .alert("Delete Group", isPresented: $showingDeleteConfirm) {
             Button("Cancel", role: .cancel) { }

@@ -204,6 +204,11 @@ struct QRCodePaymentView: View {
     @State private var isLoadingQR: Bool = true
     @State private var qrError: String? = nil
     @State private var isPaymentSuccess: Bool = false
+    @State private var customAmountStr: String = ""
+    
+    var amountToPay: Double {
+        Double(customAmountStr) ?? settlement.amount
+    }
 
     var body: some View {
         ZStack {
@@ -268,9 +273,23 @@ struct QRCodePaymentView: View {
                             .foregroundColor(.white)
                     }
 
-                    Text("\(currency.symbol)\(String(format: "%.2f", settlement.amount))")
-                        .font(.system(size: 52, weight: .heavy, design: .rounded))
-                        .foregroundStyle(Theme.primaryGradient)
+                    HStack(alignment: .lastTextBaseline, spacing: 4) {
+                        Text(currency.symbol)
+                            .font(.system(size: 32, weight: .heavy, design: .rounded))
+                            .foregroundColor(.white)
+                        TextField("Amount", text: $customAmountStr)
+                            .font(.system(size: 52, weight: .heavy, design: .rounded))
+                            .foregroundStyle(Theme.primaryGradient)
+                            .keyboardType(.decimalPad)
+                            .multilineTextAlignment(.center)
+                            .fixedSize()
+                            .onSubmit {
+                                loadQR()
+                            }
+                    }
+                    Text("Tap to edit amount, then return to generate")
+                        .font(.system(size: 11))
+                        .foregroundColor(.white.opacity(0.40))
                 }
                 .padding(.bottom, 32)
 
@@ -338,6 +357,14 @@ struct QRCodePaymentView: View {
             }
         }
         .onAppear {
+            customAmountStr = String(format: "%.2f", settlement.amount)
+            loadQR()
+        }
+    }
+    
+    private func loadQR() {
+        isLoadingQR = true
+        qrError = nil
             if settlement.toUser.paymentType == "PayOS",
                let clientId = settlement.toUser.payOSClientId,
                let apiKey = settlement.toUser.payOSApiKey,
@@ -350,7 +377,7 @@ struct QRCodePaymentView: View {
                         let info = "MatchSplitter"
                         let data = try await PayOSService.shared.createPaymentLink(
                             clientId: clientId, apiKey: apiKey, checksumKey: checksumKey,
-                            amount: Int(settlement.amount), description: info, orderCode: orderCode
+                            amount: Int(amountToPay), description: info, orderCode: orderCode
                         )
                         
                         await MainActor.run {
@@ -377,7 +404,7 @@ struct QRCodePaymentView: View {
                                     self.isPaymentSuccess = true
                                 }
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                                    viewModel.addPayment(to: group, fromUser: settlement.fromUser, toUser: settlement.toUser, amount: settlement.amount)
+                                    viewModel.addPayment(to: group, fromUser: settlement.fromUser, toUser: settlement.toUser, amount: amountToPay)
                                     presentationMode.wrappedValue.dismiss()
                                 }
                             }
@@ -385,7 +412,7 @@ struct QRCodePaymentView: View {
                     } catch {
                         await MainActor.run {
                             self.qrError = "Failed to load PayOS QR"
-                            self.qrPayload = generator.generatePaymentPayload(paymentType: settlement.toUser.paymentType, paymentID: settlement.toUser.paymentID ?? "Unknown", amount: settlement.amount, currency: currency)
+                            self.qrPayload = generator.generatePaymentPayload(paymentType: settlement.toUser.paymentType, paymentID: settlement.toUser.paymentID ?? "Unknown", amount: amountToPay, currency: currency)
                             self.isLoadingQR = false
                         }
                     }
@@ -399,7 +426,7 @@ struct QRCodePaymentView: View {
                             accountNo: accountNo, 
                             accountName: accountName, 
                             bin: bin, 
-                            amount: settlement.amount, 
+                            amount: amountToPay, 
                             info: info
                         )
                         await MainActor.run {
@@ -410,13 +437,13 @@ struct QRCodePaymentView: View {
                     } catch {
                         await MainActor.run {
                             self.qrError = "Failed to load VietQR"
-                            self.qrPayload = generator.generatePaymentPayload(paymentType: settlement.toUser.paymentType, paymentID: settlement.toUser.paymentID ?? "Unknown", amount: settlement.amount, currency: currency)
+                            self.qrPayload = generator.generatePaymentPayload(paymentType: settlement.toUser.paymentType, paymentID: settlement.toUser.paymentID ?? "Unknown", amount: amountToPay, currency: currency)
                             self.isLoadingQR = false
                         }
                     }
                 }
             } else {
-                self.qrPayload = generator.generatePaymentPayload(paymentType: settlement.toUser.paymentType, paymentID: settlement.toUser.paymentID ?? "Unknown", amount: settlement.amount, currency: currency)
+                self.qrPayload = generator.generatePaymentPayload(paymentType: settlement.toUser.paymentType, paymentID: settlement.toUser.paymentID ?? "Unknown", amount: amountToPay, currency: currency)
                 self.isLoadingQR = false
             }
         }
@@ -459,7 +486,7 @@ struct QRCodePaymentView: View {
             Text("\(settlement.fromUser.name) owes \(settlement.toUser.name)")
                 .font(.headline)
                 .foregroundColor(.white)
-            Text("\(currency.symbol)\(String(format: "%.2f", settlement.amount))")
+            Text("\(currency.symbol)\(String(format: "%.2f", amountToPay))")
                 .font(.system(size: 40, weight: .heavy))
                 .foregroundColor(.white)
 

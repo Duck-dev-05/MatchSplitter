@@ -47,6 +47,12 @@ class GroupViewModel: ObservableObject {
     private func saveData() {
         let data = AppData(groups: groups, currentUser: currentUser, registeredUsers: registeredUsers, defaultCurrency: defaultCurrency)
         DatabaseManager.shared.save(appData: data)
+        
+        Task {
+            for group in groups {
+                try? await CloudKitManager.shared.saveGroup(group)
+            }
+        }
     }
     
     func resetData() {
@@ -92,10 +98,35 @@ class GroupViewModel: ObservableObject {
             guard let user = currentUser else { return }
             
             // Find the group and add the user if not already in it
-            if let index = groups.firstIndex(where: { $0.id == groupId }) {
-                if !groups[index].members.contains(where: { $0.id == user.id }) {
-                    groups[index].members.append(user)
-                    saveData()
+            Task {
+                var targetGroup: Group? = nil
+                
+                if let index = self.groups.firstIndex(where: { $0.id == groupId }) {
+                    targetGroup = self.groups[index]
+                } else {
+                    // Fetch from CloudKit if not found locally
+                    if let fetchedGroup = try? await CloudKitManager.shared.fetchGroup(id: groupId) {
+                        targetGroup = fetchedGroup
+                        await MainActor.run {
+                            self.groups.append(fetchedGroup)
+                        }
+                    }
+                }
+                
+                if var group = targetGroup {
+                    if !group.members.contains(where: { $0.id == user.id }) {
+                        group.members.append(user)
+                        
+                        await MainActor.run {
+                            if let index = self.groups.firstIndex(where: { $0.id == groupId }) {
+                                self.groups[index] = group
+                            }
+                            self.saveData()
+                        }
+                        
+                        // Push immediately to CloudKit so creator sees it
+                        try? await CloudKitManager.shared.saveGroup(group)
+                    }
                 }
             }
         }
@@ -141,11 +172,49 @@ class GroupViewModel: ObservableObject {
         }
     }
     
-    func updateGroup(id: UUID, name: String, currency: Currency) {
+    func updateGroup(id: UUID, name: String, currency: Currency, paymentBankBin: String? = nil, paymentAccountNo: String? = nil, paymentAccountName: String? = nil) {
         if let index = groups.firstIndex(where: { $0.id == id }) {
+            let oldCurrency = groups[index].currency
             groups[index].name = name
-            groups[index].currency = currency
-            saveData()
+            groups[index].paymentBankBin = paymentBankBin
+            groups[index].paymentAccountNo = paymentAccountNo
+            groups[index].paymentAccountName = paymentAccountName
+            
+            if oldCurrency != currency {
+                Task {
+                    do {
+                        let rate = try await CurrencyService.shared.convert(amount: 1.0, from: oldCurrency, to: currency)
+                        await MainActor.run {
+                            self.groups[index].currency = currency
+                            
+                            // Convert all expenses
+                            for i in 0..<self.groups[index].expenses.count {
+                                self.groups[index].expenses[i].amount *= rate
+                                if let customShares = self.groups[index].expenses[i].customShares {
+                                    for j in 0..<customShares.count {
+                                        self.groups[index].expenses[i].customShares![j].exactAmount *= rate
+                                    }
+                                }
+                            }
+                            
+                            // Convert all payments
+                            for i in 0..<self.groups[index].payments.count {
+                                self.groups[index].payments[i].amount *= rate
+                            }
+                            
+                            self.saveData()
+                        }
+                    } catch {
+                        print("Failed to convert currency: \(error)")
+                        await MainActor.run {
+                            self.groups[index].currency = currency
+                            self.saveData()
+                        }
+                    }
+                }
+            } else {
+                saveData()
+            }
         }
     }
     

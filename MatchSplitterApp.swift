@@ -4,12 +4,13 @@ import GoogleSignIn
 @main
 struct MatchSplitterApp: App {
     @StateObject private var groupViewModel = GroupViewModel()
+    @StateObject private var themeManager = ThemeManager.shared
 
     var body: some Scene {
         WindowGroup {
             MainTabView()
                 .environmentObject(groupViewModel)
-                .preferredColorScheme(.dark)
+                .preferredColorScheme(themeManager.colorScheme)
                 .onOpenURL { url in
                     GIDSignIn.sharedInstance.handle(url)
                     groupViewModel.handleDeepLink(url)
@@ -69,6 +70,10 @@ struct MainTabView: View {
         }
         .sheet(isPresented: $showingAddGroup) {
             AddGroupSheet()
+        }
+        .onAppear {
+            CloudKitManager.shared.requestPushNotificationPermissions()
+            CloudKitManager.shared.setupSubscriptions()
         }
     }
 }

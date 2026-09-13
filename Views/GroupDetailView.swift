@@ -7,6 +7,7 @@ struct GroupDetailView: View {
     @State private var showingSettlements = false
     @State private var showingSettings = false
     @State private var showingQRInvite = false
+    @State private var showingGroupPaymentQR = false
     @State private var appear = false
 
     var currentGroup: Group {
@@ -119,6 +120,8 @@ struct GroupDetailView: View {
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 HStack(spacing: 8) {
+                    toolbarIconButton(icon: "banknote", color: Theme.successColor) { showingGroupPaymentQR = true }
+                    toolbarIconButton(icon: "qrcode", color: .white.opacity(0.80)) { showingQRInvite = true }
                     toolbarIconButton(icon: "plus.circle.fill", color: Theme.secondaryAccent) { showingAddExpense = true }
                     if currentGroup.creatorID == viewModel.currentUser?.id {
                         toolbarIconButton(icon: "gearshape.fill", color: .white.opacity(0.60)) { showingSettings = true }
@@ -140,6 +143,10 @@ struct GroupDetailView: View {
         }
         .sheet(isPresented: $showingQRInvite) {
             TeamQRInviteView(group: currentGroup)
+                .halfSheetIfAvailable()
+        }
+        .sheet(isPresented: $showingGroupPaymentQR) {
+            GroupPaymentQRView(group: currentGroup)
                 .halfSheetIfAvailable()
         }
         .onAppear { withAnimation { appear = true } }
