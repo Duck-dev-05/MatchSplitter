@@ -88,21 +88,6 @@ struct DashboardView: View {
             }
         }
         .navigationBarHidden(true)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: {
-                    if viewModel.currentUser == nil {
-                        showLoginAlert = true
-                    } else {
-                        showingAddGroup = true
-                    }
-                }) {
-                    Image(systemName: "plus.circle.fill")
-                        .font(.title2)
-                        .foregroundColor(Theme.secondaryAccent)
-                }
-            }
-        }
         .sheet(isPresented: $showingAddGroup) {
             AddGroupSheet()
         }
@@ -134,6 +119,22 @@ struct DashboardView: View {
                     .foregroundColor(.white)
             }
             Spacer()
+            
+            Button(action: {
+                if viewModel.currentUser == nil {
+                    showLoginAlert = true
+                } else {
+                    showingAddGroup = true
+                }
+            }) {
+                Image(systemName: "plus.circle.fill")
+                    .font(.system(size: 26))
+                    .foregroundColor(Theme.secondaryAccent)
+                    .background(Circle().fill(Color.black.opacity(0.2)).frame(width: 44, height: 44))
+            }
+            .frame(width: 44, height: 44)
+            .padding(.trailing, 12)
+
             if let name = viewModel.currentUser?.name {
                 GradientAvatar(name: name, avatarURL: viewModel.currentUser?.avatarURL, size: 44)
                     .overlay(

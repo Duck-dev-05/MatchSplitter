@@ -76,6 +76,27 @@ class GroupViewModel: ObservableObject {
         saveData()
     }
     
+    func handleDeepLink(_ url: URL) {
+        // matchsplitter://join?id=UUID
+        guard url.scheme == "matchsplitter", url.host == "join" else { return }
+        
+        let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+        if let idString = components?.queryItems?.first(where: { $0.name == "id" })?.value,
+           let groupId = UUID(uuidString: idString) {
+            
+            // Check if user is logged in
+            guard let user = currentUser else { return }
+            
+            // Find the group and add the user if not already in it
+            if let index = groups.firstIndex(where: { $0.id == groupId }) {
+                if !groups[index].members.contains(where: { $0.id == user.id }) {
+                    groups[index].members.append(user)
+                    saveData()
+                }
+            }
+        }
+    }
+    
     func loginOrRegisterWithGoogle(name: String, email: String, avatarURL: String? = nil) {
         if let existingIndex = registeredUsers.firstIndex(where: { $0.email == email }) {
             var existingUser = registeredUsers[existingIndex]

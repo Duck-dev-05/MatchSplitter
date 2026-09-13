@@ -12,6 +12,7 @@ struct MatchSplitterApp: App {
                 .preferredColorScheme(.dark)
                 .onOpenURL { url in
                     GIDSignIn.sharedInstance.handle(url)
+                    groupViewModel.handleDeepLink(url)
                 }
         }
     }
