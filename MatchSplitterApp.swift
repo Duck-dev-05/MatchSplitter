@@ -22,6 +22,7 @@ struct MatchSplitterApp: App {
 struct MainTabView: View {
     @EnvironmentObject var groupViewModel: GroupViewModel
     @State private var selectedTab = 0
+    @State private var showingAddGroup = false
 
     init() {
         UITabBar.appearance().isHidden = true
@@ -62,6 +63,12 @@ struct MainTabView: View {
             .accentColor(Theme.secondaryAccent)
             
             CustomTabBar(selectedTab: $selectedTab)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ShowAddGroup"))) { _ in
+            showingAddGroup = true
+        }
+        .sheet(isPresented: $showingAddGroup) {
+            AddGroupSheet()
         }
     }
 }

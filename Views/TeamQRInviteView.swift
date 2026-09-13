@@ -6,7 +6,7 @@ struct TeamQRInviteView: View {
     let qrGenerator = QRCodeGenerator()
     
     var invitePayload: String {
-        return "matchsplitter://join?id=\(group.id.uuidString)"
+        return "https://matchsplitter.com/join?id=\(group.id.uuidString)"
     }
     
     var body: some View {
@@ -68,7 +68,7 @@ struct TeamQRInviteView: View {
     
     @MainActor
     private func shareLink() {
-        let text = "Join my MatchSplitter group '\(group.name)'! Use this link to join: matchsplitter://join?id=\(group.id.uuidString)"
+        let text = "Join my MatchSplitter group '\(group.name)'! Use this link to join: https://matchsplitter.com/join?id=\(group.id.uuidString)"
         
         let activityVC = UIActivityViewController(activityItems: [text], applicationActivities: nil)
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
