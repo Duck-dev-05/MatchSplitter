@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct TeamQRInviteView: View {
     let group: Group
