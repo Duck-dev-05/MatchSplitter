@@ -38,11 +38,55 @@ struct TeamQRInviteView: View {
             .frame(width: 280, height: 280)
             .padding(.top, 20)
             
+            Button(action: {
+                shareLink()
+            }) {
+                HStack(spacing: 8) {
+                    Image(systemName: "square.and.arrow.up")
+                        .font(.system(size: 16, weight: .bold))
+                    Text("Share Invite Link")
+                        .font(.system(size: 16, weight: .bold))
+                }
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(Theme.secondaryAccent.opacity(0.15))
+                .clipShape(Capsule())
+                .overlay(Capsule().stroke(Theme.secondaryAccent.opacity(0.4), lineWidth: 1))
+            }
+            .buttonStyle(PressableButtonStyle())
+            .padding(.horizontal, 40)
+            .padding(.top, 10)
+            
             Spacer()
         }
         .background(Theme.backgroundGradient.ignoresSafeArea())
         .navigationTitle("Team Invite")
         .navigationBarTitleDisplayMode(.inline)
+    }
+    
+    @MainActor
+    private func shareLink() {
+        let text = "Join my MatchSplitter group '\(group.name)'! Use this link to join: matchsplitter://join?id=\(group.id.uuidString)"
+        
+        let activityVC = UIActivityViewController(activityItems: [text], applicationActivities: nil)
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let window = windowScene.windows.first,
+           let rootVC = window.rootViewController {
+            
+            var topVC = rootVC
+            while let presentedVC = topVC.presentedViewController {
+                topVC = presentedVC
+            }
+            
+            if let popoverController = activityVC.popoverPresentationController {
+                popoverController.sourceView = topVC.view
+                popoverController.sourceRect = CGRect(x: UIScreen.main.bounds.width / 2, y: UIScreen.main.bounds.height / 2, width: 0, height: 0)
+                popoverController.permittedArrowDirections = []
+            }
+            
+            topVC.present(activityVC, animated: true, completion: nil)
+        }
     }
 }
 

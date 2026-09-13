@@ -58,8 +58,14 @@ struct DashboardView: View {
 
                     VStack(spacing: 14) {
                         if viewModel.groups.isEmpty {
-                            EmptyGroupsView()
-                                .padding(.top, 40)
+                            EmptyGroupsView(action: {
+                                if viewModel.currentUser == nil {
+                                    showLoginAlert = true
+                                } else {
+                                    showingAddGroup = true
+                                }
+                            })
+                            .padding(.top, 40)
                         } else {
                             ForEach(viewModel.groups.indexed) { indexed in
                                 NavigationLink(destination: GroupDetailView(group: indexed.item)) {
@@ -347,6 +353,7 @@ struct GroupCardView: View {
 // MARK: - Empty State
 struct EmptyGroupsView: View {
     @State private var pulse = false
+    var action: () -> Void
 
     var body: some View {
         VStack(spacing: 18) {
@@ -368,10 +375,28 @@ struct EmptyGroupsView: View {
             Text("No Groups Yet")
                 .font(.system(size: 22, weight: .bold, design: .rounded))
                 .foregroundColor(.white.opacity(0.85))
-            Text("Tap the + button to create\nyour first expense group.")
+            
+            Text("You don't have any expense groups right now.")
                 .font(.subheadline)
                 .foregroundColor(.white.opacity(0.45))
                 .multilineTextAlignment(.center)
+                
+            Button(action: action) {
+                HStack(spacing: 8) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 14, weight: .bold))
+                    Text("Create Group")
+                        .font(.system(size: 16, weight: .bold))
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 24)
+                .padding(.vertical, 14)
+                .background(Theme.primaryGradient)
+                .clipShape(Capsule())
+                .shadow(color: Theme.primaryAccent.opacity(0.3), radius: 10, x: 0, y: 5)
+            }
+            .buttonStyle(PressableButtonStyle())
+            .padding(.top, 8)
         }
         .onAppear { pulse = true }
     }

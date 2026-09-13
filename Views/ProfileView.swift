@@ -253,8 +253,10 @@ struct EditProfileView: View {
     @State private var paymentID: String = ""
     @State private var defaultCurrency: Currency = .usd
     @State private var bankBin: String = ""
+    @State private var bankAccountName: String = ""
     @State private var banks: [VietQRBank] = []
     @State private var isLoadingBanks = false
+    @State private var showingBankSelection = false
 
     @State private var payOSClientId: String = ""
     @State private var payOSApiKey: String = ""
@@ -279,11 +281,13 @@ struct EditProfileView: View {
                         let finalType = paymentType == "None" ? nil : paymentType
                         let finalID = paymentType == "None" ? "" : paymentID
                         let finalBin = paymentType == "VietQR" ? bankBin : nil
+                        let finalAccountName = paymentType == "VietQR" ? bankAccountName : nil
                         viewModel.updateCurrentUser(
                             name: name,
                             paymentID: finalID,
                             paymentType: finalType,
                             bankBin: finalBin,
+                            bankAccountName: finalAccountName,
                             payOSClientId: paymentType == "PayOS" ? payOSClientId : nil,
                             payOSApiKey: paymentType == "PayOS" ? payOSApiKey : nil,
                             payOSChecksumKey: paymentType == "PayOS" ? payOSChecksumKey : nil
@@ -320,35 +324,33 @@ struct EditProfileView: View {
 
                             if paymentType != "None" {
                                 if paymentType == "VietQR" {
-                                    HStack(spacing: 14) {
-                                        IconBadge(systemName: "building.2.fill", color: Theme.secondaryAccent)
-                                        if isLoadingBanks {
-                                            ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                            Spacer()
-                                        } else {
-                                            Menu {
-                                                ForEach(banks) { bank in
-                                                    Button("\(bank.shortName) - \(bank.name)") {
-                                                        bankBin = bank.bin
-                                                    }
-                                                }
-                                            } label: {
+                                    Button(action: { showingBankSelection = true }) {
+                                        HStack(spacing: 14) {
+                                            IconBadge(systemName: "building.2.fill", color: Theme.secondaryAccent)
+                                            if isLoadingBanks {
+                                                ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                                Spacer()
+                                            } else {
                                                 HStack {
                                                     Text(banks.first(where: { $0.bin == bankBin })?.shortName ?? "Select Bank")
                                                         .foregroundColor(bankBin.isEmpty ? .white.opacity(0.5) : .white)
                                                     Spacer()
-                                                    Image(systemName: "chevron.up.chevron.down")
+                                                    Image(systemName: "chevron.right")
+                                                        .font(.system(size: 12, weight: .semibold))
+                                                        .foregroundColor(.white.opacity(0.3))
                                                 }
-                                                .foregroundColor(.white)
                                             }
                                         }
+                                        .padding(.horizontal, 18)
+                                        .padding(.vertical, 14)
                                     }
-                                    .padding(.horizontal, 18)
-                                    .padding(.vertical, 14)
                                     Divider().background(Color.white.opacity(0.07))
 
                                     EditFieldRow(icon: "number", iconColor: Theme.secondaryAccent, placeholder: "Account Number", text: $paymentID)
                                         .keyboardType(.numberPad)
+                                    Divider().background(Color.white.opacity(0.07))
+                                    
+                                    EditFieldRow(icon: "person.text.rectangle", iconColor: Theme.secondaryAccent, placeholder: "Account Name (Optional)", text: $bankAccountName)
                                     Divider().background(Color.white.opacity(0.07))
                                 } else if paymentType == "PayOS" {
                                     EditFieldRow(icon: "person.badge.key.fill", iconColor: Theme.secondaryAccent, placeholder: "Client ID", text: $payOSClientId)
@@ -399,6 +401,7 @@ struct EditProfileView: View {
             paymentType = viewModel.currentUser?.paymentType ?? "None"
             paymentID = viewModel.currentUser?.paymentID ?? ""
             bankBin = viewModel.currentUser?.bankBin ?? ""
+            bankAccountName = viewModel.currentUser?.bankAccountName ?? ""
             payOSClientId = viewModel.currentUser?.payOSClientId ?? ""
             payOSApiKey = viewModel.currentUser?.payOSApiKey ?? ""
             payOSChecksumKey = viewModel.currentUser?.payOSChecksumKey ?? ""
@@ -413,6 +416,9 @@ struct EditProfileView: View {
                 }
                 isLoadingBanks = false
             }
+        }
+        .sheet(isPresented: $showingBankSelection) {
+            BankSelectionView(banks: banks, selectedBankBin: $bankBin)
         }
     }
 }
@@ -433,5 +439,76 @@ struct EditFieldRow: View {
         }
         .padding(.horizontal, 18)
         .padding(.vertical, 14)
+    }
+}
+
+// MARK: - Bank Selection View
+struct BankSelectionView: View {
+    let banks: [VietQRBank]
+    @Binding var selectedBankBin: String
+    @Environment(\.presentationMode) var presentationMode
+    @State private var searchText = ""
+
+    var filteredBanks: [VietQRBank] {
+        if searchText.isEmpty {
+            return banks
+        } else {
+            return banks.filter { $0.shortName.localizedCaseInsensitiveContains(searchText) || $0.name.localizedCaseInsensitiveContains(searchText) }
+        }
+    }
+
+    var body: some View {
+        NavigationView {
+            ZStack {
+                Theme.backgroundGradient.ignoresSafeArea()
+
+                List(filteredBanks) { bank in
+                    Button(action: {
+                        selectedBankBin = bank.bin
+                        presentationMode.wrappedValue.dismiss()
+                    }) {
+                        HStack(spacing: 14) {
+                            AsyncImage(url: URL(string: bank.logo)) { image in
+                                image.resizable().scaledToFit()
+                            } placeholder: {
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color.white.opacity(0.1))
+                            }
+                            .frame(width: 44, height: 44)
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color.white)
+                            )
+
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(bank.shortName)
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(.white)
+                                Text(bank.name)
+                                    .font(.system(size: 12))
+                                    .foregroundColor(.white.opacity(0.6))
+                                    .lineLimit(1)
+                            }
+                        }
+                        .padding(.vertical, 6)
+                    }
+                    .listRowBackground(Color.clear)
+                }
+                .listStyle(.plain)
+                .searchable(text: $searchText, prompt: "Search banks...")
+            }
+            .navigationTitle("Select Bank")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                    .foregroundColor(Theme.secondaryAccent)
+                }
+            }
+        }
+        .preferredColorScheme(.dark)
     }
 }

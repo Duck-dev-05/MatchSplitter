@@ -92,9 +92,9 @@ class GroupViewModel: ObservableObject {
         }
     }
     
-    func updateCurrentUser(name: String, paymentID: String, paymentType: String? = nil, bankBin: String? = nil, payOSClientId: String? = nil, payOSApiKey: String? = nil, payOSChecksumKey: String? = nil) {
+    func updateCurrentUser(name: String, paymentID: String, paymentType: String? = nil, bankBin: String? = nil, bankAccountName: String? = nil, payOSClientId: String? = nil, payOSApiKey: String? = nil, payOSChecksumKey: String? = nil) {
         if let current = currentUser {
-            let updatedUser = User(id: current.id, name: name, paymentID: paymentID.isEmpty ? nil : paymentID, paymentType: paymentType, bankBin: bankBin, payOSClientId: payOSClientId, payOSApiKey: payOSApiKey, payOSChecksumKey: payOSChecksumKey)
+            let updatedUser = User(id: current.id, name: name, paymentID: paymentID.isEmpty ? nil : paymentID, paymentType: paymentType, bankBin: bankBin, bankAccountName: bankAccountName, payOSClientId: payOSClientId, payOSApiKey: payOSApiKey, payOSChecksumKey: payOSChecksumKey)
             currentUser = updatedUser
             
             // Also update this user's name across all groups they belong to
@@ -136,7 +136,29 @@ class GroupViewModel: ObservableObject {
         }
     }
     
-    func updateMember(in group: Group, memberId: UUID, name: String, paymentID: String, paymentType: String? = nil, bankBin: String? = nil, payOSClientId: String? = nil, payOSApiKey: String? = nil, payOSChecksumKey: String? = nil) {
+    func addExistingMember(_ member: User, to group: Group) {
+        if let index = groups.firstIndex(where: { $0.id == group.id }) {
+            if !groups[index].members.contains(where: { $0.id == member.id }) {
+                groups[index].members.append(member)
+                saveData()
+            }
+        }
+    }
+    
+    func getFriendsNotInGroup(group: Group) -> [User] {
+        var allFriends = Set<User>()
+        for g in groups {
+            for member in g.members {
+                if member.id != currentUser?.id {
+                    allFriends.insert(member)
+                }
+            }
+        }
+        let groupMemberIds = Set(group.members.map { $0.id })
+        return Array(allFriends.filter { !groupMemberIds.contains($0.id) }).sorted(by: { $0.name < $1.name })
+    }
+    
+    func updateMember(in group: Group, memberId: UUID, name: String, paymentID: String, paymentType: String? = nil, bankBin: String? = nil, bankAccountName: String? = nil, payOSClientId: String? = nil, payOSApiKey: String? = nil, payOSChecksumKey: String? = nil) {
         if let groupIndex = groups.firstIndex(where: { $0.id == group.id }) {
             if let memberIndex = groups[groupIndex].members.firstIndex(where: { $0.id == memberId }) {
                 let currentMember = groups[groupIndex].members[memberIndex]
@@ -148,6 +170,7 @@ class GroupViewModel: ObservableObject {
                     paymentID: paymentID.isEmpty ? nil : paymentID,
                     paymentType: paymentType,
                     bankBin: bankBin,
+                    bankAccountName: bankAccountName,
                     payOSClientId: payOSClientId,
                     payOSApiKey: payOSApiKey,
                     payOSChecksumKey: payOSChecksumKey

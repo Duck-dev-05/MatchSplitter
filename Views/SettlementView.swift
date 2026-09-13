@@ -386,9 +386,10 @@ struct QRCodePaymentView: View {
                 Task {
                     do {
                         let info = "MatchSplitter Settlement"
+                        let accountName = settlement.toUser.bankAccountName?.isEmpty == false ? settlement.toUser.bankAccountName! : settlement.toUser.name.uppercased()
                         let payload = try await VietQRService.shared.generatePayload(
                             accountNo: accountNo, 
-                            accountName: settlement.toUser.name.uppercased(), 
+                            accountName: accountName, 
                             bin: bin, 
                             amount: settlement.amount, 
                             info: info

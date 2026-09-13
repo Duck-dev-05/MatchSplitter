@@ -61,25 +61,118 @@ struct GroupMembersView: View {
                 }
             }
         }
-        .alert("Add Member(s)", isPresented: $showingAddMember) {
-            TextField("Name (comma separated for multiple)", text: $newName)
-            TextField("Payment ID (Optional)", text: $newPaymentID)
-            Button("Add") {
-                if !newName.isEmpty {
-                    withAnimation(.spring()) {
-                        let names = newName.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
-                        for name in names {
-                            viewModel.addMember(to: currentGroup, name: name, paymentID: names.count == 1 ? newPaymentID : "")
-                        }
-                    }
-                    newName = ""
-                    newPaymentID = ""
-                }
-            }
-            Button("Cancel", role: .cancel) { }
+        .sheet(isPresented: $showingAddMember) {
+            AddMemberSheet(group: currentGroup)
         }
         .sheet(item: $memberToEdit) { member in
             EditMemberView(group: currentGroup, member: member)
+        }
+    }
+}
+
+// MARK: - Add Member Sheet
+struct AddMemberSheet: View {
+    var group: Group
+    @EnvironmentObject var viewModel: GroupViewModel
+    @Environment(\.presentationMode) var presentationMode
+
+    @State private var newName = ""
+    @State private var newPaymentID = ""
+    
+    var availableFriends: [User] {
+        viewModel.getFriendsNotInGroup(group: group)
+    }
+
+    var body: some View {
+        ZStack {
+            Theme.backgroundGradient.ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                DragHandle()
+                    .padding(.bottom, 4)
+
+                SheetHeader(
+                    title: "Add Members",
+                    trailingLabel: "Done",
+                    trailingEnabled: true,
+                    onLeading: { presentationMode.wrappedValue.dismiss() },
+                    onTrailing: { presentationMode.wrappedValue.dismiss() }
+                )
+
+                ScrollView {
+                    VStack(spacing: 24) {
+                        // Section: Add New Person
+                        VStack(spacing: 12) {
+                            SectionHeader(title: "Add New Person")
+                            
+                            VStack(spacing: 0) {
+                                EditFieldRow(icon: "person.fill", iconColor: Theme.primaryAccent, placeholder: "Name", text: $newName)
+                                Divider().background(Color.white.opacity(0.07))
+                                EditFieldRow(icon: "creditcard.fill", iconColor: Theme.secondaryAccent, placeholder: "Payment ID (Optional)", text: $newPaymentID)
+                            }
+                            .glassCard(cornerRadius: 20)
+
+                            Button(action: {
+                                if !newName.isEmpty {
+                                    withAnimation(.spring()) {
+                                        viewModel.addMember(to: group, name: newName.trimmingCharacters(in: .whitespacesAndNewlines), paymentID: newPaymentID)
+                                        newName = ""
+                                        newPaymentID = ""
+                                    }
+                                }
+                            }) {
+                                HStack {
+                                    Image(systemName: "plus.circle.fill")
+                                    Text("Add Person")
+                                }
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                                .background(Theme.primaryGradient)
+                                .clipShape(Capsule())
+                            }
+                            .disabled(newName.isEmpty)
+                            .opacity(newName.isEmpty ? 0.5 : 1.0)
+                        }
+
+                        // Section: Existing Friends
+                        if !availableFriends.isEmpty {
+                            VStack(spacing: 12) {
+                                SectionHeader(title: "Existing Friends")
+                                
+                                VStack(spacing: 8) {
+                                    ForEach(availableFriends) { friend in
+                                        Button(action: {
+                                            withAnimation(.spring()) {
+                                                viewModel.addExistingMember(friend, to: group)
+                                            }
+                                        }) {
+                                            HStack(spacing: 14) {
+                                                GradientAvatar(name: friend.name, avatarURL: friend.avatarURL, size: 40)
+                                                
+                                                VStack(alignment: .leading, spacing: 4) {
+                                                    Text(friend.name)
+                                                        .font(.system(size: 15, weight: .semibold))
+                                                        .foregroundColor(.white)
+                                                }
+                                                Spacer()
+                                                Image(systemName: "plus.circle")
+                                                    .font(.system(size: 18, weight: .semibold))
+                                                    .foregroundColor(Theme.secondaryAccent)
+                                            }
+                                            .padding(12)
+                                            .glassCard(cornerRadius: 16)
+                                        }
+                                        .buttonStyle(PressableButtonStyle())
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    .padding(20)
+                }
+            }
         }
     }
 }
