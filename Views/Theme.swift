@@ -436,11 +436,11 @@ struct GradientButton: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
                 .background(
-                    Group {
+                    ZStack {
                         if isEnabled {
-                            AnyView(Theme.primaryGradient)
+                            Theme.primaryGradient
                         } else {
-                            AnyView(Color.white.opacity(0.08))
+                            Color.white.opacity(0.08)
                         }
                     }
                 )
