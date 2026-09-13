@@ -6,6 +6,7 @@ struct GroupDetailView: View {
     @State private var showingAddExpense = false
     @State private var showingSettlements = false
     @State private var showingSettings = false
+    @State private var showingQRInvite = false
     @State private var appear = false
 
     var currentGroup: Group {
@@ -14,6 +15,20 @@ struct GroupDetailView: View {
 
     var totalSpent: Double {
         currentGroup.expenses.reduce(0) { $0 + $1.amount }
+    }
+
+    var personalBalance: Double {
+        guard let current = viewModel.currentUser else { return 0.0 }
+        let settlements = viewModel.calculateSettlements(for: currentGroup)
+        var balance = 0.0
+        for s in settlements {
+            if s.fromUser.id == current.id {
+                balance -= s.amount
+            } else if s.toUser.id == current.id {
+                balance += s.amount
+            }
+        }
+        return balance
     }
 
     var body: some View {
@@ -31,6 +46,11 @@ struct GroupDetailView: View {
 
                 // MARK: Quick Action Strip
                 quickActionStrip
+                    .padding(.top, 16)
+                    .padding(.horizontal, 20)
+
+                // MARK: Personal Balance
+                personalBalanceCard
                     .padding(.top, 16)
                     .padding(.horizontal, 20)
 
@@ -73,6 +93,26 @@ struct GroupDetailView: View {
                     .padding(.bottom, 120)
                 }
             }
+            
+            // MARK: Floating Action Button
+            VStack {
+                Spacer()
+                HStack {
+                    Spacer()
+                    Button(action: { showingAddExpense = true }) {
+                        Image(systemName: "plus")
+                            .font(.system(size: 24, weight: .bold))
+                            .foregroundColor(.white)
+                            .frame(width: 64, height: 64)
+                            .background(Theme.primaryGradient)
+                            .clipShape(Circle())
+                            .shadow(color: Theme.primaryAccent.opacity(0.4), radius: 14, x: 0, y: 6)
+                    }
+                    .buttonStyle(PressableButtonStyle())
+                    .padding(.trailing, 24)
+                    .padding(.bottom, 32)
+                }
+            }
         }
         .navigationTitle(currentGroup.name)
         .navigationBarTitleDisplayMode(.inline)
@@ -96,6 +136,10 @@ struct GroupDetailView: View {
         }
         .sheet(isPresented: $showingSettings) {
             GroupSettingsView(group: currentGroup)
+                .halfSheetIfAvailable()
+        }
+        .sheet(isPresented: $showingQRInvite) {
+            TeamQRInviteView(group: currentGroup)
                 .halfSheetIfAvailable()
         }
         .onAppear { withAnimation { appear = true } }
@@ -182,7 +226,58 @@ struct GroupDetailView: View {
                 .frame(width: 48, height: 44)
             }
             .buttonStyle(PressableButtonStyle())
+
+            // QR Invite
+            Button(action: { showingQRInvite = true }) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(Theme.electricPurple.opacity(0.14))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .stroke(Theme.electricPurple.opacity(0.28), lineWidth: 1)
+                        )
+                    Image(systemName: "qrcode")
+                        .font(.system(size: 18))
+                        .foregroundColor(Theme.electricPurple)
+                }
+                .frame(width: 48, height: 44)
+            }
+            .buttonStyle(PressableButtonStyle())
         }
+    }
+
+    // MARK: - Personal Balance Card
+    private var personalBalanceCard: some View {
+        let isOwed = personalBalance > 0
+        let owes = personalBalance < 0
+        let color = isOwed ? Theme.successColor : (owes ? Theme.dangerColor : .white.opacity(0.5))
+        let icon = isOwed ? "arrow.down.left" : (owes ? "arrow.up.right" : "checkmark.circle.fill")
+        let title = isOwed ? "You get back" : (owes ? "You owe" : "You are settled up")
+        
+        return HStack(spacing: 14) {
+            ZStack {
+                Circle()
+                    .fill(color.opacity(0.15))
+                    .frame(width: 40, height: 40)
+                Image(systemName: icon)
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(color)
+            }
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(.white.opacity(0.7))
+                if owes || isOwed {
+                    Text("\(currentGroup.currency.symbol)\(String(format: "%.2f", abs(personalBalance)))")
+                        .font(.system(size: 20, weight: .heavy, design: .rounded))
+                        .foregroundColor(color)
+                }
+            }
+            Spacer()
+        }
+        .padding(16)
+        .glassCard(cornerRadius: 18)
     }
 
     // MARK: - Mini Stat
