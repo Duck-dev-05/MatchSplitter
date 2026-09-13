@@ -77,8 +77,12 @@ class GroupViewModel: ObservableObject {
     }
     
     func handleDeepLink(_ url: URL) {
-        // matchsplitter://join?id=UUID
-        guard url.scheme == "matchsplitter", url.host == "join" else { return }
+        // Accept custom scheme: matchsplitter://join?id=UUID
+        // Accept universal link: https://matchsplitter.com/join?id=UUID
+        let isCustomScheme = url.scheme == "matchsplitter" && url.host == "join"
+        let isUniversalLink = (url.scheme == "https" || url.scheme == "http") && url.host == "matchsplitter.com" && url.path == "/join"
+        
+        guard isCustomScheme || isUniversalLink else { return }
         
         let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
         if let idString = components?.queryItems?.first(where: { $0.name == "id" })?.value,

@@ -6,7 +6,7 @@ struct TeamQRInviteView: View {
     let qrGenerator = QRCodeGenerator()
     
     var invitePayload: String {
-        return "MATCHSPLITTER|JOIN|\(group.id.uuidString)"
+        return "matchsplitter://join?id=\(group.id.uuidString)"
     }
     
     var body: some View {
