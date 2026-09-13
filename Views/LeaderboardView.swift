@@ -267,7 +267,7 @@ struct iOS16LeaderboardGrid: View {
                 .padding(.horizontal, 20)
                 .padding(.vertical, 14)
 
-                if index < group.members.count - 1 {
+                if indexed.index < group.members.count - 1 {
                     Divider().background(Color.white.opacity(0.05)).padding(.horizontal, 20)
                 }
             }
