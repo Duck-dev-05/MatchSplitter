@@ -77,9 +77,9 @@ struct LeaderboardView: View {
                     VStack(spacing: 0) {
                         HStack {
                             Text("TEAM STATS")
+                                .kerning(1.4)
                                 .font(.system(size: 11, weight: .bold))
                                 .foregroundColor(.white.opacity(0.45))
-                                .kerning(1.4)
                             Spacer()
                         }
                         .padding(.horizontal, 20)
@@ -141,10 +141,10 @@ struct PodiumCard: View {
                 .lineLimit(1)
 
             Text(title)
+                .kerning(0.8)
                 .font(.system(size: 10, weight: .semibold))
                 .foregroundColor(.white.opacity(0.45))
                 .textCase(.uppercase)
-                .kerning(0.8)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 20)
@@ -214,19 +214,19 @@ struct iOS16LeaderboardGrid: View {
             // Header row
             HStack {
                 Text("MEMBER")
+                    .kerning(1.0)
                     .font(.system(size: 10, weight: .bold))
                     .foregroundColor(.white.opacity(0.35))
-                    .kerning(1.0)
                 Spacer()
                 Text("PAID")
+                    .kerning(1.0)
                     .font(.system(size: 10, weight: .bold))
                     .foregroundColor(.white.opacity(0.35))
-                    .kerning(1.0)
                     .frame(width: 80, alignment: .trailing)
                 Text("OWES")
+                    .kerning(1.0)
                     .font(.system(size: 10, weight: .bold))
                     .foregroundColor(.white.opacity(0.35))
-                    .kerning(1.0)
                     .frame(width: 80, alignment: .trailing)
             }
             .padding(.horizontal, 20)

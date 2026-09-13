@@ -104,9 +104,9 @@ struct ExpenseDetailView: View {
                     VStack(alignment: .leading, spacing: 14) {
                         HStack {
                             Text("SPLIT DETAILS")
+                                .kerning(1.2)
                                 .font(.system(size: 11, weight: .bold))
                                 .foregroundColor(.white.opacity(0.40))
-                                .kerning(1.2)
                             Spacer()
                             // Split type badge
                             Text(expense.splitType == .equal ? "Equal Split" : "Custom Split")

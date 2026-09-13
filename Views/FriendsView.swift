@@ -108,10 +108,10 @@ struct FriendsView: View {
             }
             VStack(alignment: .leading, spacing: 3) {
                 Text(title)
+                    .kerning(0.8)
                     .font(.system(size: 10, weight: .bold))
                     .foregroundColor(.white.opacity(0.50))
                     .textCase(.uppercase)
-                    .kerning(0.8)
                 Text(value)
                     .font(.system(size: 20, weight: .heavy, design: .rounded))
                     .foregroundColor(color)

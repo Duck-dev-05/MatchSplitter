@@ -162,9 +162,9 @@ struct DashboardView: View {
         VStack(spacing: 18) {
             // Balance label
             Text("YOUR NET BALANCE")
+                .kerning(1.5)
                 .font(.system(size: 10, weight: .bold))
                 .foregroundColor(.white.opacity(0.5))
-                .kerning(1.5)
 
             Text(netBalance >= 0
                  ? "+\(viewModel.defaultCurrency.symbol)\(String(format: "%.2f", netBalance))"

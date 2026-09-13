@@ -147,10 +147,10 @@ struct AnalyticsView: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
             Text(label)
+                .kerning(0.6)
                 .font(.system(size: 10, weight: .bold))
                 .foregroundColor(.white.opacity(0.45))
                 .textCase(.uppercase)
-                .kerning(0.6)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)

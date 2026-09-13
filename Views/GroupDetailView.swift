@@ -54,9 +54,9 @@ struct GroupDetailView: View {
                             EmptyExpensesView()
                                 .padding(.top, 40)
                         } else {
-                            ForEach(currentGroup.expenses.indexed) { indexed in
-                                NavigationLink(destination: ExpenseDetailView(expense: indexed.item, group: currentGroup)) {
-                                    ExpenseRowView(expense: indexed.item, currency: currentGroup.currency)
+                            ForEach(Array(currentGroup.expenses.enumerated()), id: \.offset) { index, expense in
+                                NavigationLink(destination: ExpenseDetailView(expense: expense, group: currentGroup)) {
+                                    ExpenseRowView(expense: expense, currency: currentGroup.currency)
                                 }
                                 .buttonStyle(PressableButtonStyle())
                                 .offset(y: appear ? 0 : 20)
@@ -107,9 +107,9 @@ struct GroupDetailView: View {
             // Total spent
             VStack(spacing: 6) {
                 Text("TOTAL SPENT")
+                    .kerning(1.4)
                     .font(.system(size: 10, weight: .bold))
                     .foregroundColor(.white.opacity(0.50))
-                    .kerning(1.4)
 
                 Text("\(currentGroup.currency.symbol)\(String(format: "%.2f", totalSpent))")
                     .font(.system(size: 46, weight: .heavy, design: .rounded))

@@ -346,9 +346,9 @@ struct SectionHeader: View {
     var body: some View {
         HStack {
             Text(title)
+                .kerning(1.2)
                 .font(.system(size: 11, weight: .bold))
                 .foregroundColor(.white.opacity(0.50))
-                .kerning(1.2)
                 .textCase(.uppercase)
             Spacer()
             if let trailing = trailing {
