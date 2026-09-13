@@ -31,7 +31,7 @@ class SupabaseManager {
         let insertData = SupabaseGroupInsert(id: group.id, group_data: groupJsonString, last_updated: Date())
         
         // Upsert to handle both insert and update
-        try await client.database
+        try await client
             .from("groups")
             .upsert(insertData)
             .execute()
@@ -45,7 +45,7 @@ class SupabaseManager {
             let last_updated: Date
         }
         
-        let response: [SupabaseGroupFetch] = try await client.database
+        let response: [SupabaseGroupFetch] = try await client
             .from("groups")
             .select()
             .eq("id", value: id.uuidString)
@@ -62,7 +62,7 @@ class SupabaseManager {
     
     // MARK: - Realtime Subscriptions
     func listenForUpdates(groupId: UUID, onChange: @escaping (Group) -> Void) {
-        let channel = client.realtime.channel("public:groups:id=eq.\(groupId.uuidString)")
+        let channel = client.channel("public:groups:id=eq.\(groupId.uuidString)")
         
         channel.on("postgres_changes", filter: .init(event: "UPDATE", schema: "public", table: "groups", filter: "id=eq.\(groupId.uuidString)")) { message in
             Task {
@@ -74,6 +74,8 @@ class SupabaseManager {
             }
         }
         
-        channel.subscribe()
+        Task {
+            await channel.subscribe()
+        }
     }
 }
