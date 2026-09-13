@@ -50,7 +50,7 @@ class GroupViewModel: ObservableObject {
         
         Task {
             for group in groups {
-                try? await CloudKitManager.shared.saveGroup(group)
+                try? await SupabaseManager.shared.saveGroup(group)
             }
         }
     }
@@ -104,8 +104,8 @@ class GroupViewModel: ObservableObject {
                 if let index = self.groups.firstIndex(where: { $0.id == groupId }) {
                     targetGroup = self.groups[index]
                 } else {
-                    // Fetch from CloudKit if not found locally
-                    if let fetchedGroup = try? await CloudKitManager.shared.fetchGroup(id: groupId) {
+                    // Fetch from Supabase if not found locally
+                    if let fetchedGroup = try? await SupabaseManager.shared.fetchGroup(id: groupId) {
                         targetGroup = fetchedGroup
                         await MainActor.run {
                             self.groups.append(fetchedGroup)
@@ -124,8 +124,8 @@ class GroupViewModel: ObservableObject {
                             self.saveData()
                         }
                         
-                        // Push immediately to CloudKit so creator sees it
-                        try? await CloudKitManager.shared.saveGroup(group)
+                        // Push immediately to Supabase so creator sees it
+                        try? await SupabaseManager.shared.saveGroup(group)
                     }
                 }
             }

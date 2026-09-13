@@ -78,6 +78,7 @@ struct AddMemberSheet: View {
 
     @State private var newName = ""
     @State private var newPaymentID = ""
+    @State private var showingQRScanner = false
     
     var availableFriends: [User] {
         viewModel.getFriendsNotInGroup(group: group)
@@ -108,6 +109,20 @@ struct AddMemberSheet: View {
                             VStack(spacing: 0) {
                                 EditFieldRow(icon: "person.fill", iconColor: Theme.primaryAccent, placeholder: "Name", text: $newName)
                                 Divider().background(Color.white.opacity(0.07))
+                                
+                                Button(action: { showingQRScanner = true }) {
+                                    HStack {
+                                        Image(systemName: "qrcode.viewfinder")
+                                        Text("Scan Payment QR")
+                                    }
+                                    .font(.system(size: 15, weight: .bold))
+                                    .foregroundColor(Theme.secondaryAccent)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 14)
+                                    .background(Theme.secondaryAccent.opacity(0.1))
+                                }
+                                Divider().background(Color.white.opacity(0.07))
+                                
                                 EditFieldRow(icon: "creditcard.fill", iconColor: Theme.secondaryAccent, placeholder: "Payment ID (Optional)", text: $newPaymentID)
                             }
                             .glassCard(cornerRadius: 20)
@@ -173,6 +188,25 @@ struct AddMemberSheet: View {
                     .padding(20)
                 }
             }
+        }
+        .sheet(isPresented: $showingQRScanner) {
+            QRScannerView(
+                onResult: { payload in
+                    showingQRScanner = false
+                    if let parsed = VietQRParser.parse(payload: payload), let bin = parsed.bankBin, let account = parsed.accountNumber {
+                        // For AddMemberSheet, we might not have full paymentType selection
+                        // So we just save the parsed account number, or we can format it
+                        newPaymentID = account
+                        // Ideally they should edit member to add bank bin, or we let them do it later.
+                    } else {
+                        newPaymentID = payload
+                    }
+                },
+                onCancel: {
+                    showingQRScanner = false
+                }
+            )
+            .ignoresSafeArea()
         }
     }
 }
@@ -285,6 +319,8 @@ struct EditMemberView: View {
     @State private var payOSClientId: String = ""
     @State private var payOSApiKey: String = ""
     @State private var payOSChecksumKey: String = ""
+    
+    @State private var showingQRScanner = false
 
     let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "VietQR", "PayOS", "None"]
 
@@ -324,6 +360,19 @@ struct EditMemberView: View {
                     VStack(spacing: 20) {
                         VStack(spacing: 0) {
                             EditFieldRow(icon: "person.fill", iconColor: Theme.primaryAccent, placeholder: "Name", text: $name)
+                            Divider().background(Color.white.opacity(0.07))
+                            
+                            Button(action: { showingQRScanner = true }) {
+                                HStack {
+                                    Image(systemName: "qrcode.viewfinder")
+                                    Text("Scan Payment QR")
+                                }
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundColor(Theme.secondaryAccent)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                                .background(Theme.secondaryAccent.opacity(0.1))
+                            }
                             Divider().background(Color.white.opacity(0.07))
 
                             HStack(spacing: 14) {
@@ -400,6 +449,28 @@ struct EditMemberView: View {
                     .padding(20)
                 }
             }
+        }
+        .sheet(isPresented: $showingQRScanner) {
+            QRScannerView(
+                onResult: { payload in
+                    showingQRScanner = false
+                    if let parsed = VietQRParser.parse(payload: payload), let bin = parsed.bankBin, let account = parsed.accountNumber {
+                        paymentType = "VietQR"
+                        bankBin = bin
+                        paymentID = account
+                        if banks.isEmpty {
+                            Task { await loadBanks() }
+                        }
+                    } else {
+                        // Just set it as raw payment ID if we don't recognize it
+                        paymentID = payload
+                    }
+                },
+                onCancel: {
+                    showingQRScanner = false
+                }
+            )
+            .ignoresSafeArea()
         }
         .onAppear {
             name = member.name

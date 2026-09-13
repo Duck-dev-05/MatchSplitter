@@ -71,9 +71,6 @@ struct MainTabView: View {
         .sheet(isPresented: $showingAddGroup) {
             AddGroupSheet()
         }
-        .onAppear {
-            CloudKitManager.shared.requestPushNotificationPermissions()
-            CloudKitManager.shared.setupSubscriptions()
-        }
     }
 }
+
