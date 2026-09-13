@@ -515,4 +515,3 @@ struct QRCodePaymentView: View {
             }
         }
     }
-}
