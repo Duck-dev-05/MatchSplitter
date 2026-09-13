@@ -44,5 +44,9 @@
 			</array>
 		</dict>
 	</array>
+	<key>SupabaseURL</key>
+	<string>https://rysvlegpwxjnrpqgdniz.supabase.co</string>
+	<key>SupabaseKey</key>
+	<string>sb_publishable_cKvUeVrK4J39hKNhqpVwoA_4SJwsrWA</string>
 </dict>
 </plist>

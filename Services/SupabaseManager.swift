@@ -8,12 +8,20 @@ import Supabase
 class SupabaseManager {
     static let shared = SupabaseManager()
     
-    let supabaseUrl = URL(string: "https://rysvlegpwxjnrpqgdniz.supabase.co")!
-    let supabaseKey = "sb_publishable_cKvUeVrK4J39hKNhqpVwoA_4SJwsrWA"
+    let supabaseUrl: URL
+    let supabaseKey: String
     
     let client: SupabaseClient
     
     init() {
+        guard let urlString = Bundle.main.object(forInfoDictionaryKey: "SupabaseURL") as? String,
+              let url = URL(string: urlString),
+              let key = Bundle.main.object(forInfoDictionaryKey: "SupabaseKey") as? String else {
+            fatalError("Supabase credentials not found in Info.plist")
+        }
+        
+        self.supabaseUrl = url
+        self.supabaseKey = key
         self.client = SupabaseClient(supabaseURL: supabaseUrl, supabaseKey: supabaseKey)
     }
     

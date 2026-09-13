@@ -5,7 +5,7 @@ struct FriendsView: View {
     @State private var appear = false
 
     var globalBalances: [User: [Currency: Double]] {
-        viewModel.calculateGlobalBalances()
+        SettlementService.shared.calculateGlobalBalances(currentUser: viewModel.currentUser, groups: viewModel.groups)
     }
 
     var totalOwedToMe: Double {

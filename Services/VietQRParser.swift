@@ -9,85 +9,40 @@ class VietQRParser {
     static func parse(payload: String) -> VietQRPayload? {
         guard payload.starts(with: "000201") else { return nil } // Ensure it's a valid EMVCo QR code
         
-        var currentIndex = payload.startIndex
+        let rootTags = parseTLV(from: payload)
         var result = VietQRPayload()
         
-        while currentIndex < payload.endIndex {
-            // Check if we have at least 4 characters left for ID and Length
-            let idEndIndex = payload.index(currentIndex, offsetBy: 2, limitedBy: payload.endIndex) ?? payload.endIndex
-            if idEndIndex == payload.endIndex { break }
-            let id = String(payload[currentIndex..<idEndIndex])
+        if let beneficiaryInfo = rootTags["38"] {
+            let beneficiaryTags = parseTLV(from: beneficiaryInfo)
             
-            let lenEndIndex = payload.index(idEndIndex, offsetBy: 2, limitedBy: payload.endIndex) ?? payload.endIndex
-            if lenEndIndex == payload.endIndex { break }
-            
-            guard let length = Int(payload[idEndIndex..<lenEndIndex]) else { break }
-            
-            let valueEndIndex = payload.index(lenEndIndex, offsetBy: length, limitedBy: payload.endIndex) ?? payload.endIndex
-            let value = String(payload[lenEndIndex..<valueEndIndex])
-            
-            if id == "38" {
-                // Parse Beneficiary Info
-                result = parseBeneficiaryInfo(value: value)
+            if let organizationInfo = beneficiaryTags["01"] {
+                let orgTags = parseTLV(from: organizationInfo)
+                result.bankBin = orgTags["00"]
+                result.accountNumber = orgTags["01"]
             }
-            
-            currentIndex = valueEndIndex
         }
         
         return result.bankBin != nil && result.accountNumber != nil ? result : nil
     }
     
-    private static func parseBeneficiaryInfo(value: String) -> VietQRPayload {
-        var currentIndex = value.startIndex
-        var result = VietQRPayload()
+    private static func parseTLV(from string: String) -> [String: String] {
+        var result: [String: String] = [:]
+        var currentIndex = string.startIndex
         
-        while currentIndex < value.endIndex {
-            let idEndIndex = value.index(currentIndex, offsetBy: 2, limitedBy: value.endIndex) ?? value.endIndex
-            if idEndIndex == value.endIndex { break }
-            let id = String(value[currentIndex..<idEndIndex])
+        while currentIndex < string.endIndex {
+            let idEndIndex = string.index(currentIndex, offsetBy: 2, limitedBy: string.endIndex) ?? string.endIndex
+            if idEndIndex == string.endIndex { break }
+            let id = String(string[currentIndex..<idEndIndex])
             
-            let lenEndIndex = value.index(idEndIndex, offsetBy: 2, limitedBy: value.endIndex) ?? value.endIndex
-            if lenEndIndex == value.endIndex { break }
+            let lenEndIndex = string.index(idEndIndex, offsetBy: 2, limitedBy: string.endIndex) ?? string.endIndex
+            if lenEndIndex == string.endIndex { break }
             
-            guard let length = Int(value[idEndIndex..<lenEndIndex]) else { break }
+            guard let length = Int(string[idEndIndex..<lenEndIndex]) else { break }
             
-            let valueEndIndex = value.index(lenEndIndex, offsetBy: length, limitedBy: value.endIndex) ?? value.endIndex
-            let subValue = String(value[lenEndIndex..<valueEndIndex])
+            let valueEndIndex = string.index(lenEndIndex, offsetBy: length, limitedBy: string.endIndex) ?? string.endIndex
+            let value = String(string[lenEndIndex..<valueEndIndex])
             
-            if id == "01" {
-                // Beneficiary organization information
-                result = parseOrganizationInfo(value: subValue)
-            }
-            
-            currentIndex = valueEndIndex
-        }
-        
-        return result
-    }
-    
-    private static func parseOrganizationInfo(value: String) -> VietQRPayload {
-        var currentIndex = value.startIndex
-        var result = VietQRPayload()
-        
-        while currentIndex < value.endIndex {
-            let idEndIndex = value.index(currentIndex, offsetBy: 2, limitedBy: value.endIndex) ?? value.endIndex
-            if idEndIndex == value.endIndex { break }
-            let id = String(value[currentIndex..<idEndIndex])
-            
-            let lenEndIndex = value.index(idEndIndex, offsetBy: 2, limitedBy: value.endIndex) ?? value.endIndex
-            if lenEndIndex == value.endIndex { break }
-            
-            guard let length = Int(value[idEndIndex..<lenEndIndex]) else { break }
-            
-            let valueEndIndex = value.index(lenEndIndex, offsetBy: length, limitedBy: value.endIndex) ?? value.endIndex
-            let subValue = String(value[lenEndIndex..<valueEndIndex])
-            
-            if id == "00" {
-                result.bankBin = subValue
-            } else if id == "01" {
-                result.accountNumber = subValue
-            }
-            
+            result[id] = value
             currentIndex = valueEndIndex
         }
         

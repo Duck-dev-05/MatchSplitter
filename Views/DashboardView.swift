@@ -9,7 +9,7 @@ struct DashboardView: View {
     var totalGroups: Int { viewModel.groups.count }
 
     var netBalance: Double {
-        let balances = viewModel.calculateGlobalBalances()
+        let balances = SettlementService.shared.calculateGlobalBalances(currentUser: viewModel.currentUser, groups: viewModel.groups)
         return balances.values.flatMap { $0.values }.reduce(0, +)
     }
 

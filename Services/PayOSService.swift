@@ -21,6 +21,20 @@ struct PayOSPaymentData: Codable {
     let qrCode: String?
 }
 
+enum PayOSError: LocalizedError {
+    case invalidURL
+    case apiError(String)
+    
+    var errorDescription: String? {
+        switch self {
+        case .invalidURL:
+            return "Invalid PayOS URL."
+        case .apiError(let message):
+            return message
+        }
+    }
+}
+
 class PayOSService {
     static let shared = PayOSService()
     
@@ -68,7 +82,7 @@ class PayOSService {
         if let responseData = response.data {
             return responseData
         } else {
-            throw NSError(domain: "PayOS", code: -1, userInfo: [NSLocalizedDescriptionKey: response.desc])
+            throw PayOSError.apiError(response.desc)
         }
     }
     
@@ -91,7 +105,7 @@ class PayOSService {
         if let responseData = response.data {
             return responseData
         } else {
-            throw NSError(domain: "PayOS", code: -1, userInfo: [NSLocalizedDescriptionKey: response.desc])
+            throw PayOSError.apiError(response.desc)
         }
     }
 }

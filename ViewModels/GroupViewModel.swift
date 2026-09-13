@@ -44,7 +44,7 @@ class GroupViewModel: ObservableObject {
         }
     }
     
-    private func saveData() {
+    func saveData() {
         let data = AppData(groups: groups, currentUser: currentUser, registeredUsers: registeredUsers, defaultCurrency: defaultCurrency)
         DatabaseManager.shared.save(appData: data)
         
@@ -81,56 +81,7 @@ class GroupViewModel: ObservableObject {
         currentUser = nil
         saveData()
     }
-    
-    func handleDeepLink(_ url: URL) {
-        // Accept custom scheme: matchsplitter://join?id=UUID
-        // Accept universal link: https://matchsplitter.com/join?id=UUID
-        let isCustomScheme = url.scheme == "matchsplitter" && url.host == "join"
-        let isUniversalLink = (url.scheme == "https" || url.scheme == "http") && url.host == "matchsplitter.com" && url.path == "/join"
-        
-        guard isCustomScheme || isUniversalLink else { return }
-        
-        let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
-        if let idString = components?.queryItems?.first(where: { $0.name == "id" })?.value,
-           let groupId = UUID(uuidString: idString) {
-            
-            // Check if user is logged in
-            guard let user = currentUser else { return }
-            
-            // Find the group and add the user if not already in it
-            Task {
-                var targetGroup: Group? = nil
-                
-                if let index = self.groups.firstIndex(where: { $0.id == groupId }) {
-                    targetGroup = self.groups[index]
-                } else {
-                    // Fetch from Supabase if not found locally
-                    if let fetchedGroup = try? await SupabaseManager.shared.fetchGroup(id: groupId) {
-                        targetGroup = fetchedGroup
-                        await MainActor.run {
-                            self.groups.append(fetchedGroup)
-                        }
-                    }
-                }
-                
-                if var group = targetGroup {
-                    if !group.members.contains(where: { $0.id == user.id }) {
-                        group.members.append(user)
-                        
-                        await MainActor.run {
-                            if let index = self.groups.firstIndex(where: { $0.id == groupId }) {
-                                self.groups[index] = group
-                            }
-                            self.saveData()
-                        }
-                        
-                        // Push immediately to Supabase so creator sees it
-                        try? await SupabaseManager.shared.saveGroup(group)
-                    }
-                }
-            }
-        }
-    }
+
     
     func loginOrRegisterWithGoogle(name: String, email: String, avatarURL: String? = nil) {
         if let existingIndex = registeredUsers.firstIndex(where: { $0.email == email }) {
@@ -315,117 +266,6 @@ class GroupViewModel: ObservableObject {
             let payment = Payment(fromUser: fromUser, toUser: toUser, amount: amount, date: date)
             groups[groupIndex].payments.append(payment)
             saveData()
-        }
-    }
-    
-    func calculateSettlements(for group: Group) -> [Settlement] {
-        var balances: [UUID: Double] = [:]
-        
-        for member in group.members {
-            balances[member.id] = 0.0
-        }
-        
-        for expense in group.expenses {
-            balances[expense.paidBy.id, default: 0.0] += expense.amount
-            
-            if expense.splitType == .equal {
-                let splitAmount = expense.amount / Double(expense.splitAmong.count)
-                for person in expense.splitAmong {
-                    balances[person.id, default: 0.0] -= splitAmount
-                }
-            } else if expense.splitType == .exact, let customShares = expense.customShares {
-                for share in customShares {
-                    balances[share.user.id, default: 0.0] -= share.exactAmount
-                }
-            }
-        }
-        
-        // Deduct payments
-        for payment in group.payments {
-            balances[payment.fromUser.id, default: 0.0] += payment.amount
-            balances[payment.toUser.id, default: 0.0] -= payment.amount
-        }
-        
-        var debtors = balances.filter { $0.value < -0.01 }.sorted(by: { $0.value < $1.value })
-        var creditors = balances.filter { $0.value > 0.01 }.sorted(by: { $0.value > $1.value })
-        
-        var settlements: [Settlement] = []
-        var i = 0
-        var j = 0
-        
-        while i < debtors.count && j < creditors.count {
-            let debtor = debtors[i]
-            let creditor = creditors[j]
-            
-            let settleAmount = min(-debtor.value, creditor.value)
-            
-            guard let fromUser = group.members.first(where: { $0.id == debtor.key }),
-                  let toUser = group.members.first(where: { $0.id == creditor.key }) else {
-                break
-            }
-            
-            settlements.append(Settlement(fromUser: fromUser, toUser: toUser, amount: settleAmount))
-            
-            debtors[i] = (key: debtor.key, value: debtor.value + settleAmount)
-            creditors[j] = (key: creditor.key, value: creditor.value - settleAmount)
-            
-            if abs(debtors[i].value) < 0.01 { i += 1 }
-            if abs(creditors[j].value) < 0.01 { j += 1 }
-        }
-        
-        return settlements
-    }
-    
-    // Calculates global balances for the current user across all groups, organized by currency.
-    // Returns a dictionary where keys are friends, and values are arrays of balances in different currencies.
-    func calculateGlobalBalances() -> [User: [Currency: Double]] {
-        guard let current = currentUser else { return [:] }
-        var globalBalances: [User: [Currency: Double]] = [:]
-        
-        for group in groups {
-            let settlements = calculateSettlements(for: group)
-            for settlement in settlements {
-                if settlement.fromUser.id == current.id {
-                    // I owe them
-                    var userBalances = globalBalances[settlement.toUser] ?? [:]
-                    userBalances[group.currency, default: 0.0] -= settlement.amount
-                    globalBalances[settlement.toUser] = userBalances
-                } else if settlement.toUser.id == current.id {
-                    // They owe me
-                    var userBalances = globalBalances[settlement.fromUser] ?? [:]
-                    userBalances[group.currency, default: 0.0] += settlement.amount
-                    globalBalances[settlement.fromUser] = userBalances
-                }
-            }
-        }
-        return globalBalances
-    }
-    
-    func exportDataToCSV(group: Group) -> URL? {
-        var csvString = "Type,Date,Title,Paid By,Amount\n"
-        
-        let formatter = DateFormatter()
-        formatter.dateStyle = .short
-        
-        for expense in group.expenses {
-            let dateStr = formatter.string(from: expense.date)
-            csvString.append("Expense,\(dateStr),\(expense.title),\(expense.paidBy.name),\(expense.amount)\n")
-        }
-        
-        for payment in group.payments {
-            let dateStr = formatter.string(from: payment.date)
-            csvString.append("Payment,\(dateStr),Payment to \(payment.toUser.name),\(payment.fromUser.name),\(payment.amount)\n")
-        }
-        
-        let fileName = "\(group.name)_Export.csv"
-        let path = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
-        
-        do {
-            try csvString.write(to: path, atomically: true, encoding: .utf8)
-            return path
-        } catch {
-            print("Failed to create CSV: \(error.localizedDescription)")
-            return nil
         }
     }
 }

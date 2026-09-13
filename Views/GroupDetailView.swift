@@ -20,7 +20,7 @@ struct GroupDetailView: View {
 
     var personalBalance: Double {
         guard let current = viewModel.currentUser else { return 0.0 }
-        let settlements = viewModel.calculateSettlements(for: currentGroup)
+        let settlements = SettlementService.shared.calculateSettlements(for: currentGroup)
         var balance = 0.0
         for s in settlements {
             if s.fromUser.id == current.id {

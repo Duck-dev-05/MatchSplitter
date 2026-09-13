@@ -42,11 +42,11 @@ struct AnalyticsView: View {
     }
 
     var overallBalance: Double {
-        viewModel.calculateGlobalBalances().values.flatMap { $0.values }.reduce(0, +)
+        SettlementService.shared.calculateGlobalBalances(currentUser: viewModel.currentUser, groups: viewModel.groups).values.flatMap { $0.values }.reduce(0, +)
     }
 
     var totalOwed: Double {
-        viewModel.calculateGlobalBalances().values.flatMap { $0.values }.filter { $0 < 0 }.reduce(0, +)
+        SettlementService.shared.calculateGlobalBalances(currentUser: viewModel.currentUser, groups: viewModel.groups).values.flatMap { $0.values }.filter { $0 < 0 }.reduce(0, +)
     }
 
     var body: some View {

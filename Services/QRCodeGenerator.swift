@@ -39,17 +39,45 @@ class QRCodeGenerator {
     func generatePaymentPayload(paymentType: String?, paymentID: String, amount: Double, currency: Currency? = nil) -> String {
         if paymentType == "PayPal" {
             let currString = currency?.rawValue ?? "USD"
-            // Ensure no spaces in the URL
             let formattedAmount = String(format: "%.2f", amount)
             let cleanPaymentID = paymentID.trimmingCharacters(in: .whitespacesAndNewlines)
             return "https://paypal.me/\(cleanPaymentID)/\(formattedAmount)\(currString)"
         } else if paymentType == "Stripe" {
             let cleanPaymentID = paymentID.trimmingCharacters(in: .whitespacesAndNewlines)
             return cleanPaymentID.hasPrefix("http") ? cleanPaymentID : "https://\(cleanPaymentID)"
+        } else if paymentType == "VietQR" {
+            // Very basic offline VietQR EMVCo string generator (without bin, it's just a fallback)
+            let amountStr = String(format: "%.0f", amount)
+            var payload = "00020101021238"
+            
+            let beneficiary = "0010A000000727011200069704360110\(paymentID.prefix(10))"
+            payload += String(format: "%02d%@", beneficiary.count, beneficiary)
+            payload += "530370454\(String(format: "%02d", amountStr.count))\(amountStr)5802VN6304"
+            
+            payload += crc16(payload)
+            return payload
         }
         
-        // In a real app, this would generate EMVCo payload (e.g., PromptPay)
-        // For now, it creates a readable string that could be caught by deep links
         return "PAYMENT|\(paymentID)|\(String(format: "%.2f", amount))"
+    }
+    
+    private func crc16(_ data: String) -> String {
+        let polynomial: UInt16 = 0x1021
+        var crc: UInt16 = 0xFFFF
+        
+        guard let dataBytes = data.data(using: .utf8) else { return "0000" }
+        
+        for byte in dataBytes {
+            crc ^= UInt16(byte) << 8
+            for _ in 0..<8 {
+                if (crc & 0x8000) != 0 {
+                    crc = (crc << 1) ^ polynomial
+                } else {
+                    crc <<= 1
+                }
+            }
+        }
+        
+        return String(format: "%04X", crc)
     }
 }

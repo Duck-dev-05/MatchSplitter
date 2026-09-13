@@ -39,7 +39,7 @@ struct SettlementView: View {
                 .padding(.horizontal, 20)
                 .padding(.vertical, 14)
 
-                let settlements = viewModel.calculateSettlements(for: group)
+                let settlements = SettlementService.shared.calculateSettlements(for: group)
 
                 if settlements.isEmpty {
                     Spacer()
