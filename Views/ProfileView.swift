@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ProfileView: View {
     @EnvironmentObject var viewModel: GroupViewModel
+    @Environment(\.layoutMetrics) var metrics
     @State private var showingEditProfile = false
     @State private var pulse = false
 
@@ -27,7 +28,7 @@ struct ProfileView: View {
                             // Animated outer pulse ring
                             Circle()
                                 .stroke(Theme.primaryGradient, lineWidth: 2.0)
-                                .frame(width: 132, height: 132)
+                                .frame(width: metrics.heroAvatarRing + 20, height: metrics.heroAvatarRing + 20)
                                 .scaleEffect(pulse ? 1.16 : 1.0)
                                 .opacity(pulse ? 0.0 : 0.55)
                                 .animation(.easeInOut(duration: 2.4).repeatForever(autoreverses: false), value: pulse)
@@ -42,9 +43,9 @@ struct ProfileView: View {
                                     ),
                                     lineWidth: 1.5
                                 )
-                                .frame(width: 118, height: 118)
+                                .frame(width: metrics.heroAvatarRing, height: metrics.heroAvatarRing)
 
-                            GradientAvatar(name: viewModel.currentUser?.name ?? "Y", avatarURL: viewModel.currentUser?.avatarURL, size: 106)
+                            GradientAvatar(name: viewModel.currentUser?.name ?? "Y", avatarURL: viewModel.currentUser?.avatarURL, size: metrics.heroAvatarSize)
                         }
                         .padding(.top, 36)
 
@@ -108,7 +109,7 @@ struct ProfileView: View {
                     }
                     .padding(.vertical, 22)
                     .accentCard(cornerRadius: 24)
-                    .padding(.horizontal, 20)
+                    .padding(.horizontal, metrics.hPad)
 
                     // MARK: Account Info
                     VStack(spacing: 0) {
@@ -140,7 +141,7 @@ struct ProfileView: View {
                         )
                     }
                     .glassCard(cornerRadius: 22)
-                    .padding(.horizontal, 20)
+                    .padding(.horizontal, metrics.hPad)
 
                     // MARK: Danger Zone
                     VStack(spacing: 10) {
@@ -165,7 +166,7 @@ struct ProfileView: View {
                             action: { withAnimation(.spring()) { viewModel.resetData() } }
                         )
                     }
-                    .padding(.horizontal, 20)
+                    .padding(.horizontal, metrics.hPad)
                     .padding(.bottom, 50)
                 }
             }

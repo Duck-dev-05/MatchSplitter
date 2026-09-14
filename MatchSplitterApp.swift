@@ -13,13 +13,16 @@ struct MatchSplitterApp: App {
 
     var body: some Scene {
         WindowGroup {
-            MainTabView()
-                .environmentObject(groupViewModel)
-                .preferredColorScheme(themeManager.colorScheme)
-                .onOpenURL { url in
-                    GIDSignIn.sharedInstance.handle(url)
-                    DeepLinkManager.shared.handleDeepLink(url, viewModel: groupViewModel)
-                }
+            GeometryReader { geo in
+                MainTabView()
+                    .environmentObject(groupViewModel)
+                    .preferredColorScheme(themeManager.colorScheme)
+                    .injectLayoutMetrics(width: geo.size.width)
+                    .onOpenURL { url in
+                        GIDSignIn.sharedInstance.handle(url)
+                        DeepLinkManager.shared.handleDeepLink(url, viewModel: groupViewModel)
+                    }
+            }
         }
     }
 }

@@ -3,6 +3,7 @@ import SwiftUI
 struct GroupDetailView: View {
     var group: Group
     @EnvironmentObject var viewModel: GroupViewModel
+    @Environment(\.layoutMetrics) var metrics
     @State private var showingAddExpense = false
     @State private var showingSettlements = false
     @State private var showingSettings = false
@@ -43,17 +44,17 @@ struct GroupDetailView: View {
                 // MARK: Hero Panel
                 heroPanelView
                     .padding(.top, 10)
-                    .padding(.horizontal, 20)
+                    .padding(.horizontal, metrics.hPad)
 
                 // MARK: Quick Action Strip
                 quickActionStrip
-                    .padding(.top, 16)
-                    .padding(.horizontal, 20)
+                    .padding(.top, metrics.cardSpacing + 4)
+                    .padding(.horizontal, metrics.hPad)
 
                 // MARK: Personal Balance
                 personalBalanceCard
-                    .padding(.top, 16)
-                    .padding(.horizontal, 20)
+                    .padding(.top, metrics.cardSpacing + 4)
+                    .padding(.horizontal, metrics.hPad)
 
                 // MARK: Expenses Header
                 SectionHeader(title: "Expenses", trailing: AnyView(
@@ -70,7 +71,7 @@ struct GroupDetailView: View {
 
                 // MARK: Expense List
                 ScrollView(showsIndicators: false) {
-                    VStack(spacing: 10) {
+                    VStack(spacing: metrics.cardSpacing) {
                         if currentGroup.expenses.isEmpty {
                             EmptyExpensesView()
                                 .padding(.top, 40)
@@ -90,7 +91,7 @@ struct GroupDetailView: View {
                             }
                         }
                     }
-                    .padding(.horizontal, 20)
+                    .padding(.horizontal, metrics.hPad)
                     .padding(.bottom, 120)
                 }
             }
@@ -102,15 +103,15 @@ struct GroupDetailView: View {
                     Spacer()
                     Button(action: { showingAddExpense = true }) {
                         Image(systemName: "plus")
-                            .font(.system(size: 24, weight: .bold))
+                            .font(.system(size: metrics.fabFont, weight: .bold))
                             .foregroundColor(.white)
-                            .frame(width: 64, height: 64)
+                            .frame(width: metrics.fabSize + 8, height: metrics.fabSize + 8)
                             .background(Theme.primaryGradient)
                             .clipShape(Circle())
                             .shadow(color: Theme.primaryAccent.opacity(0.4), radius: 14, x: 0, y: 6)
                     }
                     .buttonStyle(PressableButtonStyle())
-                    .padding(.trailing, 24)
+                    .padding(.trailing, metrics.hPad)
                     .padding(.bottom, 32)
                 }
             }
@@ -163,7 +164,7 @@ struct GroupDetailView: View {
                     .foregroundColor(.white.opacity(0.50))
 
                 Text("\(currentGroup.currency.symbol)\(String(format: "%.2f", totalSpent))")
-                    .font(.system(size: 46, weight: .heavy, design: .rounded))
+                    .font(.system(size: metrics.heroBalanceFont, weight: .heavy, design: .rounded))
                     .foregroundColor(.white)
             }
 
@@ -187,14 +188,14 @@ struct GroupDetailView: View {
 
     // MARK: - Quick Action Strip
     private var quickActionStrip: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: metrics.cardSpacing) {
             // Settle Up
             Button(action: { showingSettlements = true }) {
                 Label("Settle Up", systemImage: "arrow.left.arrow.right")
-                    .font(.system(size: 14, weight: .bold))
+                    .font(.system(size: metrics.labelFont, weight: .bold))
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
+                    .padding(.vertical, metrics.adaptive(10, 12, 14))
                     .background(Theme.primaryGradient)
                     .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                     .shadow(color: Theme.primaryAccent.opacity(0.35), radius: 10, x: 0, y: 5)
@@ -204,10 +205,10 @@ struct GroupDetailView: View {
             // Members
             NavigationLink(destination: GroupMembersView(group: currentGroup)) {
                 Label("Members", systemImage: "person.2.fill")
-                    .font(.system(size: 14, weight: .bold))
+                    .font(.system(size: metrics.labelFont, weight: .bold))
                     .foregroundColor(.white.opacity(0.85))
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
+                    .padding(.vertical, metrics.adaptive(10, 12, 14))
                     .background(Color.white.opacity(0.10))
                     .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                     .overlay(
@@ -227,10 +228,10 @@ struct GroupDetailView: View {
                                 .stroke(Theme.warmGold.opacity(0.28), lineWidth: 1)
                         )
                     Image(systemName: "trophy.fill")
-                        .font(.system(size: 18))
+                        .font(.system(size: metrics.adaptive(15, 18, 20)))
                         .foregroundColor(Theme.warmGold)
                 }
-                .frame(width: 48, height: 44)
+                .frame(width: metrics.actionIconSize, height: metrics.actionBtnHeight)
             }
             .buttonStyle(PressableButtonStyle())
 
@@ -244,10 +245,10 @@ struct GroupDetailView: View {
                                 .stroke(Theme.electricPurple.opacity(0.28), lineWidth: 1)
                         )
                     Image(systemName: "qrcode")
-                        .font(.system(size: 18))
+                        .font(.system(size: metrics.adaptive(15, 18, 20)))
                         .foregroundColor(Theme.electricPurple)
                 }
-                .frame(width: 48, height: 44)
+                .frame(width: metrics.actionIconSize, height: metrics.actionBtnHeight)
             }
             .buttonStyle(PressableButtonStyle())
 
@@ -261,10 +262,10 @@ struct GroupDetailView: View {
                                 .stroke(Theme.successColor.opacity(0.28), lineWidth: 1)
                         )
                     Image(systemName: "banknote")
-                        .font(.system(size: 18))
+                        .font(.system(size: metrics.adaptive(15, 18, 20)))
                         .foregroundColor(Theme.successColor)
                 }
-                .frame(width: 48, height: 44)
+                .frame(width: metrics.actionIconSize, height: metrics.actionBtnHeight)
             }
             .buttonStyle(PressableButtonStyle())
         }

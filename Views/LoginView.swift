@@ -11,6 +11,7 @@ enum AuthMode {
 struct LoginView: View {
     @EnvironmentObject var viewModel: GroupViewModel
     @Environment(\.presentationMode) var presentationMode
+    @Environment(\.layoutMetrics) var metrics
 
     @State private var mode: AuthMode = .login
     @State private var email = ""
@@ -104,28 +105,28 @@ struct LoginView: View {
                 Spacer()
 
                 // Logo / Header
-                VStack(spacing: 15) {
+                VStack(spacing: metrics.adaptive(10, 15, 20)) {
                     ZStack {
                         Circle()
                             .fill(Color.white.opacity(0.12))
-                            .frame(width: 100, height: 100)
+                            .frame(width: metrics.heroAvatarSize, height: metrics.heroAvatarSize)
                             .shadow(color: Color.white.opacity(0.3), radius: 25, x: 0, y: 10)
                         Image(systemName: "figure.sporting.court")
-                            .font(.system(size: 54))
+                            .font(.system(size: metrics.logoIconFont))
                             .foregroundColor(.white)
                     }
 
                     Text("MatchSplitter")
-                        .font(.system(size: 34, weight: .heavy, design: .rounded))
+                        .font(.system(size: metrics.appTitleFont, weight: .heavy, design: .rounded))
                         .foregroundColor(.white)
                         .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
                 }
                 .padding(.bottom, 20)
 
                 // Form Container
-                VStack(spacing: 20) {
+                VStack(spacing: metrics.adaptive(14, 20, 24)) {
                     Text(mode == .login ? "Welcome Back" : (mode == .registerStep1 ? "Create Account" : "Payment Setup"))
-                        .font(.system(size: 22, weight: .bold, design: .rounded))
+                        .font(.system(size: metrics.sectionFont, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
 
                     // Segmented Control with animated sliding indicator
@@ -154,7 +155,7 @@ struct LoginView: View {
                         registerStep2Fields
                     }
                 }
-                .padding(.horizontal, 24)
+                .padding(.horizontal, metrics.hPad)
 
                 Spacer()
             }

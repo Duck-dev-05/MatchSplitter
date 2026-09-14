@@ -5,6 +5,7 @@ import Charts
 
 struct AnalyticsView: View {
     @EnvironmentObject var viewModel: GroupViewModel
+    @Environment(\.layoutMetrics) var metrics
     @State private var appear = false
 
     struct CategoryStat: Identifiable {

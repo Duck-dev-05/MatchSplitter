@@ -2,6 +2,7 @@ import SwiftUI
 
 struct DashboardView: View {
     @EnvironmentObject var viewModel: GroupViewModel
+    @Environment(\.layoutMetrics) var metrics
     @State private var showingAddGroup = false
     @State private var appear = false
     @State private var showLoginAlert = false
@@ -41,8 +42,8 @@ struct DashboardView: View {
 
                     // MARK: Hero Balance Card
                     heroBallanceCard
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 32)
+                        .padding(.horizontal, metrics.hPad)
+                        .padding(.bottom, metrics.sectionSpacing + 10)
 
                     // MARK: Groups Section
                     SectionHeader(title: "Your Groups", trailing: AnyView(
@@ -56,7 +57,7 @@ struct DashboardView: View {
                     ))
                     .padding(.bottom, 14)
 
-                    VStack(spacing: 14) {
+                    VStack(spacing: metrics.cardSpacing + 4) {
                         if viewModel.groups.isEmpty {
                             EmptyGroupsView(action: {
                                 if viewModel.currentUser == nil {
@@ -82,7 +83,7 @@ struct DashboardView: View {
                             }
                         }
                     }
-                    .padding(.horizontal, 20)
+                    .padding(.horizontal, metrics.hPad)
                     .padding(.bottom, 40)
                 }
             }
@@ -107,15 +108,15 @@ struct DashboardView: View {
             VStack(alignment: .leading, spacing: 4) {
                 if let name = viewModel.currentUser?.name {
                     Text("Hello, \(name.components(separatedBy: " ").first ?? "") 👋")
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.system(size: metrics.captionFont + 1, weight: .semibold))
                         .foregroundColor(.white.opacity(0.55))
                 } else {
                     Text("Welcome 👋")
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.system(size: metrics.captionFont + 1, weight: .semibold))
                         .foregroundColor(.white.opacity(0.55))
                 }
                 Text("MatchSplitter")
-                    .font(.system(size: 28, weight: .heavy, design: .rounded))
+                    .font(.system(size: metrics.heroTitleFont, weight: .heavy, design: .rounded))
                     .foregroundColor(.white)
             }
             Spacer()
@@ -128,39 +129,39 @@ struct DashboardView: View {
                 }
             }) {
                 Image(systemName: "plus.circle.fill")
-                    .font(.system(size: 26))
+                    .font(.system(size: metrics.adaptive(22, 26, 30)))
                     .foregroundColor(Theme.secondaryAccent)
-                    .background(Circle().fill(Color.black.opacity(0.2)).frame(width: 44, height: 44))
+                    .background(Circle().fill(Color.black.opacity(0.2)).frame(width: metrics.avatarSize, height: metrics.avatarSize))
             }
-            .frame(width: 44, height: 44)
+            .frame(width: metrics.avatarSize, height: metrics.avatarSize)
             .padding(.trailing, 12)
 
             if let name = viewModel.currentUser?.name {
-                GradientAvatar(name: name, avatarURL: viewModel.currentUser?.avatarURL, size: 44)
+                GradientAvatar(name: name, avatarURL: viewModel.currentUser?.avatarURL, size: metrics.avatarSize)
                     .overlay(
                         Circle()
                             .stroke(Theme.primaryGradient, lineWidth: 2)
                     )
             }
         }
-        .padding(.horizontal, 24)
+        .padding(.horizontal, metrics.hPad)
         .padding(.top, 16)
         .padding(.bottom, 16)
     }
 
     // MARK: - Hero Balance Card
     private var heroBallanceCard: some View {
-        VStack(spacing: 18) {
+        VStack(spacing: metrics.adaptive(12, 18, 22)) {
             // Balance label
             Text("YOUR NET BALANCE")
                 .kerning(1.5)
-                .font(.system(size: 10, weight: .bold))
+                .font(.system(size: metrics.captionFont, weight: .bold))
                 .foregroundColor(.white.opacity(0.5))
 
             Text(netBalance >= 0
                  ? "+\(viewModel.defaultCurrency.symbol)\(String(format: "%.2f", netBalance))"
                  : "-\(viewModel.defaultCurrency.symbol)\(String(format: "%.2f", abs(netBalance)))")
-                .font(.system(size: 46, weight: .heavy, design: .rounded))
+                .font(.system(size: metrics.heroBalanceFont, weight: .heavy, design: .rounded))
                 .foregroundColor(.white)
 
             // Status pill

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct FriendsView: View {
     @EnvironmentObject var viewModel: GroupViewModel
+    @Environment(\.layoutMetrics) var metrics
     @State private var appear = false
 
     var globalBalances: [User: [Currency: Double]] {
@@ -46,7 +47,7 @@ struct FriendsView: View {
                                     }
                                 )
                             )
-                            .padding(.bottom, 18)
+                            .padding(.bottom, metrics.sectionSpacing)
 
                             // Summary Strip
                             HStack(spacing: 12) {

@@ -3,6 +3,7 @@ import SwiftUI
 struct LandingView: View {
     @State private var showLogin = false
     @State private var isAnimating = false
+    @Environment(\.layoutMetrics) var metrics
 
     var body: some View {
         if showLogin {
@@ -56,34 +57,34 @@ struct LandingView: View {
                     Spacer()
 
                     // Logo and Title
-                    VStack(spacing: 18) {
+                    VStack(spacing: metrics.adaptive(12, 18, 22)) {
                         // Icon with glow ring
                         ZStack {
                             Circle()
                                 .fill(Color.white.opacity(0.10))
-                                .frame(width: 130, height: 130)
+                                .frame(width: metrics.logoCircleSize, height: metrics.logoCircleSize)
                                 .shadow(color: Color.white.opacity(0.35), radius: 30, x: 0, y: 10)
 
                             Circle()
                                 .stroke(Color.white.opacity(0.22), lineWidth: 1.5)
-                                .frame(width: 145, height: 145)
+                                .frame(width: metrics.logoLargeCircle, height: metrics.logoLargeCircle)
 
                             Image(systemName: "figure.sporting.court")
-                                .font(.system(size: 70))
+                                .font(.system(size: metrics.logoIconFont))
                                 .foregroundColor(.white)
                                 .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
                         }
 
                         Text("MatchSplitter")
-                            .font(.system(size: 42, weight: .heavy, design: .rounded))
+                            .font(.system(size: metrics.appTitleFont, weight: .heavy, design: .rounded))
                             .foregroundColor(.white)
                             .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
 
                         Text("Split expenses with your team\nseamlessly.")
-                            .font(.system(size: 17, weight: .medium))
+                            .font(.system(size: metrics.bodyFont, weight: .medium))
                             .foregroundColor(.white.opacity(0.85))
                             .multilineTextAlignment(.center)
-                            .padding(.horizontal, 40)
+                            .padding(.horizontal, metrics.hPad + 10)
                     }
 
                     Spacer()
@@ -94,7 +95,7 @@ struct LandingView: View {
                         featureChip(icon: "qrcode", text: "QR Pay")
                         featureChip(icon: "chart.bar.fill", text: "Analytics")
                     }
-                    .padding(.horizontal, 30)
+                    .padding(.horizontal, metrics.hPad)
 
                     Spacer().frame(height: 10)
 
@@ -106,13 +107,13 @@ struct LandingView: View {
                     }) {
                         HStack(spacing: 8) {
                             Text("Get Started")
-                                .font(.system(size: 18, weight: .bold))
+                                .font(.system(size: metrics.bodyFont + 2, weight: .bold))
                             Image(systemName: "arrow.right")
-                                .font(.system(size: 16, weight: .bold))
+                                .font(.system(size: metrics.bodyFont, weight: .bold))
                         }
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 18)
+                        .padding(.vertical, metrics.adaptive(14, 18, 20))
                         .background(
                             LinearGradient(
                                 colors: [Theme.primaryAccent, Theme.secondaryAccent.opacity(0.80)],
@@ -128,8 +129,8 @@ struct LandingView: View {
                         )
                     }
                     .buttonStyle(PressableButtonStyle())
-                    .padding(.horizontal, 30)
-                    .padding(.bottom, 60)
+                    .padding(.horizontal, metrics.hPad)
+                    .padding(.bottom, metrics.adaptive(40, 60, 70))
                 }
             }
             .onAppear { isAnimating = true }

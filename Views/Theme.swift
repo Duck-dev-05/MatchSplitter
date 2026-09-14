@@ -463,3 +463,76 @@ struct AmbientGlob: View {
             .allowsHitTesting(false)
     }
 }
+
+// MARK: - Layout Metrics (Adaptive sizing for all screen sizes)
+struct LayoutMetrics {
+    let screenWidth: CGFloat
+
+    // Tiers: small = SE/mini (<390), large = Plus/Max (>=430), regular = everything else
+    var isSmall: Bool { screenWidth < 390 }
+    var isLarge: Bool { screenWidth >= 430 }
+
+    // MARK: Horizontal Padding
+    var hPad: CGFloat            { isSmall ? 16 : (isLarge ? 28 : 20) }
+    var hPadCard: CGFloat        { isSmall ? 14 : (isLarge ? 24 : 20) }
+
+    // MARK: Vertical Spacing
+    var sectionSpacing: CGFloat  { isSmall ? 14 : (isLarge ? 26 : 20) }
+    var cardSpacing: CGFloat     { isSmall ? 10 : (isLarge ? 16 : 12) }
+    var cardInnerPad: CGFloat    { isSmall ? 16 : (isLarge ? 28 : 22) }
+
+    // MARK: Font Sizes
+    var heroBalanceFont: CGFloat { isSmall ? 34 : (isLarge ? 52 : 46) }
+    var heroTitleFont: CGFloat   { isSmall ? 22 : (isLarge ? 34 : 28) }
+    var appTitleFont: CGFloat    { isSmall ? 28 : (isLarge ? 42 : 34) }
+    var sectionFont: CGFloat     { isSmall ? 18 : (isLarge ? 24 : 22) }
+    var bodyFont: CGFloat        { isSmall ? 14 : (isLarge ? 17 : 15) }
+    var captionFont: CGFloat     { isSmall ? 10 : (isLarge ? 13 : 12) }
+    var labelFont: CGFloat       { isSmall ? 13 : (isLarge ? 16 : 14) }
+
+    // MARK: Avatar / Icon Sizes
+    var avatarSize: CGFloat      { isSmall ? 36 : (isLarge ? 50 : 44) }
+    var heroAvatarSize: CGFloat  { isSmall ? 80 : (isLarge ? 120 : 100) }
+    var heroAvatarRing: CGFloat  { isSmall ? 90 : (isLarge ? 135 : 115) }
+    var logoCircleSize: CGFloat  { isSmall ? 100 : (isLarge ? 145 : 125) }
+    var logoIconFont: CGFloat    { isSmall ? 48 : (isLarge ? 70 : 58) }
+    var logoLargeCircle: CGFloat { isSmall ? 108 : (isLarge ? 162 : 140) }
+
+    // MARK: Card Corners
+    var cardCorner: CGFloat      { isSmall ? 18 : (isLarge ? 28 : 22) }
+    var sheetCorner: CGFloat     { isSmall ? 22 : (isLarge ? 32 : 28) }
+
+    // MARK: Tab Bar
+    var tabIconFont: CGFloat     { isSmall ? 19 : 22 }
+    var tabBottomPad: CGFloat    { isSmall ? 16 : 24 }
+    var fabSize: CGFloat         { isSmall ? 48 : (isLarge ? 60 : 56) }
+    var fabFont: CGFloat         { isSmall ? 20 : 24 }
+
+    // MARK: Quick Action Strip
+    var actionBtnHeight: CGFloat { isSmall ? 38 : 44 }
+    var actionIconSize: CGFloat  { isSmall ? 40 : 48 }
+
+    // MARK: Generic Helper
+    func adaptive<T>(_ small: T, _ regular: T, _ large: T) -> T {
+        isSmall ? small : (isLarge ? large : regular)
+    }
+}
+
+// MARK: - LayoutMetrics Environment Key
+private struct LayoutMetricsKey: EnvironmentKey {
+    static let defaultValue = LayoutMetrics(screenWidth: 390)
+}
+
+extension EnvironmentValues {
+    var layoutMetrics: LayoutMetrics {
+        get { self[LayoutMetricsKey.self] }
+        set { self[LayoutMetricsKey.self] = newValue }
+    }
+}
+
+extension View {
+    func injectLayoutMetrics(width: CGFloat) -> some View {
+        self.environment(\.layoutMetrics, LayoutMetrics(screenWidth: width))
+    }
+}
+
