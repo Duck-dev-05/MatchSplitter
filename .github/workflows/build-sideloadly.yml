@@ -15,6 +15,14 @@ jobs:
     - name: Install XcodeGen
       run: brew install xcodegen
       
+    - name: Cache Swift Packages
+      uses: actions/cache@v4
+      with:
+        path: .build/SourcePackages
+        key: ${{ runner.os }}-spm-${{ hashFiles('project.yml') }}
+        restore-keys: |
+          ${{ runner.os }}-spm-
+          
     - name: Generate Xcode Project
       run: xcodegen generate
       
@@ -25,6 +33,7 @@ jobs:
           -scheme MatchSplitter \
           -sdk iphoneos \
           -configuration Release \
+          -clonedSourcePackagesDirPath .build/SourcePackages \
           CODE_SIGN_IDENTITY="" \
           CODE_SIGNING_REQUIRED=NO \
           CODE_SIGNING_ALLOWED=NO \
