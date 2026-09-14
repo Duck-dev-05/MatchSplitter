@@ -335,6 +335,8 @@ struct GroupCardView: View {
                         Text(group.name)
                             .font(.system(size: 16, weight: .bold))
                             .foregroundColor(.white)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
                         Text(isCreator ? "Creator" : "Member")
                             .font(.system(size: 10, weight: .bold))
                             .foregroundColor(isCreator ? Theme.secondaryAccent : .white.opacity(0.5))
