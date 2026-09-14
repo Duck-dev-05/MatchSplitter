@@ -55,9 +55,9 @@ struct LoginView: View {
 
     var body: some View {
         ZStack {
-            // Animated Background
+            // Animated Background — darkened stops so icon contrast stays high
             LinearGradient(
-                gradient: Gradient(colors: [Theme.primaryAccent, Theme.secondaryAccent, Theme.backgroundEnd]),
+                gradient: Gradient(colors: [Theme.primaryAccent, Theme.backgroundMid, Theme.backgroundEnd]),
                 startPoint: isAnimating ? .topLeading : .bottomTrailing,
                 endPoint: isAnimating ? .bottomTrailing : .topLeading
             )
@@ -85,79 +85,84 @@ struct LoginView: View {
             }
             .ignoresSafeArea()
 
-            VStack(spacing: 30) {
-                if isModal {
-                    HStack {
-                        Spacer()
-                        Button(action: { presentationMode.wrappedValue.dismiss() }) {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(.system(size: 24))
-                                .foregroundColor(.white.opacity(0.7))
+            // Scrollable content so nothing is cut off on iPhone 7 / SE
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 0) {
+                    // Top bar
+                    if isModal {
+                        HStack {
+                            Spacer()
+                            Button(action: { presentationMode.wrappedValue.dismiss() }) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.system(size: 24))
+                                    .foregroundColor(.white.opacity(0.7))
+                            }
+                            .buttonStyle(PressableButtonStyle())
                         }
-                        .buttonStyle(PressableButtonStyle())
-                    }
-                    .padding(.horizontal, 25)
-                    .padding(.top, 40)
-                } else {
-                    Spacer().frame(height: 64)
-                }
-
-                Spacer()
-
-                // Logo / Header
-                VStack(spacing: metrics.adaptive(10, 15, 20)) {
-                    ZStack {
-                        Circle()
-                            .fill(Color.white.opacity(0.12))
-                            .frame(width: metrics.heroAvatarSize, height: metrics.heroAvatarSize)
-                            .shadow(color: Color.white.opacity(0.3), radius: 25, x: 0, y: 10)
-                        Image(systemName: "figure.sporting.court")
-                            .font(.system(size: metrics.logoIconFont))
-                            .foregroundColor(.white)
-                    }
-
-                    Text("MatchSplitter")
-                        .font(.system(size: metrics.appTitleFont, weight: .heavy, design: .rounded))
-                        .foregroundColor(.white)
-                        .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
-                }
-                .padding(.bottom, 20)
-
-                // Form Container
-                VStack(spacing: metrics.adaptive(14, 20, 24)) {
-                    Text(mode == .login ? "Welcome Back" : (mode == .registerStep1 ? "Create Account" : "Payment Setup"))
-                        .font(.system(size: metrics.sectionFont, weight: .bold, design: .rounded))
-                        .foregroundColor(.white)
-
-                    // Segmented Control with animated sliding indicator
-                    if mode != .registerStep2 {
-                        animatedSegmentControl
-                    }
-
-                    // Error Message
-                    if !errorMessage.isEmpty {
-                        HStack(spacing: 6) {
-                            Image(systemName: "exclamationmark.circle")
-                                .font(.system(size: 13))
-                            Text(errorMessage)
-                                .font(.system(size: 13, weight: .medium))
-                        }
-                        .foregroundColor(Theme.dangerColor)
-                        .padding(.bottom, 2)
-                    }
-
-                    // Form fields
-                    if mode == .login {
-                        loginFields
-                    } else if mode == .registerStep1 {
-                        registerStep1Fields
+                        .padding(.horizontal, 25)
+                        .padding(.top, 50)
+                        .padding(.bottom, metrics.isSmall ? 12 : 20)
                     } else {
-                        registerStep2Fields
+                        // Status bar clearance
+                        Spacer().frame(height: metrics.isSmall ? 50 : 64)
                     }
-                }
-                .padding(.horizontal, metrics.hPad)
 
-                Spacer()
+                    // Logo / Header
+                    VStack(spacing: metrics.adaptive(8, 12, 16)) {
+                        ZStack {
+                            Circle()
+                                .fill(Color.white.opacity(0.18))
+                                .frame(width: metrics.heroAvatarSize, height: metrics.heroAvatarSize)
+                                .shadow(color: Color.white.opacity(0.25), radius: 20, x: 0, y: 8)
+                            Image(systemName: "figure.sporting.court")
+                                .font(.system(size: metrics.logoIconFont, weight: .semibold))
+                                .foregroundColor(Theme.primaryAccent)
+                        }
+
+                        Text("MatchSplitter")
+                            .font(.system(size: metrics.appTitleFont, weight: .heavy, design: .rounded))
+                            .foregroundColor(.white)
+                            .shadow(color: Color.black.opacity(0.25), radius: 6, x: 0, y: 3)
+                    }
+                    .padding(.bottom, metrics.adaptive(12, 20, 24))
+
+                    // Form Container
+                    VStack(spacing: metrics.adaptive(12, 18, 22)) {
+                        Text(mode == .login ? "Welcome Back" : (mode == .registerStep1 ? "Create Account" : "Payment Setup"))
+                            .font(.system(size: metrics.sectionFont, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+
+                        // Segmented Control
+                        if mode != .registerStep2 {
+                            animatedSegmentControl
+                        }
+
+                        // Error Message
+                        if !errorMessage.isEmpty {
+                            HStack(spacing: 6) {
+                                Image(systemName: "exclamationmark.circle")
+                                    .font(.system(size: 13))
+                                Text(errorMessage)
+                                    .font(.system(size: 13, weight: .medium))
+                            }
+                            .foregroundColor(Theme.dangerColor)
+                            .padding(.bottom, 2)
+                        }
+
+                        // Form fields
+                        if mode == .login {
+                            loginFields
+                        } else if mode == .registerStep1 {
+                            registerStep1Fields
+                        } else {
+                            registerStep2Fields
+                        }
+                    }
+                    .padding(.horizontal, metrics.hPad)
+
+                    // Bottom padding: extra room so tab bar (88pt) doesn't overlap
+                    Spacer().frame(height: isModal ? metrics.adaptive(30, 40, 50) : metrics.adaptive(100, 110, 120))
+                }
             }
         }
     }

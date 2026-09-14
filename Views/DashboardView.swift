@@ -84,7 +84,7 @@ struct DashboardView: View {
                         }
                     }
                     .padding(.horizontal, metrics.hPad)
-                    .padding(.bottom, 40)
+                    .padding(.bottom, metrics.adaptive(100, 80, 80))
                 }
             }
         }
