@@ -6,8 +6,15 @@ struct ProfileView: View {
     @State private var showingEditProfile = false
     @State private var pulse = false
 
+    var myGroups: [Group] {
+        guard let user = viewModel.currentUser else { return [] }
+        return viewModel.groups.filter { group in
+            group.members.contains(where: { $0.id == user.id })
+        }
+    }
+
     var totalExpenses: Int {
-        viewModel.groups.flatMap { $0.expenses }.count
+        myGroups.flatMap { $0.expenses }.count
     }
 
     var body: some View {
@@ -101,7 +108,7 @@ struct ProfileView: View {
 
                     // MARK: Quick Stats
                     HStack(spacing: 0) {
-                        StatBadge(icon: "person.3.fill", label: "Groups", value: "\(viewModel.groups.count)", color: Theme.secondaryAccent)
+                        StatBadge(icon: "person.3.fill", label: "Groups", value: "\(myGroups.count)", color: Theme.secondaryAccent)
                         Divider().frame(height: 44).background(Color.white.opacity(0.08))
                         StatBadge(icon: "receipt.fill", label: "Expenses", value: "\(totalExpenses)", color: Theme.primaryAccent)
                         Divider().frame(height: 44).background(Color.white.opacity(0.08))

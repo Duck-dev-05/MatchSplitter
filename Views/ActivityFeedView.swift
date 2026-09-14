@@ -10,10 +10,17 @@ struct ActivityFeedView: View {
         var id: String { expense.id.uuidString }
     }
 
+    var myGroups: [Group] {
+        guard let user = viewModel.currentUser else { return [] }
+        return viewModel.groups.filter { group in
+            group.members.contains(where: { $0.id == user.id })
+        }
+    }
+
     // Extract expenses from all groups, sorted by date.
     var activities: [ActivityItem] {
         var all: [ActivityItem] = []
-        for group in viewModel.groups {
+        for group in myGroups {
             for exp in group.expenses {
                 all.append(ActivityItem(group: group, expense: exp))
             }

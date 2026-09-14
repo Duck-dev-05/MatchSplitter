@@ -16,9 +16,16 @@ struct AnalyticsView: View {
         var id: String { category }
     }
 
+    var myGroups: [Group] {
+        guard let user = viewModel.currentUser else { return [] }
+        return viewModel.groups.filter { group in
+            group.members.contains(where: { $0.id == user.id })
+        }
+    }
+
     var categoryData: [CategoryStat] {
         var totals: [ExpenseCategory: Double] = [:]
-        for group in viewModel.groups {
+        for group in myGroups {
             for expense in group.expenses {
                 totals[expense.category, default: 0.0] += expense.amount
             }
@@ -39,15 +46,15 @@ struct AnalyticsView: View {
     }
 
     var totalSpent: Double {
-        viewModel.groups.flatMap { $0.expenses.map { $0.amount } }.reduce(0, +)
+        myGroups.flatMap { $0.expenses.map { $0.amount } }.reduce(0, +)
     }
 
     var overallBalance: Double {
-        SettlementService.shared.calculateGlobalBalances(currentUser: viewModel.currentUser, groups: viewModel.groups).values.flatMap { $0.values }.reduce(0, +)
+        SettlementService.shared.calculateGlobalBalances(currentUser: viewModel.currentUser, groups: myGroups).values.flatMap { $0.values }.reduce(0, +)
     }
 
     var totalOwed: Double {
-        SettlementService.shared.calculateGlobalBalances(currentUser: viewModel.currentUser, groups: viewModel.groups).values.flatMap { $0.values }.filter { $0 < 0 }.reduce(0, +)
+        SettlementService.shared.calculateGlobalBalances(currentUser: viewModel.currentUser, groups: myGroups).values.flatMap { $0.values }.filter { $0 < 0 }.reduce(0, +)
     }
 
     var body: some View {

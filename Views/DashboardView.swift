@@ -8,10 +8,17 @@ struct DashboardView: View {
     @State private var showLoginAlert = false
     @State private var showingJoinScanner = false
 
-    var totalGroups: Int { viewModel.groups.count }
+    var myGroups: [Group] {
+        guard let user = viewModel.currentUser else { return [] }
+        return viewModel.groups.filter { group in
+            group.members.contains(where: { $0.id == user.id })
+        }
+    }
+
+    var totalGroups: Int { myGroups.count }
 
     var netBalance: Double {
-        let balances = SettlementService.shared.calculateGlobalBalances(currentUser: viewModel.currentUser, groups: viewModel.groups)
+        let balances = SettlementService.shared.calculateGlobalBalances(currentUser: viewModel.currentUser, groups: myGroups)
         return balances.values.flatMap { $0.values }.reduce(0, +)
     }
 
@@ -59,7 +66,7 @@ struct DashboardView: View {
                     .padding(.bottom, 14)
 
                     VStack(spacing: metrics.cardSpacing + 4) {
-                        if viewModel.groups.isEmpty {
+                        if myGroups.isEmpty {
                             EmptyGroupsView(
                                 action: {
                                     if viewModel.currentUser == nil {
@@ -78,7 +85,7 @@ struct DashboardView: View {
                             )
                             .padding(.top, 40)
                         } else {
-                            ForEach(Array(viewModel.groups.enumerated()), id: \.offset) { index, group in
+                            ForEach(Array(myGroups.enumerated()), id: \.offset) { index, group in
                                 NavigationLink(destination: GroupDetailView(group: group)) {
                                     GroupCardView(group: group)
                                 }
@@ -94,7 +101,7 @@ struct DashboardView: View {
                         }
                     
                     // Action Buttons (Create / Join)
-                    if !viewModel.groups.isEmpty {
+                    if !myGroups.isEmpty {
                         HStack(spacing: 12) {
                             Button(action: {
                                 if viewModel.currentUser == nil {
@@ -197,7 +204,7 @@ struct DashboardView: View {
                 Text("MatchSplitter")
                     .font(.system(size: metrics.heroTitleFont, weight: .heavy, design: .rounded))
                     .foregroundColor(.white)
-                Text(viewModel.groups.isEmpty ? "No groups yet" : "\(viewModel.groups.count) active group\(viewModel.groups.count == 1 ? "" : "s")")
+                Text(myGroups.isEmpty ? "No groups yet" : "\(myGroups.count) active group\(myGroups.count == 1 ? "" : "s")")
                     .font(.system(size: metrics.captionFont, weight: .medium))
                     .foregroundColor(.white.opacity(0.35))
             }

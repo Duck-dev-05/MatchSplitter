@@ -41,6 +41,9 @@ class GroupViewModel: ObservableObject {
                 }
                 self.saveData()
             }
+            
+            // Sync with Firebase
+            self.fetchGroupsFromFirebase()
         }
     }
     
@@ -75,14 +78,41 @@ class GroupViewModel: ObservableObject {
     func login(user: User) {
         currentUser = user
         saveData()
+        fetchGroupsFromFirebase()
     }
     
     func logout() {
         currentUser = nil
         saveData()
     }
-
     
+    func fetchGroupsFromFirebase() {
+        guard let current = currentUser else { return }
+        Task {
+            do {
+                let fetchedGroups = try await FirebaseManager.shared.fetchGroupsForUser(userId: current.id)
+                await MainActor.run {
+                    var needsSave = false
+                    for fetchedGroup in fetchedGroups {
+                        if let index = self.groups.firstIndex(where: { $0.id == fetchedGroup.id }) {
+                            // Update if fetched group has a newer state or just overwrite safely
+                            // For a robust sync, you'd compare timestamps. Overwriting is simple here.
+                            self.groups[index] = fetchedGroup
+                            needsSave = true
+                        } else {
+                            self.groups.append(fetchedGroup)
+                            needsSave = true
+                        }
+                    }
+                    if needsSave {
+                        self.saveData()
+                    }
+                }
+            } catch {
+                print("Failed to fetch groups from Firebase: \(error)")
+            }
+        }
+    }    
     func loginOrRegisterWithGoogle(name: String, email: String, avatarURL: String? = nil) {
         if let existingIndex = registeredUsers.firstIndex(where: { $0.email == email }) {
             var existingUser = registeredUsers[existingIndex]

@@ -16,6 +16,7 @@ class FirebaseManager {
         
         let data: [String: Any] = [
             "id": group.id.uuidString,
+            "member_ids": group.members.map { $0.id.uuidString },
             "group_data": groupJsonString,
             "last_updated": FieldValue.serverTimestamp()
         ]
@@ -34,6 +35,24 @@ class FirebaseManager {
         }
         
         return try JSONDecoder().decode(Group.self, from: groupData)
+    }
+    
+    // MARK: - Fetch Groups for User
+    func fetchGroupsForUser(userId: UUID) async throws -> [Group] {
+        let snapshot = try await db.collection("groups")
+            .whereField("member_ids", arrayContains: userId.uuidString)
+            .getDocuments()
+            
+        var userGroups: [Group] = []
+        for document in snapshot.documents {
+            let data = document.data()
+            if let groupJsonString = data["group_data"] as? String,
+               let groupData = groupJsonString.data(using: .utf8),
+               let group = try? JSONDecoder().decode(Group.self, from: groupData) {
+                userGroups.append(group)
+            }
+        }
+        return userGroups
     }
     
     // MARK: - Realtime Subscriptions
