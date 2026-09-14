@@ -120,8 +120,9 @@ struct LoginView: View {
                         .foregroundColor(.white)
                         .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
                 }
+                .padding(.bottom, 20)
 
-                // Glass Card
+                // Form Container
                 VStack(spacing: 20) {
                     Text(mode == .login ? "Welcome Back" : (mode == .registerStep1 ? "Create Account" : "Payment Setup"))
                         .font(.system(size: 22, weight: .bold, design: .rounded))
@@ -153,21 +154,7 @@ struct LoginView: View {
                         registerStep2Fields
                     }
                 }
-                .padding(28)
-                .background(
-                    RoundedRectangle(cornerRadius: 28)
-                        .fill(Color.white.opacity(0.12))
-                        .background(
-                            BlurView(style: .systemUltraThinMaterialDark)
-                                .clipShape(RoundedRectangle(cornerRadius: 28))
-                        )
-                        .shadow(color: .black.opacity(0.25), radius: 20, x: 0, y: 10)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 28)
-                        .stroke(Color.white.opacity(0.18), lineWidth: 1)
-                )
-                .padding(.horizontal, 20)
+                .padding(.horizontal, 24)
 
                 Spacer()
             }

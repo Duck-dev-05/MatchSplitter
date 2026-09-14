@@ -141,15 +141,6 @@ struct DashboardView: View {
                         Circle()
                             .stroke(Theme.primaryGradient, lineWidth: 2)
                     )
-            } else {
-                ZStack {
-                    Circle()
-                        .fill(Color.white.opacity(0.08))
-                        .frame(width: 44, height: 44)
-                    Image(systemName: "person.fill")
-                        .font(.system(size: 18))
-                        .foregroundColor(.white.opacity(0.35))
-                }
             }
         }
         .padding(.horizontal, 24)

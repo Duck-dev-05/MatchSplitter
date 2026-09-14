@@ -250,6 +250,23 @@ struct GroupDetailView: View {
                 .frame(width: 48, height: 44)
             }
             .buttonStyle(PressableButtonStyle())
+
+            // Group QR Payment
+            Button(action: { showingGroupPaymentQR = true }) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(Theme.successColor.opacity(0.14))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .stroke(Theme.successColor.opacity(0.28), lineWidth: 1)
+                        )
+                    Image(systemName: "banknote")
+                        .font(.system(size: 18))
+                        .foregroundColor(Theme.successColor)
+                }
+                .frame(width: 48, height: 44)
+            }
+            .buttonStyle(PressableButtonStyle())
         }
     }
 
