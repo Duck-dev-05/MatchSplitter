@@ -6,6 +6,7 @@ struct DashboardView: View {
     @State private var showingAddGroup = false
     @State private var appear = false
     @State private var showLoginAlert = false
+    @State private var showingJoinScanner = false
 
     var totalGroups: Int { viewModel.groups.count }
 
@@ -59,13 +60,22 @@ struct DashboardView: View {
 
                     VStack(spacing: metrics.cardSpacing + 4) {
                         if viewModel.groups.isEmpty {
-                            EmptyGroupsView(action: {
-                                if viewModel.currentUser == nil {
-                                    showLoginAlert = true
-                                } else {
-                                    showingAddGroup = true
+                            EmptyGroupsView(
+                                action: {
+                                    if viewModel.currentUser == nil {
+                                        showLoginAlert = true
+                                    } else {
+                                        showingAddGroup = true
+                                    }
+                                },
+                                onJoin: {
+                                    if viewModel.currentUser == nil {
+                                        showLoginAlert = true
+                                    } else {
+                                        showingJoinScanner = true
+                                    }
                                 }
-                            })
+                            )
                             .padding(.top, 40)
                         } else {
                             ForEach(Array(viewModel.groups.enumerated()), id: \.offset) { index, group in
@@ -83,34 +93,58 @@ struct DashboardView: View {
                             }
                         }
                     
-                    // Create New Group button (always visible)
+                    // Action Buttons (Create / Join)
                     if !viewModel.groups.isEmpty {
-                        Button(action: {
-                            if viewModel.currentUser == nil {
-                                showLoginAlert = true
-                            } else {
-                                showingAddGroup = true
+                        HStack(spacing: 12) {
+                            Button(action: {
+                                if viewModel.currentUser == nil {
+                                    showLoginAlert = true
+                                } else {
+                                    showingJoinScanner = true
+                                }
+                            }) {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "qrcode.viewfinder")
+                                        .font(.system(size: 16, weight: .semibold))
+                                    Text("Join")
+                                        .font(.system(size: 16, weight: .bold))
+                                }
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 16)
+                                .background(Color.white.opacity(0.1))
+                                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                                .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(Color.white.opacity(0.2), lineWidth: 1))
                             }
-                        }) {
-                            HStack(spacing: 10) {
-                                Image(systemName: "plus.circle.fill")
-                                    .font(.system(size: 18, weight: .semibold))
-                                Text("Create New Group")
-                                    .font(.system(size: 16, weight: .bold))
-                            }
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(
-                                LinearGradient(
-                                    colors: [Theme.primaryAccent, Theme.secondaryAccent],
-                                    startPoint: .leading, endPoint: .trailing
+                            .buttonStyle(PressableButtonStyle())
+
+                            Button(action: {
+                                if viewModel.currentUser == nil {
+                                    showLoginAlert = true
+                                } else {
+                                    showingAddGroup = true
+                                }
+                            }) {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "plus.circle.fill")
+                                        .font(.system(size: 16, weight: .semibold))
+                                    Text("New Group")
+                                        .font(.system(size: 16, weight: .bold))
+                                }
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 16)
+                                .background(
+                                    LinearGradient(
+                                        colors: [Theme.primaryAccent, Theme.secondaryAccent],
+                                        startPoint: .leading, endPoint: .trailing
+                                    )
                                 )
-                            )
-                            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-                            .shadow(color: Theme.primaryAccent.opacity(0.35), radius: 12, x: 0, y: 6)
+                                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                                .shadow(color: Theme.primaryAccent.opacity(0.35), radius: 12, x: 0, y: 6)
+                            }
+                            .buttonStyle(PressableButtonStyle())
                         }
-                        .buttonStyle(PressableButtonStyle())
                         .padding(.top, 8)
                     }
                     }
@@ -122,6 +156,20 @@ struct DashboardView: View {
         .navigationBarHidden(true)
         .sheet(isPresented: $showingAddGroup) {
             AddGroupSheet()
+        }
+        .sheet(isPresented: $showingJoinScanner) {
+            QRScannerView(
+                onResult: { payload in
+                    showingJoinScanner = false
+                    if let url = URL(string: payload) {
+                        DeepLinkManager.shared.handleDeepLink(url, viewModel: viewModel)
+                    }
+                },
+                onCancel: {
+                    showingJoinScanner = false
+                }
+            )
+            .ignoresSafeArea()
         }
         .alert("Account Required", isPresented: $showLoginAlert) {
             Button("OK", role: .cancel) { }
@@ -380,6 +428,7 @@ struct GroupCardView: View {
 struct EmptyGroupsView: View {
     @State private var pulse = false
     var action: () -> Void
+    var onJoin: () -> Void
 
     var body: some View {
         VStack(spacing: 18) {
@@ -407,21 +456,39 @@ struct EmptyGroupsView: View {
                 .foregroundColor(.white.opacity(0.45))
                 .multilineTextAlignment(.center)
                 
-            Button(action: action) {
-                HStack(spacing: 8) {
-                    Image(systemName: "plus")
-                        .font(.system(size: 14, weight: .bold))
-                    Text("Create Group")
-                        .font(.system(size: 16, weight: .bold))
+            HStack(spacing: 12) {
+                Button(action: onJoin) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "qrcode.viewfinder")
+                            .font(.system(size: 14, weight: .bold))
+                        Text("Join Group")
+                            .font(.system(size: 16, weight: .bold))
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 14)
+                    .background(Color.white.opacity(0.1))
+                    .clipShape(Capsule())
+                    .overlay(Capsule().stroke(Color.white.opacity(0.2), lineWidth: 1))
                 }
-                .foregroundColor(.white)
-                .padding(.horizontal, 24)
-                .padding(.vertical, 14)
-                .background(Theme.primaryGradient)
-                .clipShape(Capsule())
-                .shadow(color: Theme.primaryAccent.opacity(0.3), radius: 10, x: 0, y: 5)
+                .buttonStyle(PressableButtonStyle())
+
+                Button(action: action) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "plus")
+                            .font(.system(size: 14, weight: .bold))
+                        Text("Create")
+                            .font(.system(size: 16, weight: .bold))
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 14)
+                    .background(Theme.primaryGradient)
+                    .clipShape(Capsule())
+                    .shadow(color: Theme.primaryAccent.opacity(0.3), radius: 10, x: 0, y: 5)
+                }
+                .buttonStyle(PressableButtonStyle())
             }
-            .buttonStyle(PressableButtonStyle())
             .padding(.top, 8)
         }
         .onAppear { pulse = true }
