@@ -27,7 +27,7 @@ jobs:
       run: xcodegen generate
 
     - name: Resolve Package Dependencies
-      run: xcodebuild -resolvePackageDependencies -project MatchSplitter.xcodeproj -scheme MatchSplitter -clonedSourcePackagesDirPath .build/SourcePackages
+      run: xcodebuild -resolvePackageDependencies -project MatchSplitter.xcodeproj -scheme MatchSplitter -clonedSourcePackagesDirPath .build/SourcePackages -scmProvider system
       
     - name: Build for iOS Device (Unsigned)
       run: |
