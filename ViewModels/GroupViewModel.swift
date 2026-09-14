@@ -50,7 +50,7 @@ class GroupViewModel: ObservableObject {
         
         Task {
             for group in groups {
-                try? await SupabaseManager.shared.saveGroup(group)
+                try? await FirebaseManager.shared.saveGroup(group)
             }
         }
     }

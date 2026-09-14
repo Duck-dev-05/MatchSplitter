@@ -1,10 +1,15 @@
 import SwiftUI
 import GoogleSignIn
+import FirebaseCore
 
 @main
 struct MatchSplitterApp: App {
     @StateObject private var groupViewModel = GroupViewModel()
     @StateObject private var themeManager = ThemeManager.shared
+
+    init() {
+        FirebaseApp.configure()
+    }
 
     var body: some Scene {
         WindowGroup {

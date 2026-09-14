@@ -8,9 +8,9 @@ packages:
   GoogleSignIn:
     url: https://github.com/google/GoogleSignIn-iOS.git
     from: 8.0.0
-  Supabase:
-    url: https://github.com/supabase/supabase-swift.git
-    from: 2.0.0
+  Firebase:
+    url: https://github.com/firebase/firebase-ios-sdk.git
+    from: 10.15.0
 targets:
   MatchSplitter:
     type: application
@@ -23,12 +23,14 @@ targets:
       - ViewModels
       - Services
       - Assets.xcassets
+      - GoogleService-Info.plist
     dependencies:
       - package: EFQRCode
       - package: GoogleSignIn
       - package: GoogleSignIn
         product: GoogleSignInSwift
-      - package: Supabase
+      - package: Firebase
+        product: FirebaseFirestore
     info:
       path: Info.plist
       properties:

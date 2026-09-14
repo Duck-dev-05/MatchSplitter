@@ -27,8 +27,8 @@ class DeepLinkManager {
                 if let index = viewModel.groups.firstIndex(where: { $0.id == groupId }) {
                     targetGroup = viewModel.groups[index]
                 } else {
-                    // Fetch from Supabase if not found locally
-                    if let fetchedGroup = try? await SupabaseManager.shared.fetchGroup(id: groupId) {
+                    // Fetch from Firebase if not found locally
+                    if let fetchedGroup = try? await FirebaseManager.shared.fetchGroup(id: groupId) {
                         targetGroup = fetchedGroup
                         await MainActor.run {
                             viewModel.groups.append(fetchedGroup)
@@ -47,8 +47,8 @@ class DeepLinkManager {
                             viewModel.saveData()
                         }
                         
-                        // Push immediately to Supabase so creator sees it
-                        try? await SupabaseManager.shared.saveGroup(group)
+                        // Push immediately to Firebase so creator sees it
+                        try? await FirebaseManager.shared.saveGroup(group)
                     }
                 }
             }

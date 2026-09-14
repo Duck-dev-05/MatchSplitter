@@ -1,0 +1,61 @@
+import Foundation
+import FirebaseFirestore
+
+class FirebaseManager {
+    static let shared = FirebaseManager()
+    
+    let db = Firestore.firestore()
+    private var listeners: [UUID: ListenerRegistration] = [:]
+    
+    private init() {}
+    
+    // MARK: - Save Group to Firebase
+    func saveGroup(_ group: Group) async throws {
+        let groupData = try JSONEncoder().encode(group)
+        guard let groupJsonString = String(data: groupData, encoding: .utf8) else { return }
+        
+        let data: [String: Any] = [
+            "id": group.id.uuidString,
+            "group_data": groupJsonString,
+            "last_updated": FieldValue.serverTimestamp()
+        ]
+        
+        try await db.collection("groups").document(group.id.uuidString).setData(data, merge: true)
+    }
+    
+    // MARK: - Fetch Group from Firebase
+    func fetchGroup(id: UUID) async throws -> Group? {
+        let snapshot = try await db.collection("groups").document(id.uuidString).getDocument()
+        
+        guard let data = snapshot.data(),
+              let groupJsonString = data["group_data"] as? String,
+              let groupData = groupJsonString.data(using: .utf8) else {
+            return nil
+        }
+        
+        return try JSONDecoder().decode(Group.self, from: groupData)
+    }
+    
+    // MARK: - Realtime Subscriptions
+    func listenForUpdates(groupId: UUID, onChange: @escaping (Group) -> Void) {
+        listeners[groupId]?.remove()
+        
+        let listener = db.collection("groups").document(groupId.uuidString)
+            .addSnapshotListener { documentSnapshot, error in
+                guard let document = documentSnapshot,
+                      let data = document.data(),
+                      let groupJsonString = data["group_data"] as? String,
+                      let groupData = groupJsonString.data(using: .utf8) else {
+                    return
+                }
+                
+                if let updatedGroup = try? JSONDecoder().decode(Group.self, from: groupData) {
+                    DispatchQueue.main.async {
+                        onChange(updatedGroup)
+                    }
+                }
+            }
+        
+        listeners[groupId] = listener
+    }
+}
