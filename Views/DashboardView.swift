@@ -326,107 +326,113 @@ struct GroupCardView: View {
                 .padding(.vertical, 14)
                 .padding(.leading, 14)
 
-            HStack(spacing: 14) {
-                // Group icon
-                ZStack {
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(accentColor.opacity(0.14))
-                        .frame(width: 50, height: 50)
-                    Image(systemName: "person.3.fill")
-                        .foregroundColor(accentColor)
-                        .font(.system(size: 18, weight: .semibold))
-                }
-
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack(spacing: 8) {
-                        Text(group.name)
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(.white)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.8)
-                        Text(isCreator ? "Creator" : "Member")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(isCreator ? Theme.secondaryAccent : .white.opacity(0.5))
-                            .padding(.horizontal, 7)
-                            .padding(.vertical, 3)
-                            .background(isCreator ? Theme.secondaryAccent.opacity(0.14) : Color.white.opacity(0.08))
-                            .clipShape(Capsule())
+            VStack(spacing: 0) {
+                HStack(spacing: 14) {
+                    // Group icon
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .fill(accentColor.opacity(0.14))
+                            .frame(width: 50, height: 50)
+                        Image(systemName: "person.3.fill")
+                            .foregroundColor(accentColor)
+                            .font(.system(size: 18, weight: .semibold))
                     }
 
-                    // Member avatars row
-                    HStack(spacing: -10) {
-                        ForEach(Array(group.members.prefix(4).enumerated()), id: \.offset) { index, member in
-                            GradientAvatar(
-                                name: member.name,
-                                avatarURL: member.avatarURL,
-                                size: 24,
-                                gradient: LinearGradient(
-                                    colors: [accentColor, accentColor.opacity(0.6)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .overlay(Circle().stroke(Theme.cardBackground, lineWidth: 1.5))
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack(spacing: 8) {
+                            Text(group.name)
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundColor(.white)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
+                            Text(isCreator ? "Creator" : "Member")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundColor(isCreator ? Theme.secondaryAccent : .white.opacity(0.5))
+                                .padding(.horizontal, 7)
+                                .padding(.vertical, 3)
+                                .background(isCreator ? Theme.secondaryAccent.opacity(0.14) : Color.white.opacity(0.08))
+                                .clipShape(Capsule())
                         }
-                        if group.members.count > 4 {
-                            ZStack {
-                                Circle()
-                                    .fill(Color.white.opacity(0.10))
-                                    .frame(width: 24, height: 24)
-                                    .overlay(Circle().stroke(Theme.cardBackground, lineWidth: 1.5))
-                                Text("+\(group.members.count - 4)")
-                                    .font(.system(size: 8, weight: .bold))
-                                    .foregroundColor(.white.opacity(0.7))
+
+                        // Member avatars row
+                        HStack(spacing: -10) {
+                            ForEach(Array(group.members.prefix(4).enumerated()), id: \.offset) { index, member in
+                                GradientAvatar(
+                                    name: member.name,
+                                    avatarURL: member.avatarURL,
+                                    size: 24,
+                                    gradient: LinearGradient(
+                                        colors: [accentColor, accentColor.opacity(0.6)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .overlay(Circle().stroke(Theme.cardBackground, lineWidth: 1.5))
+                            }
+                            if group.members.count > 4 {
+                                ZStack {
+                                    Circle()
+                                        .fill(Color.white.opacity(0.10))
+                                        .frame(width: 24, height: 24)
+                                        .overlay(Circle().stroke(Theme.cardBackground, lineWidth: 1.5))
+                                    Text("+\(group.members.count - 4)")
+                                        .font(.system(size: 8, weight: .bold))
+                                        .foregroundColor(.white.opacity(0.7))
+                                }
                             }
                         }
                     }
-                }
 
-                Spacer()
+                    Spacer()
 
-                VStack(alignment: .trailing, spacing: 6) {
-                    Text(group.currency.symbol + String(format: "%.2f", totalSpent))
-                        .font(.system(size: 17, weight: .heavy, design: .rounded))
-                        .foregroundColor(.white)
-                    Text("\(group.expenses.count) expenses")
-                        .font(.caption.weight(.medium))
-                        .foregroundColor(.white.opacity(0.5))
+                    VStack(alignment: .trailing, spacing: 6) {
+                        Text(group.currency.symbol + String(format: "%.2f", totalSpent))
+                            .font(.system(size: 17, weight: .heavy, design: .rounded))
+                            .foregroundColor(.white)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.6)
+                        
+                        Text("\(group.expenses.count) expenses")
+                            .font(.caption.weight(.medium))
+                            .foregroundColor(.white.opacity(0.5))
 
-                    // Spending bar
-                    GeometryReader { geo in
-                        ZStack(alignment: .leading) {
-                            Capsule()
-                                .fill(Color.white.opacity(0.07))
-                                .frame(height: 4)
-                            Capsule()
-                                .fill(accentColor.opacity(0.80))
-                                .frame(width: geo.size.width * CGFloat(spendingRatio), height: 4)
+                        // Spending bar
+                        GeometryReader { geo in
+                            ZStack(alignment: .leading) {
+                                Capsule()
+                                    .fill(Color.white.opacity(0.07))
+                                    .frame(height: 4)
+                                Capsule()
+                                    .fill(accentColor.opacity(0.80))
+                                    .frame(width: geo.size.width * CGFloat(spendingRatio), height: 4)
+                            }
                         }
+                        .frame(width: 70, height: 4)
                     }
-                    .frame(width: 70, height: 4)
-                }
-                .padding(.trailing, 4)
-
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundColor(.white.opacity(0.25))
                     .padding(.trailing, 4)
-            }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 14)
 
-            // "Tap to view" hint row
-            HStack {
-                Spacer()
-                HStack(spacing: 4) {
-                    Text("Tap to view")
-                        .font(.system(size: 10, weight: .medium))
-                    Image(systemName: "arrow.right")
-                        .font(.system(size: 9, weight: .semibold))
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(.white.opacity(0.25))
+                        .padding(.trailing, 4)
                 }
-                .foregroundColor(accentColor.opacity(0.5))
-                .padding(.trailing, 14)
-                .padding(.bottom, 10)
+                .padding(.horizontal, 14)
+                .padding(.top, 14)
+                .padding(.bottom, 6)
+
+                // "Tap to view" hint row
+                HStack {
+                    Spacer()
+                    HStack(spacing: 4) {
+                        Text("Tap to view")
+                            .font(.system(size: 10, weight: .medium))
+                        Image(systemName: "arrow.right")
+                            .font(.system(size: 9, weight: .semibold))
+                    }
+                    .foregroundColor(accentColor.opacity(0.5))
+                    .padding(.trailing, 14)
+                    .padding(.bottom, 10)
+                }
             }
         }
         .glassCard(cornerRadius: 20)
