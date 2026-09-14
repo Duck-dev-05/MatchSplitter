@@ -85,7 +85,7 @@ struct DashboardView: View {
                             )
                             .padding(.top, 40)
                         } else {
-                            ForEach(Array(myGroups.enumerated()), id: \.offset) { index, group in
+                            ForEach(Array(myGroups.enumerated()), id: \.element.id) { index, group in
                                 NavigationLink(destination: GroupDetailView(group: group)) {
                                     GroupCardView(group: group)
                                 }
