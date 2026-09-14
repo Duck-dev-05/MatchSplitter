@@ -40,9 +40,10 @@ class DeepLinkManager {
                     if !group.members.contains(where: { $0.id == user.id }) {
                         group.members.append(user)
                         
+                        let updatedGroup = group
                         await MainActor.run {
                             if let index = viewModel.groups.firstIndex(where: { $0.id == groupId }) {
-                                viewModel.groups[index] = group
+                                viewModel.groups[index] = updatedGroup
                             }
                             viewModel.saveData()
                         }

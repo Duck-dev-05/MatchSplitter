@@ -446,10 +446,8 @@ struct QRCodePaymentView: View {
             } else {
                 self.qrPayload = generator.generatePaymentPayload(paymentType: settlement.toUser.paymentType, paymentID: settlement.toUser.paymentID ?? "Unknown", amount: amountToPay, currency: currency)
                 self.isLoadingQR = false
-            }
         }
     }
-
     // Decorative corner bracket overlay on the QR card
     private var qrCornerBrackets: some View {
         ZStack {
@@ -512,6 +510,6 @@ struct QRCodePaymentView: View {
                let window = windowScene.windows.first,
                let rootVC = window.rootViewController {
                 rootVC.present(activityVC, animated: true, completion: nil)
-            }
         }
     }
+}

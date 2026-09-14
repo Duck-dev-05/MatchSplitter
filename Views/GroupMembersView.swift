@@ -193,7 +193,7 @@ struct AddMemberSheet: View {
             QRScannerView(
                 onResult: { payload in
                     showingQRScanner = false
-                    if let parsed = VietQRParser.parse(payload: payload), let bin = parsed.bankBin, let account = parsed.accountNumber {
+                    if let parsed = VietQRParser.parse(payload: payload), let _ = parsed.bankBin, let account = parsed.accountNumber {
                         // For AddMemberSheet, we might not have full paymentType selection
                         // So we just save the parsed account number, or we can format it
                         newPaymentID = account
