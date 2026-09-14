@@ -26,6 +26,9 @@ jobs:
     - name: Generate Xcode Project
       run: xcodegen generate
 
+    - name: Authenticate Git to bypass rate limits
+      run: git config --global url."https://${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
+
     - name: Resolve Package Dependencies
       run: xcodebuild -resolvePackageDependencies -project MatchSplitter.xcodeproj -scheme MatchSplitter -clonedSourcePackagesDirPath .build/SourcePackages -scmProvider system
       
