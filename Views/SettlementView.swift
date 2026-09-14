@@ -509,8 +509,19 @@ struct QRCodePaymentView: View {
             if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
                let window = windowScene.windows.first,
                let rootVC = window.rootViewController {
-                rootVC.present(activityVC, animated: true, completion: nil)
-        }
-    }
+                var topVC = rootVC
+                while let presentedVC = topVC.presentedViewController {
+                    topVC = presentedVC
+                }
+                
+                if let popoverController = activityVC.popoverPresentationController {
+                    popoverController.sourceView = topVC.view
+                    popoverController.sourceRect = CGRect(x: UIScreen.main.bounds.width / 2, y: UIScreen.main.bounds.height / 2, width: 0, height: 0)
+                    popoverController.permittedArrowDirections = []
+                }
+                
+                topVC.present(activityVC, animated: true, completion: nil)
+            }
+}
 }
 }

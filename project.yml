@@ -39,3 +39,5 @@ targets:
         CFBundleURLTypes:
           - CFBundleURLSchemes:
               - com.googleusercontent.apps.186631252201-k3dg32m7s5i0jqerp66880hvenb48c2o
+          - CFBundleURLSchemes:
+              - matchsplitter
