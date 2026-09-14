@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import UserNotifications
 
 struct SettlementView: View {
     var group: Group
@@ -226,15 +227,29 @@ struct QRCodePaymentView: View {
             VStack(spacing: 0) {
                 DragHandle()
 
-                HStack {
-                    if #available(iOS 16.0, *) {
-                        Button(action: shareReceipt) {
+                HStack(spacing: 24) {
+                    Button(action: shareReceipt) {
+                        VStack(spacing: 4) {
                             Image(systemName: "square.and.arrow.up")
-                                .foregroundColor(Theme.secondaryAccent)
                                 .font(.system(size: 20))
+                            Text("Share")
+                                .font(.system(size: 11, weight: .semibold))
                         }
-                        .buttonStyle(PressableButtonStyle())
+                        .foregroundColor(Theme.secondaryAccent)
                     }
+                    .buttonStyle(PressableButtonStyle())
+                    
+                    Button(action: sendNudge) {
+                        VStack(spacing: 4) {
+                            Image(systemName: "bell.badge")
+                                .font(.system(size: 20))
+                            Text("Nudge")
+                                .font(.system(size: 11, weight: .semibold))
+                        }
+                        .foregroundColor(Theme.dangerColor)
+                    }
+                    .buttonStyle(PressableButtonStyle())
+                    
                     Spacer()
                     Button("Close") { presentationMode.wrappedValue.dismiss() }
                         .foregroundColor(Theme.secondaryAccent)
@@ -474,7 +489,6 @@ struct QRCodePaymentView: View {
         .frame(width: 20, height: 20)
     }
 
-    @available(iOS 16.0, *)
     @MainActor
     private func shareReceipt() {
         let receiptView = VStack(spacing: 20) {
@@ -501,27 +515,47 @@ struct QRCodePaymentView: View {
         .padding(40)
         .background(Theme.backgroundGradient)
 
-        let renderer = ImageRenderer(content: receiptView)
-        renderer.scale = UIScreen.main.scale
+        let uiImage = SnapshotHelper.takeSnapshot(of: receiptView, size: CGSize(width: 350, height: 450))
 
-        if let uiImage = renderer.uiImage {
-            let activityVC = UIActivityViewController(activityItems: [uiImage], applicationActivities: nil)
-            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-               let window = windowScene.windows.first,
-               let rootVC = window.rootViewController {
-                var topVC = rootVC
-                while let presentedVC = topVC.presentedViewController {
-                    topVC = presentedVC
-                }
-                
-                if let popoverController = activityVC.popoverPresentationController {
-                    popoverController.sourceView = topVC.view
-                    popoverController.sourceRect = CGRect(x: UIScreen.main.bounds.width / 2, y: UIScreen.main.bounds.height / 2, width: 0, height: 0)
-                    popoverController.permittedArrowDirections = []
-                }
-                
-                topVC.present(activityVC, animated: true, completion: nil)
+        let activityVC = UIActivityViewController(activityItems: [uiImage], applicationActivities: nil)
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let window = windowScene.windows.first,
+           let rootVC = window.rootViewController {
+            var topVC = rootVC
+            while let presentedVC = topVC.presentedViewController {
+                topVC = presentedVC
             }
-}
-}
+            
+            if let popoverController = activityVC.popoverPresentationController {
+                popoverController.sourceView = topVC.view
+                popoverController.sourceRect = CGRect(x: UIScreen.main.bounds.width / 2, y: UIScreen.main.bounds.height / 2, width: 0, height: 0)
+                popoverController.permittedArrowDirections = []
+            }
+            
+            topVC.present(activityVC, animated: true, completion: nil)
+        }
+    }
+
+    private func sendNudge() {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { success, error in
+            if success {
+                let content = UNMutableNotificationContent()
+                content.title = "Nudge Sent!"
+                content.body = "You nudged \(settlement.fromUser.name) for \(currency.symbol)\(String(format: "%.2f", amountToPay)). We will remind you to follow up."
+                content.sound = UNNotificationSound.default
+
+                // trigger in 5 seconds just as a demo
+                let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
+                let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
+                
+                UNUserNotificationCenter.current().add(request)
+                
+                DispatchQueue.main.async {
+                    // Show a quick visual confirmation (optional, alert is simple enough)
+                }
+            } else if let error = error {
+                print("Notification permission error: \(error.localizedDescription)")
+            }
+        }
+    }
 }

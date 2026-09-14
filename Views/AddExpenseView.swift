@@ -16,10 +16,14 @@ struct AddExpenseView: View {
     @State private var customShares: [SplitShare] = []
     @State private var selectedSplitUsers: Set<UUID> = []
 
-    // Scanner
     @State private var showingImagePicker = false
     @State private var isScanning = false
-
+    @State private var isSaving = false
+    @State private var convertedPreview: Double? = nil
+    
+    // Multi-Currency
+    @State private var selectedCurrency: Currency
+    
     var editingExpense: Expense?
 
     var isFormValid: Bool {
@@ -38,8 +42,16 @@ struct AddExpenseView: View {
             self._splitType = State(initialValue: exp.splitType)
             self._selectedSplitUsers = State(initialValue: Set(exp.splitAmong.map { $0.id }))
             self._customShares = State(initialValue: exp.customShares ?? [])
+            
+            if let originalCurr = exp.originalCurrency, let originalAmt = exp.originalAmount {
+                self._selectedCurrency = State(initialValue: originalCurr)
+                self._amountString = State(initialValue: String(format: "%.2f", originalAmt))
+            } else {
+                self._selectedCurrency = State(initialValue: group.currency)
+            }
         } else {
             self._selectedSplitUsers = State(initialValue: Set(group.members.map { $0.id }))
+            self._selectedCurrency = State(initialValue: group.currency)
         }
     }
 
@@ -67,12 +79,18 @@ struct AddExpenseView: View {
 
                     Spacer()
 
-                    Button("Save") {
-                        saveExpense()
+                    Button(action: {
+                        Task { await saveExpense() }
+                    }) {
+                        if isSaving {
+                            ProgressView().tint(Theme.primaryAccent)
+                        } else {
+                            Text("Save")
+                        }
                     }
                     .font(.system(size: 16, weight: .bold))
                     .foregroundColor(isFormValid ? Theme.primaryAccent : Color.white.opacity(0.2))
-                    .disabled(!isFormValid)
+                    .disabled(!isFormValid || isSaving)
                 }
                 .padding(.horizontal, 24)
                 .padding(.vertical, 14)
@@ -93,8 +111,8 @@ struct AddExpenseView: View {
                         splitButton
 
                         // MARK: Save Button
-                        GradientButton(label: editingExpense != nil ? "Update Expense" : "Add Expense", isEnabled: isFormValid) {
-                            saveExpense()
+                        GradientButton(label: editingExpense != nil ? "Update Expense" : "Add Expense", isEnabled: isFormValid && !isSaving) {
+                            Task { await saveExpense() }
                         }
                         .padding(.top, 4)
                     }
@@ -142,18 +160,16 @@ struct AddExpenseView: View {
                 .foregroundColor(.white.opacity(0.40))
                 .textCase(.uppercase)
 
-            HStack(alignment: .firstTextBaseline, spacing: 4) {
-                Text(group.currency.symbol)
-                    .font(.system(size: 32, weight: .bold, design: .rounded))
-                    .foregroundColor(.white.opacity(0.4))
-                TextField("0.00", text: $amountString)
-                    .keyboardType(.decimalPad)
-                    .font(.system(size: 64, weight: .heavy, design: .rounded))
-                    .foregroundColor(.white)
-                    .multilineTextAlignment(.center)
-            }
+            // Large amount field only
+            TextField("0.00", text: $amountString)
+                .keyboardType(.decimalPad)
+                .font(.system(size: 64, weight: .heavy, design: .rounded))
+                .foregroundColor(.white)
+                .multilineTextAlignment(.center)
+                .onChange(of: amountString) { _ in fetchConversionPreview() }
+                .onChange(of: selectedCurrency) { _ in fetchConversionPreview() }
 
-            // Thin separator under amount
+            // Thin separator
             RoundedRectangle(cornerRadius: 1)
                 .fill(
                     LinearGradient(
@@ -164,7 +180,59 @@ struct AddExpenseView: View {
                 .frame(height: 2)
                 .padding(.horizontal, 40)
                 .padding(.top, 4)
-                
+
+            // Currency selector row
+            HStack {
+                Image(systemName: "banknote.fill")
+                    .font(.system(size: 13))
+                    .foregroundColor(.white.opacity(0.4))
+                Text("Currency")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(.white.opacity(0.4))
+                Spacer()
+                Menu {
+                    ForEach(Currency.allCases, id: \.self) { curr in
+                        Button("\(curr.rawValue) (\(curr.symbol))") {
+                            selectedCurrency = curr
+                        }
+                    }
+                } label: {
+                    HStack(spacing: 6) {
+                        Text("\(selectedCurrency.rawValue)  \(selectedCurrency.symbol)")
+                            .font(.system(size: 14, weight: .bold))
+                        Image(systemName: "chevron.up.chevron.down")
+                            .font(.system(size: 11))
+                    }
+                    .foregroundColor(selectedCurrency != group.currency ? Theme.primaryAccent : .white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 7)
+                    .background(
+                        (selectedCurrency != group.currency ? Theme.primaryAccent : Color.white)
+                            .opacity(0.12)
+                    )
+                    .clipShape(Capsule())
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 4)
+            
+            // Conversion preview (shown if foreign currency)
+            if let preview = convertedPreview, selectedCurrency != group.currency {
+                HStack(spacing: 5) {
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                        .font(.system(size: 11))
+                    Text("≈ \(group.currency.symbol)\(String(format: "%.2f", preview)) \(group.currency.rawValue)")
+                        .font(.system(size: 13, weight: .semibold))
+                }
+                .foregroundColor(Theme.secondaryAccent)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 6)
+                .background(Theme.secondaryAccent.opacity(0.10))
+                .clipShape(Capsule())
+                .transition(.opacity.combined(with: .scale))
+            }
+
+            // Scan Receipt button
             Button(action: { showingImagePicker = true }) {
                 HStack {
                     if isScanning {
@@ -316,38 +384,86 @@ struct AddExpenseView: View {
         .buttonStyle(PressableButtonStyle())
     }
 
+    // MARK: - Conversion Preview (non-blocking fetch)
+    private func fetchConversionPreview() {
+        guard let amount = Double(amountString), amount > 0, selectedCurrency != group.currency else {
+            convertedPreview = nil
+            return
+        }
+        Task {
+            let result = try? await CurrencyService.shared.convert(amount: amount, from: selectedCurrency, to: group.currency)
+            await MainActor.run {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    convertedPreview = result
+                }
+            }
+        }
+    }
+
     // MARK: - Save
-    func saveExpense() {
+    @MainActor
+    func saveExpense() async {
         guard let amount = Double(amountString),
               let payerId = selectedPayer,
               let payer = group.members.first(where: { $0.id == payerId }) else { return }
 
+        isSaving = true
         let splitUsers = group.members.filter { selectedSplitUsers.contains($0.id) }
+
+        var finalAmount = amount
+        var finalShares = customShares
+        
+        var origCurr: Currency? = nil
+        var origAmt: Double? = nil
+        
+        if selectedCurrency != group.currency {
+            origCurr = selectedCurrency
+            origAmt = amount
+            
+            do {
+                finalAmount = try await CurrencyService.shared.convert(amount: amount, from: selectedCurrency, to: group.currency)
+                
+                if splitType == .exact {
+                    for i in 0..<finalShares.count {
+                        finalShares[i].exactAmount = try await CurrencyService.shared.convert(amount: finalShares[i].exactAmount, from: selectedCurrency, to: group.currency)
+                    }
+                }
+            } catch {
+                print("Currency conversion failed: \(error)")
+                isSaving = false
+                return // Better to show an alert, but for now we just abort
+            }
+        }
 
         if let existingExpense = editingExpense {
             viewModel.updateExpense(
                 in: group,
                 expenseId: existingExpense.id,
                 title: title,
-                amount: amount,
+                amount: finalAmount,
                 category: selectedCategory,
                 paidBy: payer,
                 splitType: splitType,
                 splitAmong: splitUsers,
-                customShares: splitType == .exact ? customShares : nil
+                customShares: splitType == .exact ? finalShares : nil,
+                originalCurrency: origCurr,
+                originalAmount: origAmt
             )
         } else {
             viewModel.addExpense(
                 to: group,
                 title: title,
-                amount: amount,
+                amount: finalAmount,
                 category: selectedCategory,
                 paidBy: payer,
                 splitType: splitType,
                 splitAmong: splitUsers,
-                customShares: splitType == .exact ? customShares : nil
+                customShares: splitType == .exact ? finalShares : nil,
+                originalCurrency: origCurr,
+                originalAmount: origAmt
             )
         }
+        isSaving = false
         presentationMode.wrappedValue.dismiss()
     }
 }

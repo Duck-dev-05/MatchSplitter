@@ -54,10 +54,18 @@ struct ExpenseDetailView: View {
                                 .foregroundColor(.white.opacity(0.45))
                         }
 
-                        Text("\(group.currency.symbol)\(String(format: "%.2f", expense.amount))")
-                            .font(.system(size: 50, weight: .heavy, design: .rounded))
-                            .foregroundColor(.white)
-                            .padding(.top, 4)
+                        VStack(spacing: 4) {
+                            Text("\(group.currency.symbol)\(String(format: "%.2f", expense.amount))")
+                                .font(.system(size: 50, weight: .heavy, design: .rounded))
+                                .foregroundColor(.white)
+                                .padding(.top, 4)
+                            
+                            if let origCurr = expense.originalCurrency, let origAmt = expense.originalAmount, origCurr != group.currency {
+                                Text("Originally \(origCurr.symbol)\(String(format: "%.2f", origAmt))")
+                                    .font(.system(size: 16, weight: .medium, design: .rounded))
+                                    .foregroundColor(.white.opacity(0.6))
+                            }
+                        }
 
                         // Paid by chip
                         HStack(spacing: 8) {

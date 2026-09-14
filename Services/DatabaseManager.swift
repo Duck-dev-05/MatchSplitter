@@ -38,4 +38,13 @@ class DatabaseManager {
             return nil
         }
     }
+    
+    func clear() {
+        do {
+            try FileManager.default.removeItem(at: fileURL)
+            print("Local database successfully deleted.")
+        } catch {
+            print("Failed to delete local database: \(error.localizedDescription)")
+        }
+    }
 }

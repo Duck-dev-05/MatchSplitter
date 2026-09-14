@@ -46,4 +46,8 @@ struct Expense: Identifiable, Codable {
     
     // For Exact splits
     var customShares: [SplitShare]?
+    
+    // For Multi-Currency (Original foreign currency and amount)
+    var originalCurrency: Currency?
+    var originalAmount: Double?
 }

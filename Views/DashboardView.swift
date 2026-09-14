@@ -82,6 +82,37 @@ struct DashboardView: View {
                                 )
                             }
                         }
+                    
+                    // Create New Group button (always visible)
+                    if !viewModel.groups.isEmpty {
+                        Button(action: {
+                            if viewModel.currentUser == nil {
+                                showLoginAlert = true
+                            } else {
+                                showingAddGroup = true
+                            }
+                        }) {
+                            HStack(spacing: 10) {
+                                Image(systemName: "plus.circle.fill")
+                                    .font(.system(size: 18, weight: .semibold))
+                                Text("Create New Group")
+                                    .font(.system(size: 16, weight: .bold))
+                            }
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(
+                                LinearGradient(
+                                    colors: [Theme.primaryAccent, Theme.secondaryAccent],
+                                    startPoint: .leading, endPoint: .trailing
+                                )
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                            .shadow(color: Theme.primaryAccent.opacity(0.35), radius: 12, x: 0, y: 6)
+                        }
+                        .buttonStyle(PressableButtonStyle())
+                        .padding(.top, 8)
+                    }
                     }
                     .padding(.horizontal, metrics.hPad)
                     .padding(.bottom, metrics.adaptive(100, 80, 80))
@@ -118,23 +149,11 @@ struct DashboardView: View {
                 Text("MatchSplitter")
                     .font(.system(size: metrics.heroTitleFont, weight: .heavy, design: .rounded))
                     .foregroundColor(.white)
+                Text(viewModel.groups.isEmpty ? "No groups yet" : "\(viewModel.groups.count) active group\(viewModel.groups.count == 1 ? "" : "s")")
+                    .font(.system(size: metrics.captionFont, weight: .medium))
+                    .foregroundColor(.white.opacity(0.35))
             }
             Spacer()
-            
-            Button(action: {
-                if viewModel.currentUser == nil {
-                    showLoginAlert = true
-                } else {
-                    showingAddGroup = true
-                }
-            }) {
-                Image(systemName: "plus.circle.fill")
-                    .font(.system(size: metrics.adaptive(22, 26, 30)))
-                    .foregroundColor(Theme.secondaryAccent)
-                    .background(Circle().fill(Color.black.opacity(0.2)).frame(width: metrics.avatarSize, height: metrics.avatarSize))
-            }
-            .frame(width: metrics.avatarSize, height: metrics.avatarSize)
-            .padding(.trailing, 12)
 
             if let name = viewModel.currentUser?.name {
                 GradientAvatar(name: name, avatarURL: viewModel.currentUser?.avatarURL, size: metrics.avatarSize)
@@ -337,7 +356,21 @@ struct GroupCardView: View {
                     .padding(.trailing, 4)
             }
             .padding(.horizontal, 14)
-            .padding(.vertical, 16)
+            .padding(.vertical, 14)
+
+            // "Tap to view" hint row
+            HStack {
+                Spacer()
+                HStack(spacing: 4) {
+                    Text("Tap to view")
+                        .font(.system(size: 10, weight: .medium))
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 9, weight: .semibold))
+                }
+                .foregroundColor(accentColor.opacity(0.5))
+                .padding(.trailing, 14)
+                .padding(.bottom, 10)
+            }
         }
         .glassCard(cornerRadius: 20)
     }

@@ -120,10 +120,9 @@ struct GroupDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                HStack(spacing: 8) {
+                HStack(spacing: 16) {
                     toolbarIconButton(icon: "banknote", color: Theme.successColor) { showingGroupPaymentQR = true }
                     toolbarIconButton(icon: "qrcode", color: .white.opacity(0.80)) { showingQRInvite = true }
-                    toolbarIconButton(icon: "plus.circle.fill", color: Theme.secondaryAccent) { showingAddExpense = true }
                     if currentGroup.creatorID == viewModel.currentUser?.id {
                         toolbarIconButton(icon: "gearshape.fill", color: .white.opacity(0.60)) { showingSettings = true }
                     }
@@ -186,89 +185,103 @@ struct GroupDetailView: View {
         .accentCard(cornerRadius: 28)
     }
 
-    // MARK: - Quick Action Strip
+    // MARK: - Quick Action Strip (2x2 labeled grid)
     private var quickActionStrip: some View {
-        HStack(spacing: metrics.cardSpacing) {
-            // Settle Up
-            Button(action: { showingSettlements = true }) {
-                Label("Settle Up", systemImage: "arrow.left.arrow.right")
-                    .font(.system(size: metrics.labelFont, weight: .bold))
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, metrics.adaptive(10, 12, 14))
-                    .background(Theme.primaryGradient)
-                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                    .shadow(color: Theme.primaryAccent.opacity(0.35), radius: 10, x: 0, y: 5)
-            }
-            .buttonStyle(PressableButtonStyle())
+        VStack(spacing: 10) {
+            HStack(spacing: 10) {
+                // Add Expense
+                actionGridButton(
+                    icon: "plus.circle.fill",
+                    label: "Add Expense",
+                    color: Theme.primaryAccent,
+                    gradient: Theme.primaryGradient
+                ) { showingAddExpense = true }
 
-            // Members
-            NavigationLink(destination: GroupMembersView(group: currentGroup)) {
-                Label("Members", systemImage: "person.2.fill")
-                    .font(.system(size: metrics.labelFont, weight: .bold))
-                    .foregroundColor(.white.opacity(0.85))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, metrics.adaptive(10, 12, 14))
-                    .background(Color.white.opacity(0.10))
-                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                // Settle Up
+                actionGridButton(
+                    icon: "arrow.left.arrow.right",
+                    label: "Settle Up",
+                    color: Theme.successColor,
+                    gradient: LinearGradient(
+                        colors: [Theme.successColor, Theme.successColor.opacity(0.7)],
+                        startPoint: .topLeading, endPoint: .bottomTrailing
                     )
+                ) { showingSettlements = true }
             }
-            .buttonStyle(PressableButtonStyle())
 
-            // Leaderboard
-            NavigationLink(destination: LeaderboardView(group: currentGroup)) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(Theme.warmGold.opacity(0.14))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .stroke(Theme.warmGold.opacity(0.28), lineWidth: 1)
-                        )
-                    Image(systemName: "trophy.fill")
-                        .font(.system(size: metrics.adaptive(15, 18, 20)))
-                        .foregroundColor(Theme.warmGold)
+            HStack(spacing: 10) {
+                // Members
+                NavigationLink(destination: GroupMembersView(group: currentGroup)) {
+                    actionGridLabel(
+                        icon: "person.2.fill",
+                        label: "Members",
+                        count: "\(currentGroup.members.count)",
+                        color: Theme.secondaryAccent
+                    )
                 }
-                .frame(width: metrics.actionIconSize, height: metrics.actionBtnHeight)
-            }
-            .buttonStyle(PressableButtonStyle())
+                .buttonStyle(PressableButtonStyle())
 
-            // QR Invite
-            Button(action: { showingQRInvite = true }) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(Theme.electricPurple.opacity(0.14))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .stroke(Theme.electricPurple.opacity(0.28), lineWidth: 1)
-                        )
-                    Image(systemName: "qrcode")
-                        .font(.system(size: metrics.adaptive(15, 18, 20)))
-                        .foregroundColor(Theme.electricPurple)
+                // Leaderboard
+                NavigationLink(destination: LeaderboardView(group: currentGroup)) {
+                    actionGridLabel(
+                        icon: "trophy.fill",
+                        label: "Leaderboard",
+                        count: nil,
+                        color: Theme.warmGold
+                    )
                 }
-                .frame(width: metrics.actionIconSize, height: metrics.actionBtnHeight)
+                .buttonStyle(PressableButtonStyle())
             }
-            .buttonStyle(PressableButtonStyle())
-
-            // Group QR Payment
-            Button(action: { showingGroupPaymentQR = true }) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(Theme.successColor.opacity(0.14))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .stroke(Theme.successColor.opacity(0.28), lineWidth: 1)
-                        )
-                    Image(systemName: "banknote")
-                        .font(.system(size: metrics.adaptive(15, 18, 20)))
-                        .foregroundColor(Theme.successColor)
-                }
-                .frame(width: metrics.actionIconSize, height: metrics.actionBtnHeight)
-            }
-            .buttonStyle(PressableButtonStyle())
         }
+    }
+
+    private func actionGridButton(icon: String, label: String, color: Color, gradient: LinearGradient, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 10) {
+                Image(systemName: icon)
+                    .font(.system(size: 20, weight: .semibold))
+                Text(label)
+                    .font(.system(size: 15, weight: .bold))
+            }
+            .foregroundColor(.white)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
+            .background(gradient)
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .shadow(color: color.opacity(0.30), radius: 8, x: 0, y: 4)
+        }
+        .buttonStyle(PressableButtonStyle())
+    }
+
+    private func actionGridLabel(icon: String, label: String, count: String?, color: Color) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: icon)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundColor(color)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(label)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(.white)
+                if let count = count {
+                    Text(count)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(color.opacity(0.8))
+                }
+            }
+            Spacer()
+            Image(systemName: "chevron.right")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundColor(.white.opacity(0.25))
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .frame(maxWidth: .infinity)
+        .background(color.opacity(0.10))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(color.opacity(0.20), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
     // MARK: - Personal Balance Card
@@ -386,6 +399,12 @@ struct ExpenseRowView: View {
                     Text("\(groupCurrency.symbol)\(String(format: "%.2f", expense.amount))")
                         .font(.system(size: 15, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
+                        
+                    if let origCurr = expense.originalCurrency, let origAmt = expense.originalAmount, origCurr != groupCurrency {
+                        Text("(\(origCurr.symbol)\(String(format: "%.2f", origAmt)))")
+                            .font(.system(size: 10, weight: .medium, design: .rounded))
+                            .foregroundColor(.white.opacity(0.5))
+                    }
 
                     Text(expense.category.rawValue)
                         .font(.system(size: 10, weight: .bold))

@@ -230,15 +230,15 @@ class GroupViewModel: ObservableObject {
         }
     }
     
-    func addExpense(to group: Group, title: String, amount: Double, category: ExpenseCategory = .general, paidBy: User, splitType: SplitType = .equal, splitAmong: [User], customShares: [SplitShare]? = nil) {
+    func addExpense(to group: Group, title: String, amount: Double, category: ExpenseCategory = .general, paidBy: User, splitType: SplitType = .equal, splitAmong: [User], customShares: [SplitShare]? = nil, originalCurrency: Currency? = nil, originalAmount: Double? = nil) {
         if let index = groups.firstIndex(where: { $0.id == group.id }) {
-            let expense = Expense(title: title, amount: amount, date: Date(), category: category, paidBy: paidBy, splitType: splitType, splitAmong: splitAmong, customShares: customShares)
+            let expense = Expense(title: title, amount: amount, date: Date(), category: category, paidBy: paidBy, splitType: splitType, splitAmong: splitAmong, customShares: customShares, originalCurrency: originalCurrency, originalAmount: originalAmount)
             groups[index].expenses.append(expense)
             saveData()
         }
     }
     
-    func updateExpense(in group: Group, expenseId: UUID, title: String, amount: Double, category: ExpenseCategory = .general, paidBy: User, splitType: SplitType = .equal, splitAmong: [User], customShares: [SplitShare]? = nil) {
+    func updateExpense(in group: Group, expenseId: UUID, title: String, amount: Double, category: ExpenseCategory = .general, paidBy: User, splitType: SplitType = .equal, splitAmong: [User], customShares: [SplitShare]? = nil, originalCurrency: Currency? = nil, originalAmount: Double? = nil) {
         if let groupIndex = groups.firstIndex(where: { $0.id == group.id }),
            let expIndex = groups[groupIndex].expenses.firstIndex(where: { $0.id == expenseId }) {
             var expense = groups[groupIndex].expenses[expIndex]
@@ -249,6 +249,8 @@ class GroupViewModel: ObservableObject {
             expense.splitType = splitType
             expense.splitAmong = splitAmong
             expense.customShares = customShares
+            expense.originalCurrency = originalCurrency
+            expense.originalAmount = originalAmount
             groups[groupIndex].expenses[expIndex] = expense
             saveData()
         }
