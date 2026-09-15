@@ -127,27 +127,29 @@ class GroupViewModel: ObservableObject {
     func authenticateGoogleUser(name: String, email: String, avatarURL: String?) async -> User? {
         if var user = try? await FirebaseManager.shared.fetchUser(byEmail: email) {
             user.avatarURL = avatarURL
-            try? await FirebaseManager.shared.saveUser(user)
+            let updatedUser = user
+            try? await FirebaseManager.shared.saveUser(updatedUser)
             await MainActor.run {
-                if let index = self.registeredUsers.firstIndex(where: { $0.id == user.id }) {
-                    self.registeredUsers[index] = user
+                if let index = self.registeredUsers.firstIndex(where: { $0.id == updatedUser.id }) {
+                    self.registeredUsers[index] = updatedUser
                 } else {
-                    self.registeredUsers.append(user)
+                    self.registeredUsers.append(updatedUser)
                 }
-                self.login(user: user)
+                self.login(user: updatedUser)
             }
-            return user
+            return updatedUser
         } else {
             if var user = registeredUsers.first(where: { $0.email == email }) {
                 user.avatarURL = avatarURL
-                try? await FirebaseManager.shared.saveUser(user)
+                let updatedUser = user
+                try? await FirebaseManager.shared.saveUser(updatedUser)
                 await MainActor.run {
-                    if let index = self.registeredUsers.firstIndex(where: { $0.id == user.id }) {
-                        self.registeredUsers[index] = user
+                    if let index = self.registeredUsers.firstIndex(where: { $0.id == updatedUser.id }) {
+                        self.registeredUsers[index] = updatedUser
                     }
-                    self.login(user: user)
+                    self.login(user: updatedUser)
                 }
-                return user
+                return updatedUser
             } else {
                 let newUser = User(name: name, email: email, password: "GoogleSignInUser", paymentID: nil, paymentType: nil, avatarURL: avatarURL)
                 try? await FirebaseManager.shared.saveUser(newUser)

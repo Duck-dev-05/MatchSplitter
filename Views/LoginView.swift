@@ -161,15 +161,13 @@ struct LoginView: View {
                     }
                     .padding(.horizontal, metrics.hPad)
                     .overlay(
-                        Group {
+                        ZStack {
                             if isAuthenticating {
-                                ZStack {
-                                    Color.black.opacity(0.6).cornerRadius(20)
-                                    ProgressView("Authenticating...")
-                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                        .foregroundColor(.white)
-                                        .padding(20)
-                                }
+                                Color.black.opacity(0.6).cornerRadius(20)
+                                ProgressView("Authenticating...")
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    .foregroundColor(.white)
+                                    .padding(20)
                             }
                         }
                     )
