@@ -86,7 +86,6 @@ struct AddMemberSheet: View {
     @State private var payOSClientId: String = ""
     @State private var payOSApiKey: String = ""
     @State private var payOSChecksumKey: String = ""
-    @State private var payOSChecksumKey: String = ""
     @State private var banks: [VietQRBank] = []
     @State private var isLoadingBanks = false
     @State private var bankAccountName: String = ""
