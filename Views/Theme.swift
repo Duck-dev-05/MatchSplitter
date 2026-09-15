@@ -573,7 +573,7 @@ struct HeroMetricCard: View {
                 .font(.system(size: 11, weight: .bold))
                 .foregroundColor(.white.opacity(0.45))
                 .textCase(.uppercase)
-                .tracking(0.8)
+                .kerning(0.8)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 20)
