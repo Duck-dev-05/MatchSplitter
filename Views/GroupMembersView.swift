@@ -157,47 +157,7 @@ struct AddMemberSheet: View {
                                 .padding(.vertical, 14)
                                 Divider().background(Color.white.opacity(0.07))
 
-                                if paymentType != "None" {
-                                    if paymentType == "VietQR" {
-                                        HStack(spacing: 14) {
-                                            IconBadge(systemName: "building.2.fill", color: Theme.secondaryAccent)
-                                            if isLoadingBanks {
-                                                ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                                Spacer()
-                                            } else {
-                                                Menu {
-                                                    ForEach(banks) { bank in
-                                                        Button("\(bank.shortName) - \(bank.name)") {
-                                                            bankBin = bank.bin
-                                                        }
-                                                    }
-                                                } label: {
-                                                    HStack {
-                                                        Text(banks.first(where: { $0.bin == bankBin })?.shortName ?? "Select Bank")
-                                                            .foregroundColor(bankBin.isEmpty ? .white.opacity(0.5) : .white)
-                                                        Spacer()
-                                                        Image(systemName: "chevron.up.chevron.down")
-                                                    }
-                                                    .foregroundColor(.white)
-                                                }
-                                            }
-                                        }
-                                        .padding(.horizontal, 18)
-                                        .padding(.vertical, 14)
-                                        Divider().background(Color.white.opacity(0.07))
-
-                                        EditFieldRow(icon: "number.circle.fill", iconColor: Theme.secondaryAccent, placeholder: "Account Number", text: $newPaymentID)
-                                            .keyboardType(.numberPad)
-                                    } else if paymentType == "PayOS" {
-                                        EditFieldRow(icon: "person.badge.key.fill", iconColor: Theme.secondaryAccent, placeholder: "Client ID", text: $payOSClientId)
-                                        Divider().background(Color.white.opacity(0.07))
-                                        EditFieldRow(icon: "key.fill", iconColor: Theme.secondaryAccent, placeholder: "API Key", text: $payOSApiKey)
-                                        Divider().background(Color.white.opacity(0.07))
-                                        EditFieldRow(icon: "lock.fill", iconColor: Theme.secondaryAccent, placeholder: "Checksum Key", text: $payOSChecksumKey)
-                                    } else {
-                                        EditFieldRow(icon: "creditcard.fill", iconColor: Theme.secondaryAccent, placeholder: "Payment Details / ID", text: $newPaymentID)
-                                    }
-                                }
+                                paymentDetailsSection
                             }
                             .glassCard(cornerRadius: 20)
 
@@ -300,6 +260,51 @@ struct AddMemberSheet: View {
                 }
             )
             .ignoresSafeArea()
+        }
+    }
+
+    @ViewBuilder
+    private var paymentDetailsSection: some View {
+        if paymentType != "None" {
+            if paymentType == "VietQR" {
+                HStack(spacing: 14) {
+                    IconBadge(systemName: "building.2.fill", color: Theme.secondaryAccent)
+                    if isLoadingBanks {
+                        ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        Spacer()
+                    } else {
+                        Menu {
+                            ForEach(banks) { bank in
+                                Button("\(bank.shortName) - \(bank.name)") {
+                                    bankBin = bank.bin
+                                }
+                            }
+                        } label: {
+                            HStack {
+                                Text(banks.first(where: { $0.bin == bankBin })?.shortName ?? "Select Bank")
+                                    .foregroundColor(bankBin.isEmpty ? .white.opacity(0.5) : .white)
+                                Spacer()
+                                Image(systemName: "chevron.up.chevron.down")
+                            }
+                            .foregroundColor(.white)
+                        }
+                    }
+                }
+                .padding(.horizontal, 18)
+                .padding(.vertical, 14)
+                Divider().background(Color.white.opacity(0.07))
+
+                EditFieldRow(icon: "number.circle.fill", iconColor: Theme.secondaryAccent, placeholder: "Account Number", text: $newPaymentID)
+                    .keyboardType(.numberPad)
+            } else if paymentType == "PayOS" {
+                EditFieldRow(icon: "person.badge.key.fill", iconColor: Theme.secondaryAccent, placeholder: "Client ID", text: $payOSClientId)
+                Divider().background(Color.white.opacity(0.07))
+                EditFieldRow(icon: "key.fill", iconColor: Theme.secondaryAccent, placeholder: "API Key", text: $payOSApiKey)
+                Divider().background(Color.white.opacity(0.07))
+                EditFieldRow(icon: "lock.fill", iconColor: Theme.secondaryAccent, placeholder: "Checksum Key", text: $payOSChecksumKey)
+            } else {
+                EditFieldRow(icon: "creditcard.fill", iconColor: Theme.secondaryAccent, placeholder: "Payment Details / ID", text: $newPaymentID)
+            }
         }
     }
 
@@ -506,50 +511,7 @@ struct EditMemberView: View {
                             .padding(.vertical, 14)
                             Divider().background(Color.white.opacity(0.07))
 
-                            if paymentType != "None" {
-                                if paymentType == "VietQR" {
-                                    HStack(spacing: 14) {
-                                        IconBadge(systemName: "building.2.fill", color: Theme.secondaryAccent)
-                                        if isLoadingBanks {
-                                            ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                            Spacer()
-                                        } else {
-                                            Menu {
-                                                ForEach(banks) { bank in
-                                                    Button("\(bank.shortName) - \(bank.name)") {
-                                                        bankBin = bank.bin
-                                                    }
-                                                }
-                                            } label: {
-                                                HStack {
-                                                    Text(banks.first(where: { $0.bin == bankBin })?.shortName ?? "Select Bank")
-                                                        .foregroundColor(bankBin.isEmpty ? .white.opacity(0.5) : .white)
-                                                    Spacer()
-                                                    Image(systemName: "chevron.up.chevron.down")
-                                                }
-                                                .foregroundColor(.white)
-                                            }
-                                        }
-                                    }
-                                    .padding(.horizontal, 18)
-                                    .padding(.vertical, 14)
-                                    Divider().background(Color.white.opacity(0.07))
-
-                                    EditFieldRow(icon: "number.circle.fill", iconColor: Theme.secondaryAccent, placeholder: "Account Number", text: $paymentID)
-                                        .keyboardType(.numberPad)
-                                    Divider().background(Color.white.opacity(0.07))
-                                } else if paymentType == "PayOS" {
-                                    EditFieldRow(icon: "person.badge.key.fill", iconColor: Theme.secondaryAccent, placeholder: "Client ID", text: $payOSClientId)
-                                    Divider().background(Color.white.opacity(0.07))
-                                    EditFieldRow(icon: "key.fill", iconColor: Theme.secondaryAccent, placeholder: "API Key", text: $payOSApiKey)
-                                    Divider().background(Color.white.opacity(0.07))
-                                    EditFieldRow(icon: "lock.fill", iconColor: Theme.secondaryAccent, placeholder: "Checksum Key", text: $payOSChecksumKey)
-                                    Divider().background(Color.white.opacity(0.07))
-                                } else {
-                                    EditFieldRow(icon: "creditcard.fill", iconColor: Theme.secondaryAccent, placeholder: "Payment Details / ID", text: $paymentID)
-                                    Divider().background(Color.white.opacity(0.07))
-                                }
-                            }
+                            paymentDetailsSection
                         }
                         .glassCard(cornerRadius: 22)
                     }
@@ -590,6 +552,54 @@ struct EditMemberView: View {
 
             if paymentType == "VietQR" {
                 Task { await loadBanks() }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var paymentDetailsSection: some View {
+        if paymentType != "None" {
+            if paymentType == "VietQR" {
+                HStack(spacing: 14) {
+                    IconBadge(systemName: "building.2.fill", color: Theme.secondaryAccent)
+                    if isLoadingBanks {
+                        ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        Spacer()
+                    } else {
+                        Menu {
+                            ForEach(banks) { bank in
+                                Button("\(bank.shortName) - \(bank.name)") {
+                                    bankBin = bank.bin
+                                }
+                            }
+                        } label: {
+                            HStack {
+                                Text(banks.first(where: { $0.bin == bankBin })?.shortName ?? "Select Bank")
+                                    .foregroundColor(bankBin.isEmpty ? .white.opacity(0.5) : .white)
+                                Spacer()
+                                Image(systemName: "chevron.up.chevron.down")
+                            }
+                            .foregroundColor(.white)
+                        }
+                    }
+                }
+                .padding(.horizontal, 18)
+                .padding(.vertical, 14)
+                Divider().background(Color.white.opacity(0.07))
+
+                EditFieldRow(icon: "number.circle.fill", iconColor: Theme.secondaryAccent, placeholder: "Account Number", text: $paymentID)
+                    .keyboardType(.numberPad)
+                Divider().background(Color.white.opacity(0.07))
+            } else if paymentType == "PayOS" {
+                EditFieldRow(icon: "person.badge.key.fill", iconColor: Theme.secondaryAccent, placeholder: "Client ID", text: $payOSClientId)
+                Divider().background(Color.white.opacity(0.07))
+                EditFieldRow(icon: "key.fill", iconColor: Theme.secondaryAccent, placeholder: "API Key", text: $payOSApiKey)
+                Divider().background(Color.white.opacity(0.07))
+                EditFieldRow(icon: "lock.fill", iconColor: Theme.secondaryAccent, placeholder: "Checksum Key", text: $payOSChecksumKey)
+                Divider().background(Color.white.opacity(0.07))
+            } else {
+                EditFieldRow(icon: "creditcard.fill", iconColor: Theme.secondaryAccent, placeholder: "Payment Details / ID", text: $paymentID)
+                Divider().background(Color.white.opacity(0.07))
             }
         }
     }
