@@ -218,9 +218,9 @@ class GroupViewModel: ObservableObject {
         saveData()
     }
     
-    func addMember(to group: Group, name: String, paymentID: String, paymentType: String? = nil, bankBin: String? = nil, payOSClientId: String? = nil, payOSApiKey: String? = nil, payOSChecksumKey: String? = nil) {
+    func addMember(to group: Group, name: String, paymentID: String, paymentType: String? = nil, bankBin: String? = nil, bankAccountName: String? = nil, payOSClientId: String? = nil, payOSApiKey: String? = nil, payOSChecksumKey: String? = nil) {
         if let index = groups.firstIndex(where: { $0.id == group.id }) {
-            groups[index].members.append(User(name: name, paymentID: paymentID.isEmpty ? nil : paymentID, paymentType: paymentType, bankBin: bankBin, payOSClientId: payOSClientId, payOSApiKey: payOSApiKey, payOSChecksumKey: payOSChecksumKey))
+            groups[index].members.append(User(name: name, paymentID: paymentID.isEmpty ? nil : paymentID, paymentType: paymentType, bankBin: bankBin, bankAccountName: bankAccountName, payOSClientId: payOSClientId, payOSApiKey: payOSApiKey, payOSChecksumKey: payOSChecksumKey))
             saveData()
         }
     }

@@ -91,4 +91,20 @@ class VietQRService {
         
         return (generateResponse.data.qrCode, generateResponse.data.qrDataURL)
     }
+    
+    func verifyAccount(bin: String, accountNumber: String) async throws -> String? {
+        // MOCK VERIFICATION
+        // In a real app, you would call the BankHub or PayOS lookup API here.
+        // Example: https://api.vietqr.io/v2/lookup
+        
+        // Simulate network delay
+        try await Task.sleep(nanoseconds: 1_000_000_000)
+        
+        // For testing purposes, we'll return a mock name if the account number is longer than 5 digits.
+        if accountNumber.count > 5 {
+            return "NGUYEN VAN A"
+        } else {
+            throw NSError(domain: "VietQR", code: 404, userInfo: [NSLocalizedDescriptionKey: "Account not found or invalid"])
+        }
+    }
 }

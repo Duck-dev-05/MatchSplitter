@@ -86,8 +86,12 @@ struct AddMemberSheet: View {
     @State private var payOSClientId: String = ""
     @State private var payOSApiKey: String = ""
     @State private var payOSChecksumKey: String = ""
+    @State private var payOSChecksumKey: String = ""
     @State private var banks: [VietQRBank] = []
     @State private var isLoadingBanks = false
+    @State private var bankAccountName: String = ""
+    @State private var isVerifyingAccount = false
+    @State private var verificationError: String? = nil
 
     let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "VietQR", "PayOS", "None"]
     
@@ -168,12 +172,14 @@ struct AddMemberSheet: View {
                                         let finalType = paymentType == "None" ? nil : paymentType
                                         let finalID = paymentType == "None" ? "" : newPaymentID
                                         let finalBin = paymentType == "VietQR" ? bankBin : nil
+                                        let finalAccountName = paymentType == "VietQR" ? bankAccountName : nil
                                         viewModel.addMember(
                                             to: group, 
                                             name: newName.trimmingCharacters(in: .whitespacesAndNewlines), 
                                             paymentID: finalID, 
                                             paymentType: finalType,
                                             bankBin: finalBin,
+                                            bankAccountName: finalAccountName,
                                             payOSClientId: paymentType == "PayOS" ? payOSClientId : nil,
                                             payOSApiKey: paymentType == "PayOS" ? payOSApiKey : nil,
                                             payOSChecksumKey: paymentType == "PayOS" ? payOSChecksumKey : nil
@@ -182,6 +188,7 @@ struct AddMemberSheet: View {
                                         newPaymentID = ""
                                         paymentType = "None"
                                         bankBin = ""
+                                        bankAccountName = ""
                                         payOSClientId = ""
                                         payOSApiKey = ""
                                         payOSChecksumKey = ""
@@ -295,8 +302,50 @@ struct AddMemberSheet: View {
                 .padding(.vertical, 14)
                 Divider().background(Color.white.opacity(0.07))
 
-                EditFieldRow(icon: "number.circle.fill", iconColor: Theme.secondaryAccent, placeholder: "Account Number", text: $newPaymentID)
-                    .keyboardType(.numberPad)
+                VStack(spacing: 0) {
+                    EditFieldRow(icon: "number.circle.fill", iconColor: Theme.secondaryAccent, placeholder: "Account Number", text: $newPaymentID)
+                        .keyboardType(.numberPad)
+                        .onChange(of: newPaymentID) { _ in
+                            verificationError = nil
+                        }
+                    
+                    if !newPaymentID.isEmpty && !bankBin.isEmpty {
+                        Button(action: {
+                            verifyBankAccount()
+                        }) {
+                            HStack {
+                                Spacer()
+                                if isVerifyingAccount {
+                                    ProgressView().progressViewStyle(CircularProgressViewStyle(tint: Theme.secondaryAccent))
+                                } else {
+                                    Text("Verify Account")
+                                        .font(.system(size: 14, weight: .bold))
+                                        .foregroundColor(Theme.secondaryAccent)
+                                }
+                                Spacer()
+                            }
+                            .padding(.vertical, 8)
+                            .background(Theme.secondaryAccent.opacity(0.1))
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Theme.secondaryAccent.opacity(0.3), lineWidth: 1))
+                        }
+                        .padding(.horizontal, 18)
+                        .padding(.bottom, 10)
+                        .disabled(isVerifyingAccount)
+                        
+                        if let error = verificationError {
+                            Text(error)
+                                .font(.system(size: 12))
+                                .foregroundColor(Theme.dangerColor)
+                                .padding(.horizontal, 18)
+                                .padding(.bottom, 10)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                    }
+                }
+
+                Divider().background(Color.white.opacity(0.07))
+                EditFieldRow(icon: "person.text.rectangle", iconColor: Theme.secondaryAccent, placeholder: "Account Name (Optional)", text: $bankAccountName)
             } else if paymentType == "PayOS" {
                 EditFieldRow(icon: "person.badge.key.fill", iconColor: Theme.secondaryAccent, placeholder: "Client ID", text: $payOSClientId)
                 Divider().background(Color.white.opacity(0.07))
@@ -320,6 +369,34 @@ struct AddMemberSheet: View {
         } catch {
             print("Failed to load banks: \(error)")
             await MainActor.run { self.isLoadingBanks = false }
+        }
+    }
+
+    private func verifyBankAccount() {
+        guard !newPaymentID.isEmpty, !bankBin.isEmpty else { return }
+        
+        isVerifyingAccount = true
+        verificationError = nil
+        
+        Task {
+            do {
+                if let name = try await VietQRService.shared.verifyAccount(bin: bankBin, accountNumber: newPaymentID) {
+                    await MainActor.run {
+                        self.bankAccountName = name
+                        self.isVerifyingAccount = false
+                    }
+                } else {
+                    await MainActor.run {
+                        self.verificationError = "Account not found."
+                        self.isVerifyingAccount = false
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    self.verificationError = error.localizedDescription
+                    self.isVerifyingAccount = false
+                }
+            }
         }
     }
 }
@@ -428,6 +505,9 @@ struct EditMemberView: View {
     @State private var bankBin: String = ""
     @State private var banks: [VietQRBank] = []
     @State private var isLoadingBanks = false
+    @State private var bankAccountName: String = ""
+    @State private var isVerifyingAccount = false
+    @State private var verificationError: String? = nil
 
     @State private var payOSClientId: String = ""
     @State private var payOSApiKey: String = ""
@@ -454,6 +534,7 @@ struct EditMemberView: View {
                         let finalType = paymentType == "None" ? nil : paymentType
                         let finalID = paymentType == "None" ? "" : paymentID
                         let finalBin = paymentType == "VietQR" ? bankBin : nil
+                        let finalAccountName = paymentType == "VietQR" ? bankAccountName : nil
                         viewModel.updateMember(
                             in: group,
                             memberId: member.id,
@@ -461,6 +542,7 @@ struct EditMemberView: View {
                             paymentID: finalID,
                             paymentType: finalType,
                             bankBin: finalBin,
+                            bankAccountName: finalAccountName,
                             payOSClientId: paymentType == "PayOS" ? payOSClientId : nil,
                             payOSApiKey: paymentType == "PayOS" ? payOSApiKey : nil,
                             payOSChecksumKey: paymentType == "PayOS" ? payOSChecksumKey : nil
@@ -547,6 +629,7 @@ struct EditMemberView: View {
             paymentType = member.paymentType ?? "None"
             paymentID = member.paymentID ?? ""
             bankBin = member.bankBin ?? ""
+            bankAccountName = member.bankAccountName ?? ""
             payOSClientId = member.payOSClientId ?? ""
             payOSApiKey = member.payOSApiKey ?? ""
             payOSChecksumKey = member.payOSChecksumKey ?? ""
@@ -588,8 +671,49 @@ struct EditMemberView: View {
                 .padding(.vertical, 14)
                 Divider().background(Color.white.opacity(0.07))
 
-                EditFieldRow(icon: "number.circle.fill", iconColor: Theme.secondaryAccent, placeholder: "Account Number", text: $paymentID)
-                    .keyboardType(.numberPad)
+                VStack(spacing: 0) {
+                    EditFieldRow(icon: "number.circle.fill", iconColor: Theme.secondaryAccent, placeholder: "Account Number", text: $paymentID)
+                        .keyboardType(.numberPad)
+                        .onChange(of: paymentID) { _ in
+                            verificationError = nil
+                        }
+                    
+                    if !paymentID.isEmpty && !bankBin.isEmpty {
+                        Button(action: {
+                            verifyBankAccount()
+                        }) {
+                            HStack {
+                                Spacer()
+                                if isVerifyingAccount {
+                                    ProgressView().progressViewStyle(CircularProgressViewStyle(tint: Theme.secondaryAccent))
+                                } else {
+                                    Text("Verify Account")
+                                        .font(.system(size: 14, weight: .bold))
+                                        .foregroundColor(Theme.secondaryAccent)
+                                }
+                                Spacer()
+                            }
+                            .padding(.vertical, 8)
+                            .background(Theme.secondaryAccent.opacity(0.1))
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Theme.secondaryAccent.opacity(0.3), lineWidth: 1))
+                        }
+                        .padding(.horizontal, 18)
+                        .padding(.bottom, 10)
+                        .disabled(isVerifyingAccount)
+                        
+                        if let error = verificationError {
+                            Text(error)
+                                .font(.system(size: 12))
+                                .foregroundColor(Theme.dangerColor)
+                                .padding(.horizontal, 18)
+                                .padding(.bottom, 10)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                    }
+                }
+                Divider().background(Color.white.opacity(0.07))
+                EditFieldRow(icon: "person.text.rectangle", iconColor: Theme.secondaryAccent, placeholder: "Account Name (Optional)", text: $bankAccountName)
                 Divider().background(Color.white.opacity(0.07))
             } else if paymentType == "PayOS" {
                 EditFieldRow(icon: "person.badge.key.fill", iconColor: Theme.secondaryAccent, placeholder: "Client ID", text: $payOSClientId)
@@ -616,6 +740,34 @@ struct EditMemberView: View {
         } catch {
             print("Failed to load banks: \(error)")
             await MainActor.run { self.isLoadingBanks = false }
+        }
+    }
+
+    private func verifyBankAccount() {
+        guard !paymentID.isEmpty, !bankBin.isEmpty else { return }
+        
+        isVerifyingAccount = true
+        verificationError = nil
+        
+        Task {
+            do {
+                if let name = try await VietQRService.shared.verifyAccount(bin: bankBin, accountNumber: paymentID) {
+                    await MainActor.run {
+                        self.bankAccountName = name
+                        self.isVerifyingAccount = false
+                    }
+                } else {
+                    await MainActor.run {
+                        self.verificationError = "Account not found."
+                        self.isVerifyingAccount = false
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    self.verificationError = error.localizedDescription
+                    self.isVerifyingAccount = false
+                }
+            }
         }
     }
 }

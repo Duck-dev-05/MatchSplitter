@@ -329,6 +329,8 @@ struct EditProfileView: View {
     @State private var banks: [VietQRBank] = []
     @State private var isLoadingBanks = false
     @State private var showingBankSelection = false
+    @State private var isVerifyingAccount = false
+    @State private var verificationError: String? = nil
 
     @State private var payOSClientId: String = ""
     @State private var payOSApiKey: String = ""
@@ -408,7 +410,49 @@ struct EditProfileView: View {
                                             .padding(.vertical, 14)
                                         }
                                         Divider().background(Color.white.opacity(0.07)).padding(.leading, 56)
-                                        settingsFieldRow(icon: "number", iconColor: Theme.secondaryAccent, placeholder: "Account Number", text: $paymentID).keyboardType(.numberPad)
+                                        
+                                        VStack(spacing: 0) {
+                                            settingsFieldRow(icon: "number", iconColor: Theme.secondaryAccent, placeholder: "Account Number", text: $paymentID)
+                                                .keyboardType(.numberPad)
+                                                .onChange(of: paymentID) { _ in
+                                                    verificationError = nil
+                                                }
+                                            
+                                            if !paymentID.isEmpty && !bankBin.isEmpty {
+                                                Button(action: {
+                                                    verifyBankAccount()
+                                                }) {
+                                                    HStack {
+                                                        Spacer()
+                                                        if isVerifyingAccount {
+                                                            ProgressView().progressViewStyle(CircularProgressViewStyle(tint: Theme.primaryAccent))
+                                                        } else {
+                                                            Text("Verify Account")
+                                                                .font(.system(size: 14, weight: .bold))
+                                                                .foregroundColor(Theme.primaryAccent)
+                                                        }
+                                                        Spacer()
+                                                    }
+                                                    .padding(.vertical, 8)
+                                                    .background(Theme.primaryAccent.opacity(0.1))
+                                                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                                                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(Theme.primaryAccent.opacity(0.3), lineWidth: 1))
+                                                }
+                                                .padding(.horizontal, 18)
+                                                .padding(.bottom, 10)
+                                                .disabled(isVerifyingAccount)
+                                                
+                                                if let error = verificationError {
+                                                    Text(error)
+                                                        .font(.system(size: 12))
+                                                        .foregroundColor(Theme.dangerColor)
+                                                        .padding(.horizontal, 18)
+                                                        .padding(.bottom, 10)
+                                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                                }
+                                            }
+                                        }
+
                                         Divider().background(Color.white.opacity(0.07)).padding(.leading, 56)
                                         settingsFieldRow(icon: "person.text.rectangle", iconColor: Theme.secondaryAccent, placeholder: "Account Name (Optional)", text: $bankAccountName)
                                     } else if paymentType == "PayOS" {
@@ -560,6 +604,34 @@ struct EditProfileView: View {
         )
         viewModel.defaultCurrency = defaultCurrency
         presentationMode.wrappedValue.dismiss()
+    }
+    
+    private func verifyBankAccount() {
+        guard !paymentID.isEmpty, !bankBin.isEmpty else { return }
+        
+        isVerifyingAccount = true
+        verificationError = nil
+        
+        Task {
+            do {
+                if let name = try await VietQRService.shared.verifyAccount(bin: bankBin, accountNumber: paymentID) {
+                    await MainActor.run {
+                        self.bankAccountName = name
+                        self.isVerifyingAccount = false
+                    }
+                } else {
+                    await MainActor.run {
+                        self.verificationError = "Account not found."
+                        self.isVerifyingAccount = false
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    self.verificationError = error.localizedDescription
+                    self.isVerifyingAccount = false
+                }
+            }
+        }
     }
 }
 
