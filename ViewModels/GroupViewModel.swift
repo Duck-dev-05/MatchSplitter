@@ -63,7 +63,7 @@ class GroupViewModel: ObservableObject {
     }
     
     func resetData() {
-        groups = []
+        groups.removeAll()
         currentUser = nil
         registeredUsers = []
         // Reset defaultCurrency is not strictly necessary since the user will pick one in onboarding,
@@ -87,6 +87,7 @@ class GroupViewModel: ObservableObject {
     
     func logout() {
         currentUser = nil
+        groups.removeAll()
         saveData()
     }
     
@@ -96,37 +97,76 @@ class GroupViewModel: ObservableObject {
         FirebaseManager.shared.listenToUserGroups(userId: current.id) { [weak self] fetchedGroups in
             guard let self = self else { return }
             self.isLoading = false
-            var needsSave = false
-            for fetchedGroup in fetchedGroups {
-                if let index = self.groups.firstIndex(where: { $0.id == fetchedGroup.id }) {
-                    self.groups[index] = fetchedGroup
-                    needsSave = true
-                } else {
-                    self.groups.append(fetchedGroup)
-                    needsSave = true
-                }
-            }
-            if needsSave {
-                self.saveData()
-            }
+            self.groups = fetchedGroups.sorted { $0.name < $1.name }
+            self.saveData()
         }
     }    
-    func loginOrRegisterWithGoogle(name: String, email: String, avatarURL: String? = nil) {
-        if let existingIndex = registeredUsers.firstIndex(where: { $0.email == email }) {
-            var existingUser = registeredUsers[existingIndex]
-            if existingUser.avatarURL != avatarURL {
-                existingUser.avatarURL = avatarURL
-                registeredUsers[existingIndex] = existingUser
-                saveData()
+    func authenticateUser(email: String, password: String) async -> User? {
+        if let user = try? await FirebaseManager.shared.fetchUser(byEmail: email) {
+            if user.password == password {
+                await MainActor.run {
+                    if let index = registeredUsers.firstIndex(where: { $0.id == user.id }) {
+                        registeredUsers[index] = user
+                    } else {
+                        registeredUsers.append(user)
+                    }
+                    self.login(user: user)
+                }
+                return user
             }
-            login(user: existingUser)
         } else {
-            let newUser = User(name: name, email: email, password: "GoogleSignInUser", paymentID: nil, paymentType: nil, avatarURL: avatarURL)
-            register(user: newUser, defaultCurrency: .vnd) // Using default VND for new Google Sign-in users
-            login(user: newUser)
+            if let user = registeredUsers.first(where: { $0.email == email && $0.password == password }) {
+                try? await FirebaseManager.shared.saveUser(user)
+                await MainActor.run { self.login(user: user) }
+                return user
+            }
+        }
+        return nil
+    }
+    
+    func authenticateGoogleUser(name: String, email: String, avatarURL: String?) async -> User? {
+        if var user = try? await FirebaseManager.shared.fetchUser(byEmail: email) {
+            user.avatarURL = avatarURL
+            try? await FirebaseManager.shared.saveUser(user)
+            await MainActor.run {
+                if let index = registeredUsers.firstIndex(where: { $0.id == user.id }) {
+                    registeredUsers[index] = user
+                } else {
+                    registeredUsers.append(user)
+                }
+                self.login(user: user)
+            }
+            return user
+        } else {
+            if var user = registeredUsers.first(where: { $0.email == email }) {
+                user.avatarURL = avatarURL
+                try? await FirebaseManager.shared.saveUser(user)
+                await MainActor.run {
+                    if let index = registeredUsers.firstIndex(where: { $0.id == user.id }) {
+                        registeredUsers[index] = user
+                    }
+                    self.login(user: user)
+                }
+                return user
+            } else {
+                let newUser = User(name: name, email: email, password: "GoogleSignInUser", paymentID: nil, paymentType: nil, avatarURL: avatarURL)
+                try? await FirebaseManager.shared.saveUser(newUser)
+                await MainActor.run {
+                    self.register(user: newUser, defaultCurrency: .vnd)
+                    self.login(user: newUser)
+                }
+                return newUser
+            }
         }
     }
     
+    func registerUserAsync(user: User, defaultCurrency: Currency) async {
+        try? await FirebaseManager.shared.saveUser(user)
+        await MainActor.run {
+            self.register(user: user, defaultCurrency: defaultCurrency)
+            self.login(user: user)
+        }
+    }
     func updateCurrentUser(name: String, paymentID: String, paymentType: String? = nil, bankBin: String? = nil, bankAccountName: String? = nil, payOSClientId: String? = nil, payOSApiKey: String? = nil, payOSChecksumKey: String? = nil) {
         if let current = currentUser {
             let updatedUser = User(id: current.id, name: name, paymentID: paymentID.isEmpty ? nil : paymentID, paymentType: paymentType, bankBin: bankBin, bankAccountName: bankAccountName, payOSClientId: payOSClientId, payOSApiKey: payOSApiKey, payOSChecksumKey: payOSChecksumKey)

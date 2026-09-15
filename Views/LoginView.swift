@@ -33,6 +33,7 @@ struct LoginView: View {
     @State private var isAnimating: Bool = false
     @State private var errorMessage: String = ""
     @State private var segmentOffset: CGFloat = 0
+    @State private var isAuthenticating: Bool = false
 
     let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "VietQR", "PayOS", "None"]
 
@@ -159,6 +160,19 @@ struct LoginView: View {
                         }
                     }
                     .padding(.horizontal, metrics.hPad)
+                    .overlay(
+                        Group {
+                            if isAuthenticating {
+                                ZStack {
+                                    Color.black.opacity(0.6).cornerRadius(20)
+                                    ProgressView("Authenticating...")
+                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                        .foregroundColor(.white)
+                                        .padding(20)
+                                }
+                            }
+                        }
+                    )
 
                     // Bottom padding: extra room so tab bar (88pt) doesn't overlap
                     Spacer().frame(height: isModal ? metrics.adaptive(30, 40, 50) : metrics.adaptive(100, 110, 120))
@@ -398,11 +412,20 @@ struct LoginView: View {
 
     // MARK: - Handlers
     private func handleLogin() {
-        if let user = viewModel.registeredUsers.first(where: { $0.email == email && $0.password == password }) {
-            viewModel.login(user: user)
-            presentationMode.wrappedValue.dismiss()
-        } else {
-            errorMessage = "Invalid email or password."
+        isAuthenticating = true
+        errorMessage = ""
+        Task {
+            if await viewModel.authenticateUser(email: email, password: password) != nil {
+                await MainActor.run {
+                    isAuthenticating = false
+                    presentationMode.wrappedValue.dismiss()
+                }
+            } else {
+                await MainActor.run {
+                    isAuthenticating = false
+                    errorMessage = "Invalid email or password."
+                }
+            }
         }
     }
     
@@ -445,8 +468,15 @@ struct LoginView: View {
             let email = profile.email
             let avatarURL = profile.imageURL(withDimension: 320)?.absoluteString
             
-            viewModel.loginOrRegisterWithGoogle(name: name, email: email, avatarURL: avatarURL)
-            presentationMode.wrappedValue.dismiss()
+            self.isAuthenticating = true
+            self.errorMessage = ""
+            Task {
+                _ = await viewModel.authenticateGoogleUser(name: name, email: email, avatarURL: avatarURL)
+                await MainActor.run {
+                    self.isAuthenticating = false
+                    presentationMode.wrappedValue.dismiss()
+                }
+            }
         }
     }
 
@@ -470,8 +500,15 @@ struct LoginView: View {
             payOSApiKey: finalApiKey,
             payOSChecksumKey: finalChecksumKey
         )
-        viewModel.register(user: newUser, defaultCurrency: currency)
-        presentationMode.wrappedValue.dismiss()
+        isAuthenticating = true
+        errorMessage = ""
+        Task {
+            await viewModel.registerUserAsync(user: newUser, defaultCurrency: currency)
+            await MainActor.run {
+                isAuthenticating = false
+                presentationMode.wrappedValue.dismiss()
+            }
+        }
     }
 
     func placeholderFor(type: String) -> String {

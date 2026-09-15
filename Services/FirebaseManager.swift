@@ -9,6 +9,36 @@ class FirebaseManager {
     
     private init() {}
     
+    // MARK: - User Management
+    func saveUser(_ user: User) async throws {
+        let userData = try JSONEncoder().encode(user)
+        guard let userJsonString = String(data: userData, encoding: .utf8) else { return }
+        
+        let data: [String: Any] = [
+            "id": user.id.uuidString,
+            "email": user.email ?? "",
+            "user_data": userJsonString,
+            "last_updated": FieldValue.serverTimestamp()
+        ]
+        
+        try await db.collection("users").document(user.id.uuidString).setData(data, merge: true)
+    }
+    
+    func fetchUser(byEmail email: String) async throws -> User? {
+        let snapshot = try await db.collection("users")
+            .whereField("email", isEqualTo: email)
+            .getDocuments()
+            
+        guard let document = snapshot.documents.first else { return nil }
+        
+        let data = document.data()
+        if let userJsonString = data["user_data"] as? String,
+           let userData = userJsonString.data(using: .utf8) {
+            return try JSONDecoder().decode(User.self, from: userData)
+        }
+        return nil
+    }
+    
     // MARK: - Save Group to Firebase
     func saveGroup(_ group: Group) async throws {
         let groupData = try JSONEncoder().encode(group)
