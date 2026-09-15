@@ -415,15 +415,15 @@ struct LoginView: View {
         isAuthenticating = true
         errorMessage = ""
         Task {
-            if await viewModel.authenticateUser(email: email, password: password) != nil {
+            if await self.viewModel.authenticateUser(email: self.email, password: self.password) != nil {
                 await MainActor.run {
-                    isAuthenticating = false
-                    presentationMode.wrappedValue.dismiss()
+                    self.isAuthenticating = false
+                    self.presentationMode.wrappedValue.dismiss()
                 }
             } else {
                 await MainActor.run {
-                    isAuthenticating = false
-                    errorMessage = "Invalid email or password."
+                    self.isAuthenticating = false
+                    self.errorMessage = "Invalid email or password."
                 }
             }
         }
@@ -503,10 +503,10 @@ struct LoginView: View {
         isAuthenticating = true
         errorMessage = ""
         Task {
-            await viewModel.registerUserAsync(user: newUser, defaultCurrency: currency)
+            await self.viewModel.registerUserAsync(user: newUser, defaultCurrency: currency)
             await MainActor.run {
-                isAuthenticating = false
-                presentationMode.wrappedValue.dismiss()
+                self.isAuthenticating = false
+                self.presentationMode.wrappedValue.dismiss()
             }
         }
     }

@@ -105,10 +105,10 @@ class GroupViewModel: ObservableObject {
         if let user = try? await FirebaseManager.shared.fetchUser(byEmail: email) {
             if user.password == password {
                 await MainActor.run {
-                    if let index = registeredUsers.firstIndex(where: { $0.id == user.id }) {
-                        registeredUsers[index] = user
+                    if let index = self.registeredUsers.firstIndex(where: { $0.id == user.id }) {
+                        self.registeredUsers[index] = user
                     } else {
-                        registeredUsers.append(user)
+                        self.registeredUsers.append(user)
                     }
                     self.login(user: user)
                 }
@@ -129,10 +129,10 @@ class GroupViewModel: ObservableObject {
             user.avatarURL = avatarURL
             try? await FirebaseManager.shared.saveUser(user)
             await MainActor.run {
-                if let index = registeredUsers.firstIndex(where: { $0.id == user.id }) {
-                    registeredUsers[index] = user
+                if let index = self.registeredUsers.firstIndex(where: { $0.id == user.id }) {
+                    self.registeredUsers[index] = user
                 } else {
-                    registeredUsers.append(user)
+                    self.registeredUsers.append(user)
                 }
                 self.login(user: user)
             }
@@ -142,8 +142,8 @@ class GroupViewModel: ObservableObject {
                 user.avatarURL = avatarURL
                 try? await FirebaseManager.shared.saveUser(user)
                 await MainActor.run {
-                    if let index = registeredUsers.firstIndex(where: { $0.id == user.id }) {
-                        registeredUsers[index] = user
+                    if let index = self.registeredUsers.firstIndex(where: { $0.id == user.id }) {
+                        self.registeredUsers[index] = user
                     }
                     self.login(user: user)
                 }
