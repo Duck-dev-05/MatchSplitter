@@ -619,3 +619,29 @@ struct EditMemberView: View {
         }
     }
 }
+
+// MARK: - Reusable Edit Field
+struct EditFieldRow: View {
+    var icon: String
+    var iconColor: Color
+    var placeholder: String
+    @Binding var text: String
+
+    var body: some View {
+        HStack(spacing: 14) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(iconColor.opacity(0.15))
+                    .frame(width: 38, height: 38)
+                Image(systemName: icon)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(iconColor)
+            }
+            TextField(placeholder, text: $text)
+                .font(.system(size: 15))
+                .foregroundColor(.white)
+        }
+        .padding(.horizontal, 18)
+        .padding(.vertical, 14)
+    }
+}
