@@ -37,8 +37,8 @@ struct Group: Identifiable, Codable {
         members = try container.decode([User].self, forKey: .members)
         expenses = try container.decode([Expense].self, forKey: .expenses)
         payments = try container.decodeIfPresent([Payment].self, forKey: .payments) ?? []
-        currency = try container.decode(Currency.self, forKey: .currency)
-        creatorID = try container.decode(UUID.self, forKey: .creatorID)
+        currency = try container.decodeIfPresent(Currency.self, forKey: .currency) ?? .usd
+        creatorID = try container.decodeIfPresent(UUID.self, forKey: .creatorID) ?? members.first?.id ?? UUID()
         paymentBankBin = try container.decodeIfPresent(String.self, forKey: .paymentBankBin)
         paymentAccountNo = try container.decodeIfPresent(String.self, forKey: .paymentAccountNo)
         paymentAccountName = try container.decodeIfPresent(String.self, forKey: .paymentAccountName)

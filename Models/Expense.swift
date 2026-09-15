@@ -50,4 +50,38 @@ struct Expense: Identifiable, Codable {
     // For Multi-Currency (Original foreign currency and amount)
     var originalCurrency: Currency?
     var originalAmount: Double?
+    
+    enum CodingKeys: String, CodingKey {
+        case id, title, amount, date, category, paidBy, splitType
+        case splitAmong, customShares, originalCurrency, originalAmount
+    }
+    
+    init(id: UUID = UUID(), title: String, amount: Double, date: Date, category: ExpenseCategory, paidBy: User, splitType: SplitType, splitAmong: [User], customShares: [SplitShare]? = nil, originalCurrency: Currency? = nil, originalAmount: Double? = nil) {
+        self.id = id
+        self.title = title
+        self.amount = amount
+        self.date = date
+        self.category = category
+        self.paidBy = paidBy
+        self.splitType = splitType
+        self.splitAmong = splitAmong
+        self.customShares = customShares
+        self.originalCurrency = originalCurrency
+        self.originalAmount = originalAmount
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+        title = try container.decode(String.self, forKey: .title)
+        amount = try container.decode(Double.self, forKey: .amount)
+        date = try container.decodeIfPresent(Date.self, forKey: .date) ?? Date()
+        category = try container.decodeIfPresent(ExpenseCategory.self, forKey: .category) ?? .general
+        paidBy = try container.decode(User.self, forKey: .paidBy)
+        splitType = try container.decodeIfPresent(SplitType.self, forKey: .splitType) ?? .equal
+        splitAmong = try container.decodeIfPresent([User].self, forKey: .splitAmong) ?? []
+        customShares = try container.decodeIfPresent([SplitShare].self, forKey: .customShares)
+        originalCurrency = try container.decodeIfPresent(Currency.self, forKey: .originalCurrency)
+        originalAmount = try container.decodeIfPresent(Double.self, forKey: .originalAmount)
+    }
 }

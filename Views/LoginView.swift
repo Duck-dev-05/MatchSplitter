@@ -233,11 +233,20 @@ struct LoginView: View {
             glassTextField(icon: "lock.fill", iconColor: Theme.warmGold, placeholder: "Password", text: $password, isSecure: true)
 
             GradientButton(label: "Next →", isEnabled: isStepValid) {
-                if viewModel.registeredUsers.contains(where: { $0.email == email }) {
-                    errorMessage = "Email already in use."
-                } else {
-                    errorMessage = ""
-                    withAnimation { mode = .registerStep2 }
+                isAuthenticating = true
+                Task {
+                    if let _ = try? await FirebaseManager.shared.fetchUser(byEmail: email) {
+                        await MainActor.run {
+                            isAuthenticating = false
+                            errorMessage = "Email already in use."
+                        }
+                    } else {
+                        await MainActor.run {
+                            isAuthenticating = false
+                            errorMessage = ""
+                            withAnimation { mode = .registerStep2 }
+                        }
+                    }
                 }
             }
             .padding(.top, 6)

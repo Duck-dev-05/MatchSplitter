@@ -4,56 +4,51 @@ import SwiftUI
 class GroupViewModel: ObservableObject {
     @Published var groups: [Group] = []
     @Published var currentUser: User? = nil
-    @Published var registeredUsers: [User] = []
-    @Published var defaultCurrency: Currency = .vnd
+    
+    // Use AppStorage for persistence instead of DatabaseManager
+    @AppStorage("defaultCurrency") private var storedCurrencyRaw: String = Currency.usd.rawValue
+    @AppStorage("currentUserId") private var storedUserId: String = ""
+    
+    @Published var defaultCurrency: Currency = .usd {
+        didSet {
+            storedCurrencyRaw = defaultCurrency.rawValue
+        }
+    }
     
     @Published var errorMessage: String? = nil
     @Published var showError: Bool = false
     @Published var isLoading: Bool = false
     
     init() {
+        if let currency = Currency(rawValue: storedCurrencyRaw) {
+            self.defaultCurrency = currency
+        }
         loadData()
     }
     
     private func loadData() {
-        if let data = DatabaseManager.shared.load() {
-            self.groups = data.groups
-            self.currentUser = data.currentUser
-            self.registeredUsers = data.registeredUsers ?? []
-            self.defaultCurrency = data.defaultCurrency
-            
-            // Auto-migrate current user to VietQR and VND for testing
-            if var user = self.currentUser, user.paymentType != "VietQR" {
-                user.paymentType = "VietQR"
-                user.paymentID = "123456789" // Placeholder account number
-                user.bankBin = "970436" // Vietcombank BIN (default)
-                self.currentUser = user
-                
-                if let idx = self.registeredUsers.firstIndex(where: { $0.id == user.id }) {
-                    self.registeredUsers[idx] = user
-                }
-                
-                self.defaultCurrency = .vnd
-                
-                for i in 0..<self.groups.count {
-                    if self.groups[i].currency == .usd {
-                        self.groups[i].currency = .vnd
+        if !storedUserId.isEmpty {
+            isLoading = true
+            Task {
+                if let user = try? await FirebaseManager.shared.fetchUser(byId: storedUserId) {
+                    await MainActor.run {
+                        self.currentUser = user
+                        self.fetchGroupsFromFirebase()
                     }
-                    if let mIdx = self.groups[i].members.firstIndex(where: { $0.id == user.id }) {
-                        self.groups[i].members[mIdx] = user
+                } else {
+                    await MainActor.run {
+                        self.logout()
+                        self.isLoading = false
                     }
                 }
-                self.saveData()
             }
-            
-            // Sync with Firebase
-            self.fetchGroupsFromFirebase()
         }
     }
     
     func saveData() {
-        let data = AppData(groups: groups, currentUser: currentUser, registeredUsers: registeredUsers, defaultCurrency: defaultCurrency)
-        DatabaseManager.shared.save(appData: data)
+        if let current = currentUser {
+            storedUserId = current.id.uuidString
+        }
         
         Task {
             for group in groups {
@@ -65,18 +60,14 @@ class GroupViewModel: ObservableObject {
     func resetData() {
         groups.removeAll()
         currentUser = nil
-        registeredUsers = []
-        // Reset defaultCurrency is not strictly necessary since the user will pick one in onboarding,
-        // but it's good practice to clear it.
-        // However, if we don't know the exact starting value, .usd is fine.
-        saveData()
+        storedUserId = ""
     }
     
     func register(user: User, defaultCurrency: Currency) {
         currentUser = user
-        registeredUsers.append(user)
         self.defaultCurrency = defaultCurrency
         saveData()
+        fetchGroupsFromFirebase() // Though it's empty, good practice
     }
     
     func login(user: User) {
@@ -88,7 +79,7 @@ class GroupViewModel: ObservableObject {
     func logout() {
         currentUser = nil
         groups.removeAll()
-        saveData()
+        storedUserId = ""
     }
     
     func fetchGroupsFromFirebase() {
@@ -98,26 +89,15 @@ class GroupViewModel: ObservableObject {
             guard let self = self else { return }
             self.isLoading = false
             self.groups = fetchedGroups.sorted { $0.name < $1.name }
-            self.saveData()
         }
-    }    
+    }
+    
     func authenticateUser(email: String, password: String) async -> User? {
         if let user = try? await FirebaseManager.shared.fetchUser(byEmail: email) {
             if user.password == password {
                 await MainActor.run {
-                    if let index = self.registeredUsers.firstIndex(where: { $0.id == user.id }) {
-                        self.registeredUsers[index] = user
-                    } else {
-                        self.registeredUsers.append(user)
-                    }
                     self.login(user: user)
                 }
-                return user
-            }
-        } else {
-            if let user = registeredUsers.first(where: { $0.email == email && $0.password == password }) {
-                try? await FirebaseManager.shared.saveUser(user)
-                await MainActor.run { self.login(user: user) }
                 return user
             }
         }
@@ -130,35 +110,17 @@ class GroupViewModel: ObservableObject {
             let updatedUser = user
             try? await FirebaseManager.shared.saveUser(updatedUser)
             await MainActor.run {
-                if let index = self.registeredUsers.firstIndex(where: { $0.id == updatedUser.id }) {
-                    self.registeredUsers[index] = updatedUser
-                } else {
-                    self.registeredUsers.append(updatedUser)
-                }
                 self.login(user: updatedUser)
             }
             return updatedUser
         } else {
-            if var user = registeredUsers.first(where: { $0.email == email }) {
-                user.avatarURL = avatarURL
-                let updatedUser = user
-                try? await FirebaseManager.shared.saveUser(updatedUser)
-                await MainActor.run {
-                    if let index = self.registeredUsers.firstIndex(where: { $0.id == updatedUser.id }) {
-                        self.registeredUsers[index] = updatedUser
-                    }
-                    self.login(user: updatedUser)
-                }
-                return updatedUser
-            } else {
-                let newUser = User(name: name, email: email, password: "GoogleSignInUser", paymentID: nil, paymentType: nil, avatarURL: avatarURL)
-                try? await FirebaseManager.shared.saveUser(newUser)
-                await MainActor.run {
-                    self.register(user: newUser, defaultCurrency: .vnd)
-                    self.login(user: newUser)
-                }
-                return newUser
+            let newUser = User(name: name, email: email, password: "GoogleSignInUser", paymentID: nil, paymentType: nil, avatarURL: avatarURL)
+            try? await FirebaseManager.shared.saveUser(newUser)
+            await MainActor.run {
+                self.register(user: newUser, defaultCurrency: .usd)
+                self.login(user: newUser)
             }
+            return newUser
         }
     }
     
@@ -169,18 +131,27 @@ class GroupViewModel: ObservableObject {
             self.login(user: user)
         }
     }
+
     func updateCurrentUser(name: String, paymentID: String, paymentType: String? = nil, bankBin: String? = nil, bankAccountName: String? = nil, payOSClientId: String? = nil, payOSApiKey: String? = nil, payOSChecksumKey: String? = nil) {
         if let current = currentUser {
             let updatedUser = User(id: current.id, name: name, paymentID: paymentID.isEmpty ? nil : paymentID, paymentType: paymentType, bankBin: bankBin, bankAccountName: bankAccountName, payOSClientId: payOSClientId, payOSApiKey: payOSApiKey, payOSChecksumKey: payOSChecksumKey)
             currentUser = updatedUser
             
             // Also update this user's name across all groups they belong to
+            var changedGroups = false
             for groupIndex in groups.indices {
                 if let memberIndex = groups[groupIndex].members.firstIndex(where: { $0.id == current.id }) {
                     groups[groupIndex].members[memberIndex] = updatedUser
+                    changedGroups = true
                 }
             }
-            saveData()
+            if changedGroups {
+                saveData()
+            }
+            // Need to save user document too!
+            Task {
+                try? await FirebaseManager.shared.saveUser(updatedUser)
+            }
         }
     }
     
@@ -241,6 +212,9 @@ class GroupViewModel: ObservableObject {
     
     func deleteGroup(id: UUID) {
         groups.removeAll(where: { $0.id == id })
+        Task {
+            try? await FirebaseManager.shared.deleteGroup(id.uuidString)
+        }
         saveData()
     }
     
@@ -291,10 +265,6 @@ class GroupViewModel: ObservableObject {
                     payOSChecksumKey: payOSChecksumKey
                 )
                 groups[groupIndex].members[memberIndex] = updatedMember
-                
-                // Note: the updated member is now in the group's members list.
-                // Any QR codes generated from SettlementView pull directly from group.members,
-                // so they will automatically reflect these new payment details!
                 saveData()
             }
         }

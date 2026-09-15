@@ -39,6 +39,17 @@ class FirebaseManager {
         return nil
     }
     
+    func fetchUser(byId id: String) async throws -> User? {
+        let snapshot = try await db.collection("users").document(id).getDocument()
+        guard let data = snapshot.data() else { return nil }
+        
+        if let userJsonString = data["user_data"] as? String,
+           let userData = userJsonString.data(using: .utf8) {
+            return try JSONDecoder().decode(User.self, from: userData)
+        }
+        return nil
+    }
+    
     // MARK: - Save Group to Firebase
     func saveGroup(_ group: Group) async throws {
         let groupData = try JSONEncoder().encode(group)
@@ -65,6 +76,11 @@ class FirebaseManager {
         }
         
         return try JSONDecoder().decode(Group.self, from: groupData)
+    }
+    
+    // MARK: - Delete Group from Firebase
+    func deleteGroup(id: String) async throws {
+        try await db.collection("groups").document(id).delete()
     }
     
     // MARK: - Fetch Groups for User
