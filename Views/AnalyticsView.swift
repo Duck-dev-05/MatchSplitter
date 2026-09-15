@@ -78,50 +78,38 @@ struct AnalyticsView: View {
 
                         // MARK: Stats Row — 3 individual cards
                         HStack(spacing: 10) {
-                            analyticsStatCard(
+                            HeroMetricCard(
                                 icon: "banknote.fill",
                                 label: "Total Spent",
                                 value: "\(viewModel.defaultCurrency.symbol)\(String(format: "%.0f", totalSpent))",
-                                color: Theme.secondaryAccent
+                                color: Theme.secondaryAccent,
+                                valueFont: metrics.adaptive(20, 24, 28)
                             )
-                            analyticsStatCard(
+                            HeroMetricCard(
                                 icon: "arrow.down.circle.fill",
                                 label: "Owed to You",
                                 value: "\(viewModel.defaultCurrency.symbol)\(String(format: "%.0f", overallBalance > 0 ? overallBalance : 0))",
-                                color: Theme.successColor
+                                color: Theme.successColor,
+                                valueFont: metrics.adaptive(20, 24, 28)
                             )
-                            analyticsStatCard(
+                            HeroMetricCard(
                                 icon: "arrow.up.circle.fill",
                                 label: "You Owe",
                                 value: "\(viewModel.defaultCurrency.symbol)\(String(format: "%.0f", abs(totalOwed)))",
-                                color: Theme.dangerColor
+                                color: Theme.dangerColor,
+                                valueFont: metrics.adaptive(20, 24, 28)
                             )
                         }
                         .padding(.horizontal, 20)
 
                         // MARK: Chart
                         if categoryData.isEmpty {
-                            VStack(spacing: 16) {
-                                ZStack {
-                                    Circle()
-                                        .fill(Theme.primaryAccent.opacity(0.07))
-                                        .frame(width: 110, height: 110)
-                                    Circle()
-                                        .fill(Theme.primaryAccent.opacity(0.12))
-                                        .frame(width: 78, height: 78)
-                                    Image(systemName: "chart.pie.fill")
-                                        .font(.system(size: 36))
-                                        .foregroundColor(Theme.primaryAccent.opacity(0.50))
-                                }
-                                Text("No spending data yet.")
-                                    .foregroundColor(.white.opacity(0.40))
-                                    .font(.system(size: 15, weight: .medium))
-                                Text("Add expenses to groups to see your breakdown here.")
-                                    .foregroundColor(.white.opacity(0.30))
-                                    .font(.caption)
-                                    .multilineTextAlignment(.center)
-                            }
-                            .padding(.top, 30)
+                            EmptyStateView(
+                                icon: "📊",
+                                title: "No Spending Data Yet",
+                                subtitle: "Add expenses to your groups and your breakdown will appear here."
+                            )
+                            .padding(.top, 10)
                         } else {
                             if #available(iOS 16.0, *) {
                                 iOS16ChartView(categoryData: categoryData)
@@ -138,33 +126,7 @@ struct AnalyticsView: View {
         }
     }
 
-    // MARK: - Analytics Stat Card
-    private func analyticsStatCard(icon: String, label: String, value: String, color: Color) -> some View {
-        VStack(spacing: 10) {
-            ZStack {
-                Circle()
-                    .fill(color.opacity(0.15))
-                    .frame(width: 40, height: 40)
-                Image(systemName: icon)
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(color)
-            }
-            Text(value)
-                .font(.system(size: 16, weight: .heavy, design: .rounded))
-                .foregroundColor(.white)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-            Text(label)
-                .kerning(0.6)
-                .font(.system(size: 10, weight: .bold))
-                .foregroundColor(.white.opacity(0.45))
-                .textCase(.uppercase)
-                .multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 18)
-        .premiumCard(cornerRadius: 18, accentColor: color)
-    }
+    // analyticsStatCard replaced by HeroMetricCard (defined in Theme.swift)
 }
 
 // MARK: - iOS 15 Custom Chart

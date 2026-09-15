@@ -159,8 +159,11 @@ struct PodiumCard: View {
                     )
             }
         )
-        .shadow(color: rank == 1 ? Theme.warmGold.opacity(0.20) : Color.black.opacity(0.25), radius: rank == 1 ? 16 : 8, x: 0, y: 6)
+        .shadow(color: rank == 1 ? Theme.warmGold.opacity(0.25) : Color.black.opacity(0.25), radius: rank == 1 ? 20 : 8, x: 0, y: 6)
         .frame(height: height)
+        .if(rank == 1) { view in
+            view.neonGlow(Theme.warmGold, radius: 12)
+        }
     }
 }
 
@@ -199,7 +202,7 @@ struct StatRow: View {
             }
         }
         .padding(16)
-        .glassCard(cornerRadius: 16)
+        .premiumCard(cornerRadius: 16, accentColor: Theme.primaryAccent)
         .padding(.bottom, 8)
     }
 }

@@ -139,7 +139,7 @@ struct GroupSettingsView: View {
                                 }
                                 .padding(20)
                             }
-                            .glassCard(cornerRadius: 24)
+                            .premiumCard(cornerRadius: 24, accentColor: Theme.secondaryAccent)
                         }
 
                         // Export Button
@@ -157,11 +157,7 @@ struct GroupSettingsView: View {
                                 Spacer()
                             }
                             .padding(20)
-                            .background(
-                                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                                    .fill(Theme.cardBackground)
-                                    .shadow(color: Color.black.opacity(0.30), radius: 16, x: 0, y: 8)
-                            )
+                            .premiumCard(cornerRadius: 20, accentColor: Theme.successColor)
                         }
                         .buttonStyle(PressableButtonStyle())
 
@@ -175,15 +171,7 @@ struct GroupSettingsView: View {
                                 Spacer()
                             }
                             .padding(20)
-                            .background(
-                                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                                    .fill(Theme.cardBackground)
-                                    .shadow(color: Color.black.opacity(0.30), radius: 16, x: 0, y: 8)
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                                    .stroke(Theme.dangerColor.opacity(0.30), lineWidth: 1)
-                            )
+                            .premiumCard(cornerRadius: 20, accentColor: Theme.dangerColor)
                         }
                         .buttonStyle(PressableButtonStyle())
                     }

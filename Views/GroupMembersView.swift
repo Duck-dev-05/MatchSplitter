@@ -164,7 +164,7 @@ struct AddMemberSheet: View {
 
                                 paymentDetailsSection
                             }
-                            .glassCard(cornerRadius: 20)
+                            .premiumCard(cornerRadius: 24, accentColor: Theme.primaryAccent)
 
                             Button(action: {
                                 if !newName.isEmpty {
@@ -236,7 +236,7 @@ struct AddMemberSheet: View {
                                                     .foregroundColor(Theme.secondaryAccent)
                                             }
                                             .padding(12)
-                                            .glassCard(cornerRadius: 16)
+                                            .premiumCard(cornerRadius: 16, accentColor: Theme.secondaryAccent)
                                         }
                                         .buttonStyle(PressableButtonStyle())
                                     }

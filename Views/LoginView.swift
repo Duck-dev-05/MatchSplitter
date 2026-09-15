@@ -32,8 +32,12 @@ struct LoginView: View {
 
     @State private var isAnimating: Bool = false
     @State private var errorMessage: String = ""
-    @State private var segmentOffset: CGFloat = 0
     @State private var isAuthenticating: Bool = false
+    @FocusState private var focusedField: LoginField?
+
+    enum LoginField: Hashable {
+        case email, password, name, paymentID
+    }
 
     let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "VietQR", "PayOS", "None"]
 
@@ -44,7 +48,7 @@ struct LoginView: View {
         switch mode {
         case .login:         return !email.isEmpty && !password.isEmpty
         case .registerStep1: return !name.isEmpty && !email.isEmpty && !password.isEmpty
-        case .registerStep2: 
+        case .registerStep2:
             if paymentType == "VietQR" {
                 return selectedCurrency != nil && !paymentID.isEmpty && !bankBin.isEmpty
             } else if paymentType == "PayOS" {
@@ -56,7 +60,7 @@ struct LoginView: View {
 
     var body: some View {
         ZStack {
-            // Animated Background — darkened stops so icon contrast stays high
+            // Animated Background
             LinearGradient(
                 gradient: Gradient(colors: [Theme.primaryAccent, Theme.backgroundMid, Theme.backgroundEnd]),
                 startPoint: isAnimating ? .topLeading : .bottomTrailing,
@@ -86,7 +90,6 @@ struct LoginView: View {
             }
             .ignoresSafeArea()
 
-            // Scrollable content so nothing is cut off on iPhone 7 / SE
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 0) {
                     // Top bar
@@ -104,7 +107,6 @@ struct LoginView: View {
                         .padding(.top, 50)
                         .padding(.bottom, metrics.isSmall ? 12 : 20)
                     } else {
-                        // Status bar clearance
                         Spacer().frame(height: metrics.isSmall ? 50 : 64)
                     }
 
@@ -119,6 +121,7 @@ struct LoginView: View {
                                 .font(.system(size: metrics.logoIconFont, weight: .semibold))
                                 .foregroundColor(Theme.primaryAccent)
                         }
+                        .neonGlow(Theme.primaryAccent, radius: 14)
 
                         Text("MatchSplitter")
                             .font(.system(size: metrics.appTitleFont, weight: .heavy, design: .rounded))
@@ -138,16 +141,38 @@ struct LoginView: View {
                             animatedSegmentControl
                         }
 
-                        // Error Message
-                        if !errorMessage.isEmpty {
-                            HStack(spacing: 6) {
-                                Image(systemName: "exclamationmark.circle")
-                                    .font(.system(size: 13))
-                                Text(errorMessage)
-                                    .font(.system(size: 13, weight: .medium))
+                        // Step indicator for register
+                        if mode == .registerStep1 || mode == .registerStep2 {
+                            HStack(spacing: 8) {
+                                ForEach(0..<2) { i in
+                                    Capsule()
+                                        .fill(i == (mode == .registerStep1 ? 0 : 1) ? Theme.secondaryAccent : Color.white.opacity(0.25))
+                                        .frame(width: i == (mode == .registerStep1 ? 0 : 1) ? 24 : 8, height: 6)
+                                        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: mode)
+                                }
                             }
-                            .foregroundColor(Theme.dangerColor)
-                            .padding(.bottom, 2)
+                        }
+
+                        // Error Banner
+                        if !errorMessage.isEmpty {
+                            HStack(spacing: 10) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundColor(Theme.dangerColor)
+                                Text(errorMessage)
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundColor(Theme.dangerColor)
+                                Spacer()
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 12)
+                            .background(Theme.dangerColor.opacity(0.12))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .stroke(Theme.dangerColor.opacity(0.28), lineWidth: 1)
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            .transition(.move(edge: .top).combined(with: .opacity))
                         }
 
                         // Form fields
@@ -163,16 +188,29 @@ struct LoginView: View {
                     .overlay(
                         ZStack {
                             if isAuthenticating {
-                                Color.black.opacity(0.6).cornerRadius(20)
-                                ProgressView("Authenticating...")
-                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                    .foregroundColor(.white)
-                                    .padding(20)
+                                // Branded auth overlay
+                                Color.black.opacity(0.65).cornerRadius(20)
+                                VStack(spacing: 16) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(Color.white.opacity(0.14))
+                                            .frame(width: 56, height: 56)
+                                        Image(systemName: "figure.sporting.court")
+                                            .font(.system(size: 24, weight: .semibold))
+                                            .foregroundColor(Theme.primaryAccent)
+                                    }
+                                    .neonGlow(Theme.primaryAccent, radius: 12)
+                                    .shimmerLoading()
+
+                                    Text("Authenticating...")
+                                        .font(.system(size: 14, weight: .semibold))
+                                        .foregroundColor(.white.opacity(0.80))
+                                }
+                                .padding(24)
                             }
                         }
                     )
 
-                    // Bottom padding: extra room so tab bar (88pt) doesn't overlap
                     Spacer().frame(height: isModal ? metrics.adaptive(30, 40, 50) : metrics.adaptive(100, 110, 120))
                 }
             }
@@ -184,43 +222,54 @@ struct LoginView: View {
         ZStack(alignment: .leading) {
             // Track
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color.white.opacity(0.08))
-                .frame(height: 40)
+                .fill(Color.white.opacity(0.07))
+                .frame(height: 42)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                )
 
-            // Sliding pill
+            // Sliding gradient pill
             GeometryReader { geo in
                 RoundedRectangle(cornerRadius: 10)
-                    .fill(Color.white.opacity(0.20))
+                    .fill(
+                        LinearGradient(
+                            colors: [Theme.primaryAccent.opacity(0.80), Theme.secondaryAccent.opacity(0.60)],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
                     .frame(width: geo.size.width / 2, height: 34)
-                    .offset(x: mode == .login ? 3 : geo.size.width / 2 - 3, y: 3)
+                    .offset(x: mode == .login ? 4 : geo.size.width / 2 - 4, y: 4)
                     .animation(.spring(response: 0.35, dampingFraction: 0.75), value: mode)
+                    .shadow(color: Theme.primaryAccent.opacity(0.40), radius: 8, x: 0, y: 4)
             }
 
             HStack(spacing: 0) {
                 Button("Login") { mode = .login; errorMessage = "" }
                     .frame(maxWidth: .infinity)
-                    .font(.system(size: 15, weight: mode == .login ? .bold : .regular))
-                    .foregroundColor(mode == .login ? .white : .white.opacity(0.5))
+                    .font(.system(size: 15, weight: mode == .login ? .bold : .semibold))
+                    .foregroundColor(mode == .login ? .white : .white.opacity(0.45))
 
                 Button("Register") { mode = .registerStep1; errorMessage = "" }
                     .frame(maxWidth: .infinity)
-                    .font(.system(size: 15, weight: mode == .registerStep1 ? .bold : .regular))
-                    .foregroundColor(mode == .registerStep1 ? .white : .white.opacity(0.5))
+                    .font(.system(size: 15, weight: mode == .registerStep1 ? .bold : .semibold))
+                    .foregroundColor(mode == .registerStep1 ? .white : .white.opacity(0.45))
             }
         }
-        .frame(height: 40)
+        .frame(height: 42)
         .padding(.bottom, 4)
     }
 
     // MARK: - Login Fields
     private var loginFields: some View {
         VStack(spacing: 14) {
-            glassTextField(icon: "envelope.fill", iconColor: Theme.secondaryAccent, placeholder: "Email", text: $email, keyboard: .emailAddress)
-            glassTextField(icon: "lock.fill", iconColor: Theme.primaryAccent, placeholder: "Password", text: $password, isSecure: true)
+            glassTextField(icon: "envelope.fill", iconColor: Theme.secondaryAccent, placeholder: "Email", text: $email, keyboard: .emailAddress, field: .email)
+            glassTextField(icon: "lock.fill", iconColor: Theme.primaryAccent, placeholder: "Password", text: $password, isSecure: true, field: .password)
 
             GradientButton(label: "Login", isEnabled: isStepValid, action: handleLogin)
                 .padding(.top, 6)
-            
+
             googleSignInSection
         }
     }
@@ -228,9 +277,9 @@ struct LoginView: View {
     // MARK: - Register Step 1 Fields
     private var registerStep1Fields: some View {
         VStack(spacing: 14) {
-            glassTextField(icon: "person.fill", iconColor: Theme.primaryAccent, placeholder: "Your Name", text: $name)
-            glassTextField(icon: "envelope.fill", iconColor: Theme.secondaryAccent, placeholder: "Email", text: $email, keyboard: .emailAddress)
-            glassTextField(icon: "lock.fill", iconColor: Theme.warmGold, placeholder: "Password", text: $password, isSecure: true)
+            glassTextField(icon: "person.fill", iconColor: Theme.primaryAccent, placeholder: "Your Name", text: $name, field: .name)
+            glassTextField(icon: "envelope.fill", iconColor: Theme.secondaryAccent, placeholder: "Email", text: $email, keyboard: .emailAddress, field: .email)
+            glassTextField(icon: "lock.fill", iconColor: Theme.warmGold, placeholder: "Password", text: $password, isSecure: true, field: .password)
 
             GradientButton(label: "Next →", isEnabled: isStepValid) {
                 isAuthenticating = true
@@ -250,7 +299,7 @@ struct LoginView: View {
                 }
             }
             .padding(.top, 6)
-            
+
             googleSignInSection
         }
     }
@@ -384,37 +433,46 @@ struct LoginView: View {
         }
     }
 
-    // MARK: - Glass Text Field
+    // MARK: - Glass Text Field (with focus glow)
     private func glassTextField(
         icon: String,
         iconColor: Color,
         placeholder: String,
         text: Binding<String>,
         keyboard: UIKeyboardType = .default,
-        isSecure: Bool = false
+        isSecure: Bool = false,
+        field: LoginField? = nil
     ) -> some View {
-        HStack(spacing: 12) {
-            IconBadge(systemName: icon, color: iconColor, size: 36, iconSize: 14)
+        let isFocused = field != nil && focusedField == field
+        return HStack(spacing: 12) {
+            IconBadge(systemName: icon, color: isFocused ? iconColor : iconColor.opacity(0.7), size: 36, iconSize: 14)
             if isSecure {
                 SecureField(placeholder, text: text)
                     .font(.system(size: 15))
                     .foregroundColor(.white)
+                    .focused($focusedField, equals: field ?? .email)
             } else {
                 TextField(placeholder, text: text)
                     .keyboardType(keyboard)
                     .autocapitalization(.none)
                     .font(.system(size: 15))
                     .foregroundColor(.white)
+                    .focused($focusedField, equals: field ?? .email)
             }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(Color.white.opacity(0.12))
+        .background(Color.white.opacity(isFocused ? 0.14 : 0.08))
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                .stroke(
+                    isFocused ? iconColor.opacity(0.55) : Color.white.opacity(0.10),
+                    lineWidth: isFocused ? 1.5 : 1
+                )
         )
+        .shadow(color: isFocused ? iconColor.opacity(0.20) : .clear, radius: 8, x: 0, y: 4)
+        .animation(.easeInOut(duration: 0.2), value: isFocused)
     }
 
     // MARK: - Handlers

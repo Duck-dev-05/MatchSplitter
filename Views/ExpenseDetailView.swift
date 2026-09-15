@@ -58,6 +58,7 @@ struct ExpenseDetailView: View {
                             Text("\(group.currency.symbol)\(String(format: "%.2f", expense.amount))")
                                 .font(.system(size: 50, weight: .heavy, design: .rounded))
                                 .foregroundColor(.white)
+                                .neonGlow(categoryColor, radius: 8)
                                 .padding(.top, 4)
                             
                             if let origCurr = expense.originalCurrency, let origAmt = expense.originalAmount, origCurr != group.currency {
@@ -106,7 +107,7 @@ struct ExpenseDetailView: View {
                     }
                     .padding(32)
                     .frame(maxWidth: .infinity)
-                    .glassCard(cornerRadius: 32)
+                    .premiumCard(cornerRadius: 32, accentColor: categoryColor)
 
                     // MARK: Split Details
                     VStack(alignment: .leading, spacing: 14) {

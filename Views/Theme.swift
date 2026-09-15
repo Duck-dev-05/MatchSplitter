@@ -415,33 +415,63 @@ struct GradientButton: View {
     var label: String
     var isEnabled: Bool = true
     var action: () -> Void
+    @State private var shimmerOffset: CGFloat = -1.0
 
     var body: some View {
         Button(action: action) {
-            Text(label)
-                .font(.system(size: 17, weight: .bold))
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
-                .background(
-                    ZStack {
-                        if isEnabled {
-                            Theme.primaryGradient
-                        } else {
-                            Color.white.opacity(0.08)
-                        }
+            ZStack {
+                Text(label)
+                    .font(.system(size: 17, weight: .bold))
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+
+                // Shimmer sweep
+                if isEnabled {
+                    LinearGradient(
+                        colors: [.clear, Color.white.opacity(0.20), .clear],
+                        startPoint: .init(x: shimmerOffset, y: 0.5),
+                        endPoint: .init(x: shimmerOffset + 0.4, y: 0.5)
+                    )
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .allowsHitTesting(false)
+                }
+            }
+            .background(
+                ZStack {
+                    if isEnabled {
+                        Theme.primaryGradient
+                    } else {
+                        Color.white.opacity(0.08)
                     }
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .stroke(Color.white.opacity(isEnabled ? 0.18 : 0.0), lineWidth: 1)
-                )
-                .shadow(color: isEnabled ? Theme.primaryAccent.opacity(0.45) : .clear, radius: 14, x: 0, y: 7)
+                }
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(
+                        LinearGradient(
+                            colors: isEnabled
+                                ? [Color.white.opacity(0.30), Color.white.opacity(0.06)]
+                                : [Color.clear],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
+                    )
+            )
+            .shadow(color: isEnabled ? Theme.primaryAccent.opacity(0.50) : .clear, radius: 16, x: 0, y: 8)
         }
         .disabled(!isEnabled)
         .animation(.easeInOut(duration: 0.2), value: isEnabled)
         .buttonStyle(PressableButtonStyle())
+        .onAppear {
+            guard isEnabled else { return }
+            withAnimation(.linear(duration: 2.4).repeatForever(autoreverses: false).delay(0.6)) {
+                shimmerOffset = 1.6
+            }
+        }
     }
 }
 
@@ -461,6 +491,179 @@ struct AmbientGlob: View {
             .blur(radius: blurRadius)
             .offset(x: offsetX, y: offsetY)
             .allowsHitTesting(false)
+    }
+}
+
+// MARK: - Neon Glow Modifier
+struct NeonGlowModifier: ViewModifier {
+    var color: Color
+    var radius: CGFloat
+
+    func body(content: Content) -> some View {
+        content
+            .shadow(color: color.opacity(0.55), radius: radius, x: 0, y: 0)
+            .shadow(color: color.opacity(0.30), radius: radius * 2, x: 0, y: 0)
+    }
+}
+
+extension View {
+    func neonGlow(_ color: Color = Theme.primaryAccent, radius: CGFloat = 12) -> some View {
+        modifier(NeonGlowModifier(color: color, radius: radius))
+    }
+}
+
+// MARK: - Shimmer Loading Modifier
+struct ShimmerModifier: ViewModifier {
+    @State private var phase: CGFloat = -1
+
+    func body(content: Content) -> some View {
+        content
+            .overlay(
+                LinearGradient(
+                    colors: [.clear, Color.white.opacity(0.15), .clear],
+                    startPoint: .init(x: phase, y: 0.5),
+                    endPoint: .init(x: phase + 0.5, y: 0.5)
+                )
+                .allowsHitTesting(false)
+            )
+            .onAppear {
+                withAnimation(.linear(duration: 1.4).repeatForever(autoreverses: false)) {
+                    phase = 1.5
+                }
+            }
+    }
+}
+
+extension View {
+    func shimmerLoading() -> some View {
+        modifier(ShimmerModifier())
+    }
+}
+
+// MARK: - Hero Metric Card
+struct HeroMetricCard: View {
+    var icon: String
+    var label: String
+    var value: String
+    var color: Color = Theme.primaryAccent
+    var valueFont: CGFloat = 28
+
+    var body: some View {
+        VStack(spacing: 12) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(color.opacity(0.14))
+                    .frame(width: 48, height: 48)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .stroke(color.opacity(0.28), lineWidth: 1)
+                    )
+                Image(systemName: icon)
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundColor(color)
+            }
+
+            Text(value)
+                .font(.system(size: valueFont, weight: .heavy, design: .rounded))
+                .foregroundColor(.white)
+                .minimumScaleFactor(0.7)
+                .lineLimit(1)
+
+            Text(label)
+                .font(.system(size: 11, weight: .bold))
+                .foregroundColor(.white.opacity(0.45))
+                .textCase(.uppercase)
+                .tracking(0.8)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 20)
+        .padding(.horizontal, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(Theme.cardBackground)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .stroke(
+                            LinearGradient(
+                                colors: [color.opacity(0.35), color.opacity(0.08)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1
+                        )
+                )
+        )
+        .shadow(color: color.opacity(0.18), radius: 14, x: 0, y: 7)
+    }
+}
+
+// MARK: - Empty State View
+struct EmptyStateView: View {
+    var icon: String
+    var title: String
+    var subtitle: String
+    var actionLabel: String? = nil
+    var secondaryLabel: String? = nil
+    var onAction: (() -> Void)? = nil
+    var onSecondary: (() -> Void)? = nil
+
+    var body: some View {
+        VStack(spacing: 20) {
+            // Icon circle with glow
+            ZStack {
+                Circle()
+                    .fill(Theme.primaryAccent.opacity(0.10))
+                    .frame(width: 88, height: 88)
+                    .overlay(
+                        Circle().stroke(Theme.primaryAccent.opacity(0.20), lineWidth: 1)
+                    )
+                Text(icon)
+                    .font(.system(size: 38))
+            }
+            .neonGlow(Theme.primaryAccent, radius: 14)
+
+            VStack(spacing: 8) {
+                Text(title)
+                    .font(.system(size: 20, weight: .heavy, design: .rounded))
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+
+                Text(subtitle)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.white.opacity(0.50))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 24)
+            }
+
+            if let label = actionLabel {
+                Button(action: { onAction?() }) {
+                    Text(label)
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 28)
+                        .padding(.vertical, 13)
+                        .background(Theme.primaryGradient)
+                        .clipShape(Capsule())
+                        .shadow(color: Theme.primaryAccent.opacity(0.40), radius: 12, x: 0, y: 6)
+                }
+                .buttonStyle(PressableButtonStyle())
+            }
+
+            if let label = secondaryLabel {
+                Button(action: { onSecondary?() }) {
+                    Text(label)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.60))
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 11)
+                        .background(Color.white.opacity(0.08))
+                        .clipShape(Capsule())
+                        .overlay(Capsule().stroke(Color.white.opacity(0.14), lineWidth: 1))
+                }
+                .buttonStyle(PressableButtonStyle())
+            }
+        }
+        .padding(32)
     }
 }
 
@@ -533,6 +736,15 @@ extension EnvironmentValues {
 extension View {
     func injectLayoutMetrics(width: CGFloat) -> some View {
         self.environment(\.layoutMetrics, LayoutMetrics(screenWidth: width))
+    }
+
+    @ViewBuilder
+    func `if`<Transform: View>(_ condition: Bool, transform: (Self) -> Transform) -> some View {
+        if condition {
+            transform(self)
+        } else {
+            self
+        }
     }
 }
 

@@ -113,6 +113,10 @@ class ScannerViewController: UIViewController {
         frameView.layer.borderColor = UIColor(red: 0.45, green: 0.22, blue: 1.00, alpha: 1.0).cgColor // Theme.primaryAccent
         frameView.layer.borderWidth = 3
         frameView.layer.cornerRadius = 16
+        frameView.layer.shadowColor = UIColor(red: 0.45, green: 0.22, blue: 1.00, alpha: 1.0).cgColor
+        frameView.layer.shadowOpacity = 0.8
+        frameView.layer.shadowRadius = 12
+        frameView.layer.shadowOffset = .zero
         view.addSubview(frameView)
         
         // Add text instruction

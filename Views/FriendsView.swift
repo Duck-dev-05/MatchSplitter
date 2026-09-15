@@ -125,26 +125,11 @@ struct FriendsView: View {
 
     // MARK: - Empty State
     private var emptyState: some View {
-        VStack(spacing: 18) {
-            ZStack {
-                Circle()
-                    .fill(Theme.primaryAccent.opacity(0.07))
-                    .frame(width: 110, height: 110)
-                Circle()
-                    .fill(Theme.primaryAccent.opacity(0.12))
-                    .frame(width: 80, height: 80)
-                Image(systemName: "person.2.slash.fill")
-                    .font(.system(size: 38))
-                    .foregroundColor(Theme.primaryAccent.opacity(0.45))
-            }
-            Text("No Friends Yet")
-                .font(.system(size: 22, weight: .bold, design: .rounded))
-                .foregroundColor(.white.opacity(0.85))
-            Text("When you add expenses with friends\nin groups, their balances appear here.")
-                .font(.subheadline)
-                .foregroundColor(.white.opacity(0.40))
-                .multilineTextAlignment(.center)
-        }
+        EmptyStateView(
+            icon: "🤝",
+            title: "No Balances Yet",
+            subtitle: "When you share expenses with friends in groups, their balances will appear here."
+        )
     }
 }
 

@@ -164,7 +164,14 @@ struct GroupDetailView: View {
 
                 Text("\(currentGroup.currency.symbol)\(String(format: "%.2f", totalSpent))")
                     .font(.system(size: metrics.heroBalanceFont, weight: .heavy, design: .rounded))
-                    .foregroundColor(.white)
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [Color.white, Theme.secondaryAccent.opacity(0.80)],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .neonGlow(Theme.secondaryAccent, radius: 8)
             }
 
             // Mini stats strip

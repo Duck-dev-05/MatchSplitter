@@ -191,31 +191,34 @@ struct DashboardView: View {
     // MARK: - Hero Header
     private var heroHeader: some View {
         HStack(alignment: .center) {
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 3) {
                 if let name = viewModel.currentUser?.name {
-                    Text("Hello, \(name.components(separatedBy: " ").first ?? "") 👋")
+                    Text("Hey, \(name.components(separatedBy: " ").first ?? "") 👋")
                         .font(.system(size: metrics.captionFont + 1, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.55))
+                        .foregroundColor(.white.opacity(0.50))
                 } else {
                     Text("Welcome 👋")
                         .font(.system(size: metrics.captionFont + 1, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.55))
+                        .foregroundColor(.white.opacity(0.50))
                 }
                 Text("MatchSplitter")
                     .font(.system(size: metrics.heroTitleFont, weight: .heavy, design: .rounded))
                     .foregroundColor(.white)
-                Text(myGroups.isEmpty ? "No groups yet" : "\(myGroups.count) active group\(myGroups.count == 1 ? "" : "s")")
+                Text(myGroups.isEmpty ? "No groups yet — let's start!" : "\(myGroups.count) active group\(myGroups.count == 1 ? "" : "s")")
                     .font(.system(size: metrics.captionFont, weight: .medium))
                     .foregroundColor(.white.opacity(0.35))
             }
             Spacer()
 
             if let name = viewModel.currentUser?.name {
-                GradientAvatar(name: name, avatarURL: viewModel.currentUser?.avatarURL, size: metrics.avatarSize)
-                    .overlay(
-                        Circle()
-                            .stroke(Theme.primaryGradient, lineWidth: 2)
-                    )
+                ZStack {
+                    // Outer gradient ring
+                    Circle()
+                        .strokeBorder(Theme.primaryGradient, lineWidth: 2)
+                        .frame(width: metrics.avatarSize + 8, height: metrics.avatarSize + 8)
+                    GradientAvatar(name: name, avatarURL: viewModel.currentUser?.avatarURL, size: metrics.avatarSize)
+                }
+                .neonGlow(Theme.primaryAccent, radius: 8)
             }
         }
         .padding(.horizontal, metrics.hPad)
@@ -225,34 +228,40 @@ struct DashboardView: View {
 
     // MARK: - Hero Balance Card
     private var heroBallanceCard: some View {
-        VStack(spacing: metrics.adaptive(12, 18, 22)) {
+        VStack(spacing: metrics.adaptive(14, 20, 24)) {
             // Balance label
             Text("YOUR NET BALANCE")
                 .kerning(1.5)
                 .font(.system(size: metrics.captionFont, weight: .bold))
-                .foregroundColor(.white.opacity(0.5))
+                .foregroundColor(.white.opacity(0.45))
 
+            // Color-coded balance amount
             Text(netBalance >= 0
                  ? "+\(viewModel.defaultCurrency.symbol)\(String(format: "%.2f", netBalance))"
                  : "-\(viewModel.defaultCurrency.symbol)\(String(format: "%.2f", abs(netBalance)))")
                 .font(.system(size: metrics.heroBalanceFont, weight: .heavy, design: .rounded))
-                .foregroundColor(.white)
+                .foregroundStyle(
+                    netBalance >= 0
+                        ? LinearGradient(colors: [Theme.successColor, Color(red: 0.10, green: 0.82, blue: 0.55)], startPoint: .leading, endPoint: .trailing)
+                        : LinearGradient(colors: [Theme.dangerColor, Color(red: 1.0, green: 0.45, blue: 0.35)], startPoint: .leading, endPoint: .trailing)
+                )
+                .neonGlow(netBalance >= 0 ? Theme.successColor : Theme.dangerColor, radius: 10)
 
             // Status pill
             HStack(spacing: 6) {
-                Circle()
-                    .fill(netBalance >= 0 ? Theme.successColor : Theme.dangerColor)
-                    .frame(width: 7, height: 7)
-                Text(netBalance >= 0 ? "People owe you overall" : "You owe overall")
+                Image(systemName: netBalance >= 0 ? "arrow.down.circle.fill" : "arrow.up.circle.fill")
+                    .font(.system(size: 12, weight: .semibold))
+                Text(netBalance >= 0 ? "You're owed overall" : "You owe overall")
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(netBalance >= 0 ? Theme.successColor : Theme.dangerColor)
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 7)
+            .foregroundColor(netBalance >= 0 ? Theme.successColor : Theme.dangerColor)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
             .background((netBalance >= 0 ? Theme.successColor : Theme.dangerColor).opacity(0.12))
+            .overlay(Capsule().stroke((netBalance >= 0 ? Theme.successColor : Theme.dangerColor).opacity(0.25), lineWidth: 1))
             .clipShape(Capsule())
 
-            Divider().background(Color.white.opacity(0.10))
+            Divider().background(Color.white.opacity(0.08))
 
             HStack(spacing: 0) {
                 StatBadge(
@@ -263,7 +272,7 @@ struct DashboardView: View {
                 )
                 Divider()
                     .frame(height: 40)
-                    .background(Color.white.opacity(0.10))
+                    .background(Color.white.opacity(0.08))
                 StatBadge(
                     icon: "receipt.fill",
                     label: "Expenses",
@@ -272,7 +281,7 @@ struct DashboardView: View {
                 )
                 Divider()
                     .frame(height: 40)
-                    .background(Color.white.opacity(0.10))
+                    .background(Color.white.opacity(0.08))
                 StatBadge(
                     icon: netBalance >= 0 ? "arrow.down.circle.fill" : "arrow.up.circle.fill",
                     label: netBalance >= 0 ? "Owed to You" : "You Owe",
@@ -573,7 +582,7 @@ struct AddGroupSheet: View {
                             .padding(.horizontal, 18)
                             .padding(.vertical, 14)
                         }
-                        .glassCard(cornerRadius: 22)
+                        .premiumCard(cornerRadius: 24, accentColor: Theme.primaryAccent)
                     }
                     .padding(20)
                 }

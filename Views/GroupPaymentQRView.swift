@@ -43,6 +43,7 @@ struct GroupPaymentQRView: View {
                     .font(.largeTitle)
                     .fontWeight(.heavy)
                     .foregroundColor(.white)
+                    .neonGlow(Theme.primaryAccent, radius: 4)
                     .padding(.top, 10)
                 
                 if !isConfigured {
@@ -71,6 +72,7 @@ struct GroupPaymentQRView: View {
                         RoundedRectangle(cornerRadius: 30)
                             .fill(Theme.cardBackground)
                             .shadow(color: Theme.primaryAccent.opacity(0.3), radius: 20)
+                            .overlay(RoundedRectangle(cornerRadius: 30).stroke(Theme.primaryAccent.opacity(0.4), lineWidth: 1.5))
                         
                         if isLoadingQR {
                             VStack(spacing: 16) {
@@ -180,7 +182,7 @@ struct GroupPaymentQRView: View {
             }
             .padding(20)
         }
-        .glassCard(cornerRadius: 24)
+        .premiumCard(cornerRadius: 24, accentColor: Theme.primaryAccent)
     }
     
     // MARK: - Actions

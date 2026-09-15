@@ -155,66 +155,28 @@ struct ProfileView: View {
     }
 
     private var statsGrid: some View {
-        HStack(spacing: 16) {
-            // Left large tile
-            VStack(alignment: .leading, spacing: 12) {
-                IconBadge(systemName: "person.3.fill", color: Theme.secondaryAccent, size: 40, iconSize: 18)
-                Spacer()
-                Text("\(myGroups.count)")
-                    .font(.system(size: 32, weight: .bold, design: .rounded))
-                    .foregroundColor(.white)
-                Text("Active Groups")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white.opacity(0.5))
-            }
-            .padding(20)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.white.opacity(0.06))
-            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
+        HStack(spacing: 12) {
+            HeroMetricCard(
+                icon: "person.3.fill",
+                label: "Groups",
+                value: "\(myGroups.count)",
+                color: Theme.secondaryAccent,
+                valueFont: metrics.adaptive(24, 30, 34)
             )
-
-            // Right vertical stack
-            VStack(spacing: 16) {
-                HStack(spacing: 12) {
-                    IconBadge(systemName: "receipt.fill", color: Theme.primaryAccent, size: 36, iconSize: 16)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("\(totalExpenses)")
-                            .font(.system(size: 20, weight: .bold, design: .rounded))
-                            .foregroundColor(.white)
-                        Text("Expenses")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(.white.opacity(0.5))
-                    }
-                    Spacer()
-                }
-                .padding(16)
-                .frame(maxWidth: .infinity)
-                .background(Color.white.opacity(0.06))
-                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).stroke(Color.white.opacity(0.1), lineWidth: 1))
-
-                HStack(spacing: 12) {
-                    IconBadge(systemName: "banknote.fill", color: Theme.warmGold, size: 36, iconSize: 16)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(viewModel.defaultCurrency.symbol)
-                            .font(.system(size: 20, weight: .bold, design: .rounded))
-                            .foregroundColor(.white)
-                        Text("Currency")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(.white.opacity(0.5))
-                    }
-                    Spacer()
-                }
-                .padding(16)
-                .frame(maxWidth: .infinity)
-                .background(Color.white.opacity(0.06))
-                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).stroke(Color.white.opacity(0.1), lineWidth: 1))
-            }
-            .frame(maxWidth: .infinity)
+            HeroMetricCard(
+                icon: "receipt.fill",
+                label: "Expenses",
+                value: "\(totalExpenses)",
+                color: Theme.primaryAccent,
+                valueFont: metrics.adaptive(24, 30, 34)
+            )
+            HeroMetricCard(
+                icon: "banknote.fill",
+                label: "Currency",
+                value: viewModel.defaultCurrency.symbol,
+                color: Theme.warmGold,
+                valueFont: metrics.adaptive(24, 30, 34)
+            )
         }
         .padding(.horizontal, metrics.hPad)
     }

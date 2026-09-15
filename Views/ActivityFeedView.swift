@@ -141,26 +141,11 @@ struct ActivityFeedView: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: 18) {
-            ZStack {
-                Circle()
-                    .fill(Theme.primaryAccent.opacity(0.07))
-                    .frame(width: 110, height: 110)
-                Circle()
-                    .fill(Theme.primaryAccent.opacity(0.12))
-                    .frame(width: 80, height: 80)
-                Image(systemName: "bell.slash.fill")
-                    .font(.system(size: 36))
-                    .foregroundColor(.white.opacity(0.25))
-            }
-            Text("No Activity Yet")
-                .font(.system(size: 22, weight: .bold, design: .rounded))
-                .foregroundColor(.white.opacity(0.80))
-            Text("Your recent group activity will appear here.")
-                .font(.subheadline)
-                .foregroundColor(.white.opacity(0.40))
-                .multilineTextAlignment(.center)
-        }
+        EmptyStateView(
+            icon: "🔔",
+            title: "No Activity Yet",
+            subtitle: "Add expenses to your groups and your activity feed will show up here."
+        )
     }
 }
 

@@ -16,6 +16,7 @@ struct TeamQRInviteView: View {
                     .font(.largeTitle)
                     .fontWeight(.heavy)
                     .foregroundColor(.white)
+                    .neonGlow(Theme.primaryAccent, radius: 4)
                     .padding(.top, 40)
                 
                 Text("Have your friends scan this QR code with their camera to instantly join the team.")
@@ -27,6 +28,7 @@ struct TeamQRInviteView: View {
                     RoundedRectangle(cornerRadius: 30)
                         .fill(Theme.cardBackground)
                         .shadow(color: Theme.primaryAccent.opacity(0.3), radius: 20)
+                        .overlay(RoundedRectangle(cornerRadius: 30).stroke(Theme.primaryAccent.opacity(0.4), lineWidth: 1.5))
                     
                     Image(uiImage: qrGenerator.generateQRCode(from: invitePayload))
                         .interpolation(.none)

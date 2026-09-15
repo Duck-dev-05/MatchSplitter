@@ -78,21 +78,27 @@ struct SettlementView: View {
     private var allSettledView: some View {
         VStack(spacing: 20) {
             ZStack {
+                // Outer glow ring
                 Circle()
-                    .fill(Theme.successColor.opacity(0.12))
-                    .frame(width: 120, height: 120)
+                    .stroke(Theme.successColor.opacity(0.20), lineWidth: 1.5)
+                    .frame(width: 148, height: 148)
                 Circle()
-                    .stroke(Theme.successColor.opacity(0.25), lineWidth: 1.5)
-                    .frame(width: 138, height: 138)
+                    .fill(Theme.successColor.opacity(0.10))
+                    .frame(width: 126, height: 126)
+                Circle()
+                    .fill(Theme.successColor.opacity(0.16))
+                    .frame(width: 100, height: 100)
                 Image(systemName: "checkmark.seal.fill")
-                    .font(.system(size: 58))
+                    .font(.system(size: 50))
                     .foregroundColor(Theme.successColor)
             }
-            Text("All Settled Up!")
-                .font(.system(size: 28, weight: .heavy, design: .rounded))
+            .neonGlow(Theme.successColor, radius: 16)
+
+            Text("You're All Clear! 🎉")
+                .font(.system(size: 26, weight: .heavy, design: .rounded))
                 .foregroundColor(.white)
             Text("Everyone is even. No payments needed.")
-                .font(.subheadline)
+                .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.white.opacity(0.45))
                 .multilineTextAlignment(.center)
         }
@@ -170,8 +176,8 @@ struct SettlementCardView: View {
                     .foregroundColor(Theme.primaryAccent)
             }
         }
-        .padding(16)
-        .glassCard(cornerRadius: 20)
+        .padding(18)
+        .premiumCard(cornerRadius: 20, accentColor: Theme.primaryAccent)
     }
 }
 
