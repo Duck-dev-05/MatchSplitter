@@ -7,6 +7,10 @@ class GroupViewModel: ObservableObject {
     @Published var registeredUsers: [User] = []
     @Published var defaultCurrency: Currency = .vnd
     
+    @Published var errorMessage: String? = nil
+    @Published var showError: Bool = false
+    @Published var isLoading: Bool = false
+    
     init() {
         loadData()
     }
@@ -88,28 +92,22 @@ class GroupViewModel: ObservableObject {
     
     func fetchGroupsFromFirebase() {
         guard let current = currentUser else { return }
-        Task {
-            do {
-                let fetchedGroups = try await FirebaseManager.shared.fetchGroupsForUser(userId: current.id)
-                await MainActor.run {
-                    var needsSave = false
-                    for fetchedGroup in fetchedGroups {
-                        if let index = self.groups.firstIndex(where: { $0.id == fetchedGroup.id }) {
-                            // Update if fetched group has a newer state or just overwrite safely
-                            // For a robust sync, you'd compare timestamps. Overwriting is simple here.
-                            self.groups[index] = fetchedGroup
-                            needsSave = true
-                        } else {
-                            self.groups.append(fetchedGroup)
-                            needsSave = true
-                        }
-                    }
-                    if needsSave {
-                        self.saveData()
-                    }
+        isLoading = true
+        FirebaseManager.shared.listenToUserGroups(userId: current.id) { [weak self] fetchedGroups in
+            guard let self = self else { return }
+            self.isLoading = false
+            var needsSave = false
+            for fetchedGroup in fetchedGroups {
+                if let index = self.groups.firstIndex(where: { $0.id == fetchedGroup.id }) {
+                    self.groups[index] = fetchedGroup
+                    needsSave = true
+                } else {
+                    self.groups.append(fetchedGroup)
+                    needsSave = true
                 }
-            } catch {
-                print("Failed to fetch groups from Firebase: \(error)")
+            }
+            if needsSave {
+                self.saveData()
             }
         }
     }    

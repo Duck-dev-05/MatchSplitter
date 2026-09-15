@@ -77,4 +77,32 @@ class FirebaseManager {
         
         listeners[groupId] = listener
     }
+    
+    private var userGroupsListener: ListenerRegistration?
+    
+    func listenToUserGroups(userId: UUID, onChange: @escaping ([Group]) -> Void) {
+        userGroupsListener?.remove()
+        
+        let listener = db.collection("groups")
+            .whereField("member_ids", arrayContains: userId.uuidString)
+            .addSnapshotListener { snapshot, error in
+                guard let documents = snapshot?.documents else { return }
+                
+                var userGroups: [Group] = []
+                for document in documents {
+                    let data = document.data()
+                    if let groupJsonString = data["group_data"] as? String,
+                       let groupData = groupJsonString.data(using: .utf8),
+                       let group = try? JSONDecoder().decode(Group.self, from: groupData) {
+                        userGroups.append(group)
+                    }
+                }
+                
+                DispatchQueue.main.async {
+                    onChange(userGroups)
+                }
+            }
+            
+        userGroupsListener = listener
+    }
 }
