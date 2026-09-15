@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct GroupMembersView: View {
     var group: Group
