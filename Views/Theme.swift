@@ -570,10 +570,10 @@ struct HeroMetricCard: View {
                 .lineLimit(1)
 
             Text(label)
+                .kerning(0.8)
                 .font(.system(size: 11, weight: .bold))
                 .foregroundColor(.white.opacity(0.45))
                 .textCase(.uppercase)
-                .kerning(0.8)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 20)
