@@ -80,6 +80,16 @@ struct AddMemberSheet: View {
     @State private var newPaymentID = ""
     @State private var showingQRScanner = false
     
+    @State private var paymentType: String = "None"
+    @State private var bankBin: String = ""
+    @State private var payOSClientId: String = ""
+    @State private var payOSApiKey: String = ""
+    @State private var payOSChecksumKey: String = ""
+    @State private var banks: [VietQRBank] = []
+    @State private var isLoadingBanks = false
+
+    let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "VietQR", "PayOS", "None"]
+    
     var availableFriends: [User] {
         viewModel.getFriendsNotInGroup(group: group)
     }
@@ -123,16 +133,97 @@ struct AddMemberSheet: View {
                                 }
                                 Divider().background(Color.white.opacity(0.07))
                                 
-                                EditFieldRow(icon: "creditcard.fill", iconColor: Theme.secondaryAccent, placeholder: "Payment ID (Optional)", text: $newPaymentID)
+                                HStack(spacing: 14) {
+                                    IconBadge(systemName: "building.columns.fill", color: Theme.secondaryAccent)
+                                    Menu {
+                                        ForEach(paymentTypes, id: \.self) { type in
+                                            Button(type) {
+                                                paymentType = type
+                                                if type == "VietQR" && banks.isEmpty {
+                                                    Task { await loadBanks() }
+                                                }
+                                            }
+                                        }
+                                    } label: {
+                                        HStack {
+                                            Text(paymentType)
+                                            Spacer()
+                                            Image(systemName: "chevron.up.chevron.down")
+                                        }
+                                    }
+                                    .accentColor(.white)
+                                }
+                                .padding(.horizontal, 18)
+                                .padding(.vertical, 14)
+                                Divider().background(Color.white.opacity(0.07))
+
+                                if paymentType != "None" {
+                                    if paymentType == "VietQR" {
+                                        HStack(spacing: 14) {
+                                            IconBadge(systemName: "building.2.fill", color: Theme.secondaryAccent)
+                                            if isLoadingBanks {
+                                                ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                                Spacer()
+                                            } else {
+                                                Menu {
+                                                    ForEach(banks) { bank in
+                                                        Button("\(bank.shortName) - \(bank.name)") {
+                                                            bankBin = bank.bin
+                                                        }
+                                                    }
+                                                } label: {
+                                                    HStack {
+                                                        Text(banks.first(where: { $0.bin == bankBin })?.shortName ?? "Select Bank")
+                                                            .foregroundColor(bankBin.isEmpty ? .white.opacity(0.5) : .white)
+                                                        Spacer()
+                                                        Image(systemName: "chevron.up.chevron.down")
+                                                    }
+                                                    .foregroundColor(.white)
+                                                }
+                                            }
+                                        }
+                                        .padding(.horizontal, 18)
+                                        .padding(.vertical, 14)
+                                        Divider().background(Color.white.opacity(0.07))
+
+                                        EditFieldRow(icon: "number.circle.fill", iconColor: Theme.secondaryAccent, placeholder: "Account Number", text: $newPaymentID)
+                                            .keyboardType(.numberPad)
+                                    } else if paymentType == "PayOS" {
+                                        EditFieldRow(icon: "person.badge.key.fill", iconColor: Theme.secondaryAccent, placeholder: "Client ID", text: $payOSClientId)
+                                        Divider().background(Color.white.opacity(0.07))
+                                        EditFieldRow(icon: "key.fill", iconColor: Theme.secondaryAccent, placeholder: "API Key", text: $payOSApiKey)
+                                        Divider().background(Color.white.opacity(0.07))
+                                        EditFieldRow(icon: "lock.fill", iconColor: Theme.secondaryAccent, placeholder: "Checksum Key", text: $payOSChecksumKey)
+                                    } else {
+                                        EditFieldRow(icon: "creditcard.fill", iconColor: Theme.secondaryAccent, placeholder: "Payment Details / ID", text: $newPaymentID)
+                                    }
+                                }
                             }
                             .glassCard(cornerRadius: 20)
 
                             Button(action: {
                                 if !newName.isEmpty {
                                     withAnimation(.spring()) {
-                                        viewModel.addMember(to: group, name: newName.trimmingCharacters(in: .whitespacesAndNewlines), paymentID: newPaymentID)
+                                        let finalType = paymentType == "None" ? nil : paymentType
+                                        let finalID = paymentType == "None" ? "" : newPaymentID
+                                        let finalBin = paymentType == "VietQR" ? bankBin : nil
+                                        viewModel.addMember(
+                                            to: group, 
+                                            name: newName.trimmingCharacters(in: .whitespacesAndNewlines), 
+                                            paymentID: finalID, 
+                                            paymentType: finalType,
+                                            bankBin: finalBin,
+                                            payOSClientId: paymentType == "PayOS" ? payOSClientId : nil,
+                                            payOSApiKey: paymentType == "PayOS" ? payOSApiKey : nil,
+                                            payOSChecksumKey: paymentType == "PayOS" ? payOSChecksumKey : nil
+                                        )
                                         newName = ""
                                         newPaymentID = ""
+                                        paymentType = "None"
+                                        bankBin = ""
+                                        payOSClientId = ""
+                                        payOSApiKey = ""
+                                        payOSChecksumKey = ""
                                     }
                                 }
                             }) {
@@ -193,11 +284,13 @@ struct AddMemberSheet: View {
             QRScannerView(
                 onResult: { payload in
                     showingQRScanner = false
-                    if let parsed = VietQRParser.parse(payload: payload), let _ = parsed.bankBin, let account = parsed.accountNumber {
-                        // For AddMemberSheet, we might not have full paymentType selection
-                        // So we just save the parsed account number, or we can format it
+                    if let parsed = VietQRParser.parse(payload: payload), let bin = parsed.bankBin, let account = parsed.accountNumber {
+                        paymentType = "VietQR"
+                        bankBin = bin
                         newPaymentID = account
-                        // Ideally they should edit member to add bank bin, or we let them do it later.
+                        if banks.isEmpty {
+                            Task { await loadBanks() }
+                        }
                     } else {
                         newPaymentID = payload
                     }
@@ -207,6 +300,20 @@ struct AddMemberSheet: View {
                 }
             )
             .ignoresSafeArea()
+        }
+    }
+
+    private func loadBanks() async {
+        isLoadingBanks = true
+        do {
+            let fetchedBanks = try await VietQRService.shared.fetchBanks()
+            await MainActor.run {
+                self.banks = fetchedBanks
+                self.isLoadingBanks = false
+            }
+        } catch {
+            print("Failed to load banks: \(error)")
+            await MainActor.run { self.isLoadingBanks = false }
         }
     }
 }

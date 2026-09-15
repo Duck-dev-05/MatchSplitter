@@ -91,17 +91,27 @@ struct GroupPaymentQRView: View {
                             }
                             .padding()
                         } else {
-                            Image(uiImage: qrGenerator.generateQRCode(from: qrPayload))
-                                .interpolation(.none)
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 200, height: 200)
-                                .padding(30)
-                                .background(Color.white)
-                                .cornerRadius(20)
+                            if let base64String = qrImageBase64,
+                               let data = Data(base64Encoded: base64String, options: .ignoreUnknownCharacters),
+                               let uiImage = UIImage(data: data) {
+                                Image(uiImage: uiImage)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .cornerRadius(20)
+                                    .padding(10)
+                            } else {
+                                Image(uiImage: qrGenerator.generateQRCode(from: qrPayload))
+                                    .interpolation(.none)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 200, height: 200)
+                                    .padding(30)
+                                    .background(Color.white)
+                                    .cornerRadius(20)
+                            }
                         }
                     }
-                    .frame(width: 280, height: 280)
+                    .frame(maxWidth: 320)
                     .padding(.top, 20)
                     
                     Spacer()

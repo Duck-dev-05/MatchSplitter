@@ -213,14 +213,14 @@ class GroupViewModel: ObservableObject {
     func deleteGroup(id: UUID) {
         groups.removeAll(where: { $0.id == id })
         Task {
-            try? await FirebaseManager.shared.deleteGroup(id.uuidString)
+            try? await FirebaseManager.shared.deleteGroup(id: id.uuidString)
         }
         saveData()
     }
     
-    func addMember(to group: Group, name: String, paymentID: String, paymentType: String? = nil) {
+    func addMember(to group: Group, name: String, paymentID: String, paymentType: String? = nil, bankBin: String? = nil, payOSClientId: String? = nil, payOSApiKey: String? = nil, payOSChecksumKey: String? = nil) {
         if let index = groups.firstIndex(where: { $0.id == group.id }) {
-            groups[index].members.append(User(name: name, paymentID: paymentID.isEmpty ? nil : paymentID, paymentType: paymentType))
+            groups[index].members.append(User(name: name, paymentID: paymentID.isEmpty ? nil : paymentID, paymentType: paymentType, bankBin: bankBin, payOSClientId: payOSClientId, payOSApiKey: payOSApiKey, payOSChecksumKey: payOSChecksumKey))
             saveData()
         }
     }

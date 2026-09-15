@@ -73,7 +73,7 @@ class VietQRService {
             amount: Int(amount), // VietQR uses integer amounts
             addInfo: info,
             format: "text",
-            template: "compact"
+            template: "print"
         )
         
         request.httpBody = try JSONEncoder().encode(requestData)
