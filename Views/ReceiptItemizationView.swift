@@ -59,7 +59,7 @@ struct ReceiptItemizationView: View {
                             .listRowBackground(Color.white.opacity(0.1))
                         }
                     }
-                    .scrollContentBackground(.hidden)
+                    .hideScrollContentBackgroundIfAvailable()
                     
                     GradientButton(label: "Confirm Items", isEnabled: true) {
                         calculateAndComplete()

@@ -79,7 +79,7 @@ struct RecurringExpensesView: View {
                             .listRowBackground(Color.white.opacity(0.05))
                         }
                     }
-                    .scrollContentBackground(.hidden)
+                    .hideScrollContentBackgroundIfAvailable()
                 }
             }
         }

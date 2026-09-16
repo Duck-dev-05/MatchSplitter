@@ -222,6 +222,17 @@ extension View {
             self
         }
     }
+
+    @ViewBuilder
+    func hideScrollContentBackgroundIfAvailable() -> some View {
+        if #available(iOS 16.0, *) {
+            self.scrollContentBackground(.hidden)
+        } else {
+            self.onAppear {
+                UITableView.appearance().backgroundColor = .clear
+            }
+        }
+    }
 }
 
 // MARK: - Page Header
