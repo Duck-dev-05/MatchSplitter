@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import FirebaseAuth
 
 class GroupViewModel: ObservableObject {
     @Published var groups: [Group] = []
