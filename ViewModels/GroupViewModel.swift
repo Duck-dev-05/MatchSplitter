@@ -120,14 +120,18 @@ class GroupViewModel: ObservableObject {
         if var user = try? await FirebaseManager.shared.fetchUser(byEmail: email) {
             user.avatarURL = avatarURL
             let updatedUser = user
-            try? await FirebaseManager.shared.saveUser(updatedUser)
+            Task {
+                try? await FirebaseManager.shared.saveUser(updatedUser)
+            }
             await MainActor.run {
                 self.login(user: updatedUser)
             }
             return updatedUser
         } else {
             let newUser = User(name: name, email: email, password: "GoogleSignInUser", paymentID: nil, paymentType: nil, avatarURL: avatarURL)
-            try? await FirebaseManager.shared.saveUser(newUser)
+            Task {
+                try? await FirebaseManager.shared.saveUser(newUser)
+            }
             await MainActor.run {
                 self.register(user: newUser, defaultCurrency: .usd)
                 self.login(user: newUser)
