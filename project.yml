@@ -33,6 +33,11 @@ targets:
         product: FirebaseFirestore
       - package: Firebase
         product: FirebaseMessaging
+    settings:
+      base:
+        OTHER_LDFLAGS: ["-ObjC"]
+        HEADER_SEARCH_PATHS: ["$(inherited)"]
+        SWIFT_INCLUDE_PATHS: ["$(inherited)"]
     info:
       path: Info.plist
       properties:

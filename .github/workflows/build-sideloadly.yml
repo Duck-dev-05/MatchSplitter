@@ -15,13 +15,8 @@ jobs:
     - name: Install XcodeGen
       run: brew install xcodegen
       
-    - name: Cache Swift Packages
-      uses: actions/cache@v4
-      with:
-        path: .build/SourcePackages
-        key: ${{ runner.os }}-spm-${{ hashFiles('project.yml') }}
-        restore-keys: |
-          ${{ runner.os }}-spm-
+    - name: Clean Xcode derived data
+      run: rm -rf ~/Library/Developer/Xcode/DerivedData
           
     - name: Generate Xcode Project
       run: xcodegen generate
