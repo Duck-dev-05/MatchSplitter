@@ -44,9 +44,9 @@ targets:
       path: Info.plist
       properties:
         UILaunchScreen: {}
-        GIDClientID: 186631252201-k3dg32m7s5i0jqerp66880hvenb48c2o.apps.googleusercontent.com
+        GIDClientID: 933171043939-sfll588877ht08qi5dlsmf2jfdte93e1.apps.googleusercontent.com
         CFBundleURLTypes:
           - CFBundleURLSchemes:
-              - com.googleusercontent.apps.186631252201-k3dg32m7s5i0jqerp66880hvenb48c2o
+              - com.googleusercontent.apps.933171043939-sfll588877ht08qi5dlsmf2jfdte93e1
           - CFBundleURLSchemes:
               - matchsplitter
