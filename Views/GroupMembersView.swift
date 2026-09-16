@@ -305,32 +305,18 @@ struct AddMemberSheet: View {
                     EditFieldRow(icon: "number.circle.fill", iconColor: Theme.secondaryAccent, placeholder: "Account Number", text: $newPaymentID)
                         .keyboardType(.numberPad)
                         .onChange(of: newPaymentID) { _ in
-                            verificationError = nil
+                            triggerAutoVerification()
                         }
                     
                     if !newPaymentID.isEmpty && !bankBin.isEmpty {
-                        Button(action: {
-                            verifyBankAccount()
-                        }) {
+                        if isVerifyingAccount {
                             HStack {
                                 Spacer()
-                                if isVerifyingAccount {
-                                    ProgressView().progressViewStyle(CircularProgressViewStyle(tint: Theme.secondaryAccent))
-                                } else {
-                                    Text("Verify Account")
-                                        .font(.system(size: 14, weight: .bold))
-                                        .foregroundColor(Theme.secondaryAccent)
-                                }
+                                ProgressView().progressViewStyle(CircularProgressViewStyle(tint: Theme.secondaryAccent))
+                                    .padding(.vertical, 8)
                                 Spacer()
                             }
-                            .padding(.vertical, 8)
-                            .background(Theme.secondaryAccent.opacity(0.1))
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
-                            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Theme.secondaryAccent.opacity(0.3), lineWidth: 1))
                         }
-                        .padding(.horizontal, 18)
-                        .padding(.bottom, 10)
-                        .disabled(isVerifyingAccount)
                         
                         if let error = verificationError {
                             Text(error)
@@ -371,6 +357,21 @@ struct AddMemberSheet: View {
         }
     }
 
+    private func triggerAutoVerification() {
+        verificationError = nil
+        bankAccountName = ""
+        verificationTask?.cancel()
+        guard !newPaymentID.isEmpty, !bankBin.isEmpty else { return }
+        
+        verificationTask = Task {
+            do {
+                try await Task.sleep(nanoseconds: 1_000_000_000) // 1s debounce
+                guard !Task.isCancelled else { return }
+                await MainActor.run { verifyBankAccount() }
+            } catch { }
+        }
+    }
+    
     private func verifyBankAccount() {
         guard !newPaymentID.isEmpty, !bankBin.isEmpty else { return }
         
@@ -507,6 +508,7 @@ struct EditMemberView: View {
     @State private var bankAccountName: String = ""
     @State private var isVerifyingAccount = false
     @State private var verificationError: String? = nil
+    @State private var verificationTask: Task<Void, Never>? = nil
 
     @State private var payOSClientId: String = ""
     @State private var payOSApiKey: String = ""
@@ -674,32 +676,18 @@ struct EditMemberView: View {
                     EditFieldRow(icon: "number.circle.fill", iconColor: Theme.secondaryAccent, placeholder: "Account Number", text: $paymentID)
                         .keyboardType(.numberPad)
                         .onChange(of: paymentID) { _ in
-                            verificationError = nil
+                            triggerAutoVerification()
                         }
                     
                     if !paymentID.isEmpty && !bankBin.isEmpty {
-                        Button(action: {
-                            verifyBankAccount()
-                        }) {
+                        if isVerifyingAccount {
                             HStack {
                                 Spacer()
-                                if isVerifyingAccount {
-                                    ProgressView().progressViewStyle(CircularProgressViewStyle(tint: Theme.secondaryAccent))
-                                } else {
-                                    Text("Verify Account")
-                                        .font(.system(size: 14, weight: .bold))
-                                        .foregroundColor(Theme.secondaryAccent)
-                                }
+                                ProgressView().progressViewStyle(CircularProgressViewStyle(tint: Theme.secondaryAccent))
+                                    .padding(.vertical, 8)
                                 Spacer()
                             }
-                            .padding(.vertical, 8)
-                            .background(Theme.secondaryAccent.opacity(0.1))
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
-                            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Theme.secondaryAccent.opacity(0.3), lineWidth: 1))
                         }
-                        .padding(.horizontal, 18)
-                        .padding(.bottom, 10)
-                        .disabled(isVerifyingAccount)
                         
                         if let error = verificationError {
                             Text(error)
@@ -742,6 +730,21 @@ struct EditMemberView: View {
         }
     }
 
+    private func triggerAutoVerification() {
+        verificationError = nil
+        bankAccountName = ""
+        verificationTask?.cancel()
+        guard !paymentID.isEmpty, !bankBin.isEmpty else { return }
+        
+        verificationTask = Task {
+            do {
+                try await Task.sleep(nanoseconds: 1_000_000_000) // 1s debounce
+                guard !Task.isCancelled else { return }
+                await MainActor.run { verifyBankAccount() }
+            } catch { }
+        }
+    }
+    
     private func verifyBankAccount() {
         guard !paymentID.isEmpty, !bankBin.isEmpty else { return }
         

@@ -290,6 +290,7 @@ struct EditProfileView: View {
     @State private var bankAccountName: String = ""
     @State private var banks: [VietQRBank] = []
     @State private var isLoadingBanks = false
+    @State private var verificationTask: Task<Void, Never>? = nil
     @State private var showingBankSelection = false
     @State private var isVerifyingAccount = false
     @State private var verificationError: String? = nil
@@ -371,38 +372,27 @@ struct EditProfileView: View {
                                             .padding(.horizontal, 18)
                                             .padding(.vertical, 14)
                                         }
+                                        .onChange(of: bankBin) { _ in
+                                            triggerAutoVerification()
+                                        }
                                         Divider().background(Color.white.opacity(0.07)).padding(.leading, 56)
                                         
                                         VStack(spacing: 0) {
                                             settingsFieldRow(icon: "number", iconColor: Theme.secondaryAccent, placeholder: "Account Number", text: $paymentID)
                                                 .keyboardType(.numberPad)
                                                 .onChange(of: paymentID) { _ in
-                                                    verificationError = nil
+                                                    triggerAutoVerification()
                                                 }
                                             
                                             if !paymentID.isEmpty && !bankBin.isEmpty {
-                                                Button(action: {
-                                                    verifyBankAccount()
-                                                }) {
+                                                if isVerifyingAccount {
                                                     HStack {
                                                         Spacer()
-                                                        if isVerifyingAccount {
-                                                            ProgressView().progressViewStyle(CircularProgressViewStyle(tint: Theme.primaryAccent))
-                                                        } else {
-                                                            Text("Verify Account")
-                                                                .font(.system(size: 14, weight: .bold))
-                                                                .foregroundColor(Theme.primaryAccent)
-                                                        }
+                                                        ProgressView().progressViewStyle(CircularProgressViewStyle(tint: Theme.primaryAccent))
+                                                            .padding(.vertical, 8)
                                                         Spacer()
                                                     }
-                                                    .padding(.vertical, 8)
-                                                    .background(Theme.primaryAccent.opacity(0.1))
-                                                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                                                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(Theme.primaryAccent.opacity(0.3), lineWidth: 1))
                                                 }
-                                                .padding(.horizontal, 18)
-                                                .padding(.bottom, 10)
-                                                .disabled(isVerifyingAccount)
                                                 
                                                 if let error = verificationError {
                                                     Text(error)
@@ -566,6 +556,24 @@ struct EditProfileView: View {
         )
         viewModel.defaultCurrency = defaultCurrency
         presentationMode.wrappedValue.dismiss()
+    }
+    
+    private func triggerAutoVerification() {
+        verificationError = nil
+        bankAccountName = ""
+        verificationTask?.cancel()
+        guard !paymentID.isEmpty, !bankBin.isEmpty else { return }
+        
+        verificationTask = Task {
+            do {
+                // 1-second debounce
+                try await Task.sleep(nanoseconds: 1_000_000_000)
+                guard !Task.isCancelled else { return }
+                await MainActor.run { verifyBankAccount() }
+            } catch {
+                // Task cancelled
+            }
+        }
     }
     
     private func verifyBankAccount() {

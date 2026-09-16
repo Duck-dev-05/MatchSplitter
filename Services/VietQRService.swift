@@ -38,6 +38,21 @@ struct VietQRGenerateResponse: Codable {
     let data: VietQRGenerateData
 }
 
+struct VietQRLookupRequest: Codable {
+    let bin: String
+    let accountNumber: String
+}
+
+struct VietQRLookupData: Codable {
+    let accountName: String
+}
+
+struct VietQRLookupResponse: Codable {
+    let code: String
+    let desc: String
+    let data: VietQRLookupData?
+}
+
 class VietQRService {
     static let shared = VietQRService()
     private init() {}
@@ -92,19 +107,35 @@ class VietQRService {
         return (generateResponse.data.qrCode, generateResponse.data.qrDataURL)
     }
     
-    func verifyAccount(bin: String, accountNumber: String) async throws -> String? {
-        // MOCK VERIFICATION
-        // In a real app, you would call the BankHub or PayOS lookup API here.
-        // Example: https://api.vietqr.io/v2/lookup
+    func verifyAccount(bin: String, accountNumber: String, clientId: String? = nil, apiKey: String? = nil) async throws -> String? {
+        guard let url = URL(string: "https://api.vietqr.io/v2/lookup") else {
+            throw URLError(.badURL)
+        }
         
-        // Simulate network delay
-        try await Task.sleep(nanoseconds: 1_000_000_000)
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
-        // For testing purposes, we'll return a mock name if the account number is longer than 5 digits.
-        if accountNumber.count > 5 {
-            return "NGUYEN VAN A"
+        // Include API keys if provided. Note: api.vietqr.io/v2/lookup requires these for production use.
+        if let clientId = clientId, let apiKey = apiKey {
+            request.setValue(clientId, forHTTPHeaderField: "x-client-id")
+            request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
+        }
+        
+        let requestData = VietQRLookupRequest(bin: bin, accountNumber: accountNumber)
+        request.httpBody = try JSONEncoder().encode(requestData)
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+            throw URLError(.badServerResponse)
+        }
+        
+        let lookupResponse = try JSONDecoder().decode(VietQRLookupResponse.self, from: data)
+        if lookupResponse.code == "00", let accountName = lookupResponse.data?.accountName {
+            return accountName
         } else {
-            throw NSError(domain: "VietQR", code: 404, userInfo: [NSLocalizedDescriptionKey: "Account not found or invalid"])
+            throw NSError(domain: "VietQR", code: Int(lookupResponse.code) ?? -1, userInfo: [NSLocalizedDescriptionKey: lookupResponse.desc])
         }
     }
 }
