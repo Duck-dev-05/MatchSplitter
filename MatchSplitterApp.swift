@@ -1,6 +1,7 @@
 import SwiftUI
 import GoogleSignIn
 import FirebaseCore
+import FirebaseMessaging
 
 @main
 struct MatchSplitterApp: App {

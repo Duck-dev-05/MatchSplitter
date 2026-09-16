@@ -130,7 +130,7 @@ struct AnalyticsView: View {
                                 ForEach(budgetedGroups) { group in
                                     let budget = group.budgetLimit ?? 0
                                     let spent = group.expenses.map { $0.amount }.reduce(0, +)
-                                    let percentage = min(spent / budget, 1.0)
+                                    let percentage = budget > 0 ? min(spent / budget, 1.0) : (spent > 0 ? 1.0 : 0.0)
                                     let isOver = spent > budget
                                     
                                     VStack(alignment: .leading, spacing: 8) {
