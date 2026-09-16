@@ -28,9 +28,6 @@ class GroupViewModel: ObservableObject {
     
     private func loadData() {
         if !storedUserId.isEmpty {
-            // Load from cache for instantaneous UI
-            self.groups = LocalCacheService.shared.loadGroups()
-            
             isLoading = true
             Task {
                 if let user = try? await FirebaseManager.shared.fetchUser(byId: storedUserId) {
@@ -53,17 +50,10 @@ class GroupViewModel: ObservableObject {
             storedUserId = current.id.uuidString
             // Save token if available
             if let token = NotificationManager.shared.fcmToken {
+                let currentId = current.id.uuidString
                 Task {
-                    try? await FirebaseManager.shared.updateFCMToken(token, forUserId: current.id.uuidString)
+                    try? await FirebaseManager.shared.updateFCMToken(token, forUserId: currentId)
                 }
-            }
-        }
-        
-        LocalCacheService.shared.saveGroups(groups)
-        
-        Task {
-            for group in groups {
-                try? await FirebaseManager.shared.saveGroup(group)
             }
         }
     }
@@ -72,6 +62,7 @@ class GroupViewModel: ObservableObject {
         groups.removeAll()
         currentUser = nil
         storedUserId = ""
+        FirebaseManager.shared.stopListeningToUserGroups()
     }
     
     func register(user: User, defaultCurrency: Currency) {
@@ -91,6 +82,7 @@ class GroupViewModel: ObservableObject {
         currentUser = nil
         groups.removeAll()
         storedUserId = ""
+        FirebaseManager.shared.stopListeningToUserGroups()
     }
     
     func fetchGroupsFromFirebase() {
@@ -100,12 +92,12 @@ class GroupViewModel: ObservableObject {
             guard let self = self else { return }
             self.isLoading = false
             self.groups = fetchedGroups.sorted { $0.name < $1.name }
-            LocalCacheService.shared.saveGroups(self.groups) // Update cache
         }
     }
     
     func authenticateUser(email: String, password: String) async -> User? {
-        if let user = try? await FirebaseManager.shared.fetchUser(byEmail: email) {
+        let lowerEmail = email.lowercased()
+        if let user = try? await FirebaseManager.shared.fetchUser(byEmail: lowerEmail) {
             if user.password == password {
                 await MainActor.run {
                     self.login(user: user)
@@ -117,7 +109,8 @@ class GroupViewModel: ObservableObject {
     }
     
     func authenticateGoogleUser(name: String, email: String, avatarURL: String?) async -> User? {
-        if var user = try? await FirebaseManager.shared.fetchUser(byEmail: email) {
+        let lowerEmail = email.lowercased()
+        if var user = try? await FirebaseManager.shared.fetchUser(byEmail: lowerEmail) {
             user.avatarURL = avatarURL
             let updatedUser = user
             Task {
@@ -128,7 +121,7 @@ class GroupViewModel: ObservableObject {
             }
             return updatedUser
         } else {
-            let newUser = User(name: name, email: email, password: "GoogleSignInUser", paymentID: nil, paymentType: nil, avatarURL: avatarURL)
+            let newUser = User(name: name, email: lowerEmail, password: "GoogleSignInUser", paymentID: nil, paymentType: nil, avatarURL: avatarURL)
             Task {
                 try? await FirebaseManager.shared.saveUser(newUser)
             }
@@ -141,10 +134,12 @@ class GroupViewModel: ObservableObject {
     }
     
     func registerUserAsync(user: User, defaultCurrency: Currency) async {
-        try? await FirebaseManager.shared.saveUser(user)
+        var newUser = user
+        newUser.email = newUser.email?.lowercased()
+        try? await FirebaseManager.shared.saveUser(newUser)
         await MainActor.run {
-            self.register(user: user, defaultCurrency: defaultCurrency)
-            self.login(user: user)
+            self.register(user: newUser, defaultCurrency: defaultCurrency)
+            self.login(user: newUser)
         }
     }
 
@@ -154,18 +149,18 @@ class GroupViewModel: ObservableObject {
             currentUser = updatedUser
             
             // Also update this user's name across all groups they belong to
-            var changedGroups = false
+            var updatedGroups: [Group] = []
             for groupIndex in groups.indices {
                 if let memberIndex = groups[groupIndex].members.firstIndex(where: { $0.id == current.id }) {
-                    groups[groupIndex].members[memberIndex] = updatedUser
-                    changedGroups = true
+                    var modifiedGroup = groups[groupIndex]
+                    modifiedGroup.members[memberIndex] = updatedUser
+                    updatedGroups.append(modifiedGroup)
                 }
             }
-            if changedGroups {
-                saveData()
-            }
-            // Need to save user document too!
             Task {
+                for g in updatedGroups {
+                    try? await FirebaseManager.shared.saveGroup(g)
+                }
                 try? await FirebaseManager.shared.saveUser(updatedUser)
             }
         }
@@ -175,85 +170,92 @@ class GroupViewModel: ObservableObject {
         if let current = currentUser {
             var newGroup = Group(name: name, currency: currency ?? defaultCurrency, creatorID: current.id)
             newGroup.members.append(current)
-            groups.append(newGroup)
-            saveData()
+            Task {
+                try? await FirebaseManager.shared.saveGroup(newGroup)
+            }
         }
     }
     
     func updateGroup(id: UUID, name: String, currency: Currency, paymentBankBin: String? = nil, paymentAccountNo: String? = nil, paymentAccountName: String? = nil, simplifyDebts: Bool = true) {
         if let index = groups.firstIndex(where: { $0.id == id }) {
-            let oldCurrency = groups[index].currency
-            groups[index].name = name
-            groups[index].paymentBankBin = paymentBankBin
-            groups[index].paymentAccountNo = paymentAccountNo
-            groups[index].paymentAccountName = paymentAccountName
-            groups[index].simplifyDebts = simplifyDebts
+            var updatedGroup = groups[index]
+            let oldCurrency = updatedGroup.currency
+            updatedGroup.name = name
+            updatedGroup.paymentBankBin = paymentBankBin
+            updatedGroup.paymentAccountNo = paymentAccountNo
+            updatedGroup.paymentAccountName = paymentAccountName
+            updatedGroup.simplifyDebts = simplifyDebts
             
             if oldCurrency != currency {
                 Task {
                     do {
                         let rate = try await CurrencyService.shared.convert(amount: 1.0, from: oldCurrency, to: currency)
-                        await MainActor.run {
-                            self.groups[index].currency = currency
-                            
-                            // Convert all expenses
-                            for i in 0..<self.groups[index].expenses.count {
-                                self.groups[index].expenses[i].amount *= rate
-                                if let customShares = self.groups[index].expenses[i].customShares {
-                                    for j in 0..<customShares.count {
-                                        self.groups[index].expenses[i].customShares![j].exactAmount *= rate
-                                    }
+                        updatedGroup.currency = currency
+                        
+                        // Convert all expenses
+                        for i in 0..<updatedGroup.expenses.count {
+                            updatedGroup.expenses[i].amount *= rate
+                            if let customShares = updatedGroup.expenses[i].customShares {
+                                for j in 0..<customShares.count {
+                                    updatedGroup.expenses[i].customShares![j].exactAmount *= rate
                                 }
                             }
-                            
-                            // Convert all payments
-                            for i in 0..<self.groups[index].payments.count {
-                                self.groups[index].payments[i].amount *= rate
-                            }
-                            
-                            self.saveData()
                         }
+                        
+                        // Convert all payments
+                        for i in 0..<updatedGroup.payments.count {
+                            updatedGroup.payments[i].amount *= rate
+                        }
+                        
+                        try? await FirebaseManager.shared.saveGroup(updatedGroup)
                     } catch {
                         print("Failed to convert currency: \(error)")
-                        await MainActor.run {
-                            self.groups[index].currency = currency
-                            self.saveData()
-                        }
+                        updatedGroup.currency = currency
+                        try? await FirebaseManager.shared.saveGroup(updatedGroup)
                     }
                 }
             } else {
-                saveData()
+                Task {
+                    try? await FirebaseManager.shared.saveGroup(updatedGroup)
+                }
             }
         }
     }
     
     func updateGroupBudget(id: UUID, budgetLimit: Double?) {
         if let index = groups.firstIndex(where: { $0.id == id }) {
-            groups[index].budgetLimit = budgetLimit
-            saveData()
+            var updatedGroup = groups[index]
+            updatedGroup.budgetLimit = budgetLimit
+            Task {
+                try? await FirebaseManager.shared.saveGroup(updatedGroup)
+            }
         }
     }
     
     func deleteGroup(id: UUID) {
-        groups.removeAll(where: { $0.id == id })
         Task {
             try? await FirebaseManager.shared.deleteGroup(id: id.uuidString)
         }
-        saveData()
     }
     
     func addMember(to group: Group, name: String, paymentID: String, paymentType: String? = nil, bankBin: String? = nil, bankAccountName: String? = nil, payOSClientId: String? = nil, payOSApiKey: String? = nil, payOSChecksumKey: String? = nil) {
         if let index = groups.firstIndex(where: { $0.id == group.id }) {
-            groups[index].members.append(User(name: name, paymentID: paymentID.isEmpty ? nil : paymentID, paymentType: paymentType, bankBin: bankBin, bankAccountName: bankAccountName, payOSClientId: payOSClientId, payOSApiKey: payOSApiKey, payOSChecksumKey: payOSChecksumKey))
-            saveData()
+            var updatedGroup = groups[index]
+            updatedGroup.members.append(User(name: name, paymentID: paymentID.isEmpty ? nil : paymentID, paymentType: paymentType, bankBin: bankBin, bankAccountName: bankAccountName, payOSClientId: payOSClientId, payOSApiKey: payOSApiKey, payOSChecksumKey: payOSChecksumKey))
+            Task {
+                try? await FirebaseManager.shared.saveGroup(updatedGroup)
+            }
         }
     }
     
     func addExistingMember(_ member: User, to group: Group) {
         if let index = groups.firstIndex(where: { $0.id == group.id }) {
             if !groups[index].members.contains(where: { $0.id == member.id }) {
-                groups[index].members.append(member)
-                saveData()
+                var updatedGroup = groups[index]
+                updatedGroup.members.append(member)
+                Task {
+                    try? await FirebaseManager.shared.saveGroup(updatedGroup)
+                }
             }
         }
     }
@@ -288,8 +290,11 @@ class GroupViewModel: ObservableObject {
                     payOSApiKey: payOSApiKey,
                     payOSChecksumKey: payOSChecksumKey
                 )
-                groups[groupIndex].members[memberIndex] = updatedMember
-                saveData()
+                var updatedGroup = groups[groupIndex]
+                updatedGroup.members[memberIndex] = updatedMember
+                Task {
+                    try? await FirebaseManager.shared.saveGroup(updatedGroup)
+                }
             }
         }
     }
@@ -297,15 +302,19 @@ class GroupViewModel: ObservableObject {
     func addExpense(to group: Group, title: String, amount: Double, category: ExpenseCategory = .general, paidBy: User, splitType: SplitType = .equal, splitAmong: [User], customShares: [SplitShare]? = nil, originalCurrency: Currency? = nil, originalAmount: Double? = nil) {
         if let index = groups.firstIndex(where: { $0.id == group.id }) {
             let expense = Expense(title: title, amount: amount, date: Date(), category: category, paidBy: paidBy, splitType: splitType, splitAmong: splitAmong, customShares: customShares, originalCurrency: originalCurrency, originalAmount: originalAmount)
-            groups[index].expenses.append(expense)
-            saveData()
+            var updatedGroup = groups[index]
+            updatedGroup.expenses.append(expense)
+            Task {
+                try? await FirebaseManager.shared.saveGroup(updatedGroup)
+            }
         }
     }
     
     func updateExpense(in group: Group, expenseId: UUID, title: String, amount: Double, category: ExpenseCategory = .general, paidBy: User, splitType: SplitType = .equal, splitAmong: [User], customShares: [SplitShare]? = nil, originalCurrency: Currency? = nil, originalAmount: Double? = nil) {
         if let groupIndex = groups.firstIndex(where: { $0.id == group.id }),
            let expIndex = groups[groupIndex].expenses.firstIndex(where: { $0.id == expenseId }) {
-            var expense = groups[groupIndex].expenses[expIndex]
+            var updatedGroup = groups[groupIndex]
+            var expense = updatedGroup.expenses[expIndex]
             expense.title = title
             expense.amount = amount
             expense.category = category
@@ -315,23 +324,31 @@ class GroupViewModel: ObservableObject {
             expense.customShares = customShares
             expense.originalCurrency = originalCurrency
             expense.originalAmount = originalAmount
-            groups[groupIndex].expenses[expIndex] = expense
-            saveData()
+            updatedGroup.expenses[expIndex] = expense
+            Task {
+                try? await FirebaseManager.shared.saveGroup(updatedGroup)
+            }
         }
     }
     
     func deleteExpense(from group: Group, expenseId: UUID) {
         if let groupIndex = groups.firstIndex(where: { $0.id == group.id }) {
-            groups[groupIndex].expenses.removeAll(where: { $0.id == expenseId })
-            saveData()
+            var updatedGroup = groups[groupIndex]
+            updatedGroup.expenses.removeAll(where: { $0.id == expenseId })
+            Task {
+                try? await FirebaseManager.shared.saveGroup(updatedGroup)
+            }
         }
     }
     
     func addPayment(to group: Group, fromUser: User, toUser: User, amount: Double, date: Date = Date()) {
         if let groupIndex = groups.firstIndex(where: { $0.id == group.id }) {
             let payment = Payment(fromUser: fromUser, toUser: toUser, amount: amount, date: date)
-            groups[groupIndex].payments.append(payment)
-            saveData()
+            var updatedGroup = groups[groupIndex]
+            updatedGroup.payments.append(payment)
+            Task {
+                try? await FirebaseManager.shared.saveGroup(updatedGroup)
+            }
         }
     }
 }

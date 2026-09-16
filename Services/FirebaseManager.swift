@@ -126,6 +126,11 @@ class FirebaseManager {
     
     private var userGroupsListener: ListenerRegistration?
     
+    func stopListeningToUserGroups() {
+        userGroupsListener?.remove()
+        userGroupsListener = nil
+    }
+    
     func listenToUserGroups(userId: UUID, onChange: @escaping ([Group]) -> Void) {
         userGroupsListener?.remove()
         
