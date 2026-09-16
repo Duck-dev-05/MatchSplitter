@@ -21,6 +21,9 @@ struct AddExpenseView: View {
     @State private var isSaving = false
     @State private var convertedPreview: Double? = nil
     
+    @State private var showingItemization = false
+    @State private var scannedItems: [ReceiptItem] = []
+    
     // Multi-Currency
     @State private var selectedCurrency: Currency
     
@@ -135,13 +138,22 @@ struct AddExpenseView: View {
                 isScanning = true
                 Task {
                     do {
-                        if let total = try await ReceiptScanner.shared.scanForTotalAmount(in: image) {
-                            await MainActor.run {
-                                self.amountString = String(format: "%.2f", total)
-                                self.isScanning = false
+                        let items = try await ReceiptScanner.shared.scanForItems(in: image)
+                        await MainActor.run {
+                            self.isScanning = false
+                            if !items.isEmpty {
+                                self.scannedItems = items
+                                self.showingItemization = true
+                            } else {
+                                // Fallback if no items found
+                                Task {
+                                    if let total = try? await ReceiptScanner.shared.scanForTotalAmount(in: image) {
+                                        await MainActor.run {
+                                            self.amountString = String(format: "%.2f", total)
+                                        }
+                                    }
+                                }
                             }
-                        } else {
-                            await MainActor.run { self.isScanning = false }
                         }
                     } catch {
                         await MainActor.run { self.isScanning = false }
@@ -149,6 +161,14 @@ struct AddExpenseView: View {
                 }
             }
             .ignoresSafeArea()
+        }
+        .sheet(isPresented: $showingItemization) {
+            ReceiptItemizationView(group: group, items: scannedItems) { total, customShares in
+                self.amountString = String(format: "%.2f", total)
+                self.customShares = customShares
+                self.splitType = .exact
+                self.selectedSplitUsers = Set(customShares.map { $0.user.id })
+            }
         }
     }
 

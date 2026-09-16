@@ -13,8 +13,9 @@ struct User: Identifiable, Codable, Hashable {
     var payOSApiKey: String?
     var payOSChecksumKey: String?
     var avatarURL: String?
+    var fcmToken: String?
 
-    init(id: UUID = UUID(), name: String, email: String? = nil, password: String? = nil, paymentID: String? = nil, paymentType: String? = nil, bankBin: String? = nil, bankAccountName: String? = nil, payOSClientId: String? = nil, payOSApiKey: String? = nil, payOSChecksumKey: String? = nil, avatarURL: String? = nil) {
+    init(id: UUID = UUID(), name: String, email: String? = nil, password: String? = nil, paymentID: String? = nil, paymentType: String? = nil, bankBin: String? = nil, bankAccountName: String? = nil, payOSClientId: String? = nil, payOSApiKey: String? = nil, payOSChecksumKey: String? = nil, avatarURL: String? = nil, fcmToken: String? = nil) {
         self.id = id
         self.name = name
         self.email = email
@@ -27,5 +28,6 @@ struct User: Identifiable, Codable, Hashable {
         self.payOSApiKey = payOSApiKey
         self.payOSChecksumKey = payOSChecksumKey
         self.avatarURL = avatarURL
+        self.fcmToken = fcmToken
     }
 }

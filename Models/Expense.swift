@@ -21,6 +21,13 @@ enum ExpenseCategory: String, Codable, CaseIterable {
     }
 }
 
+enum RecurringFrequency: String, Codable, CaseIterable {
+    case daily = "Daily"
+    case weekly = "Weekly"
+    case monthly = "Monthly"
+    case yearly = "Yearly"
+}
+
 enum SplitType: String, Codable {
     case equal = "Equal"
     case exact = "Exact Amounts"
@@ -51,12 +58,18 @@ struct Expense: Identifiable, Codable {
     var originalCurrency: Currency?
     var originalAmount: Double?
     
+    // For Recurring
+    var isRecurring: Bool?
+    var recurringFrequency: RecurringFrequency?
+    var nextBillingDate: Date?
+    
     enum CodingKeys: String, CodingKey {
         case id, title, amount, date, category, paidBy, splitType
         case splitAmong, customShares, originalCurrency, originalAmount
+        case isRecurring, recurringFrequency, nextBillingDate
     }
     
-    init(id: UUID = UUID(), title: String, amount: Double, date: Date, category: ExpenseCategory, paidBy: User, splitType: SplitType, splitAmong: [User], customShares: [SplitShare]? = nil, originalCurrency: Currency? = nil, originalAmount: Double? = nil) {
+    init(id: UUID = UUID(), title: String, amount: Double, date: Date, category: ExpenseCategory, paidBy: User, splitType: SplitType, splitAmong: [User], customShares: [SplitShare]? = nil, originalCurrency: Currency? = nil, originalAmount: Double? = nil, isRecurring: Bool? = nil, recurringFrequency: RecurringFrequency? = nil, nextBillingDate: Date? = nil) {
         self.id = id
         self.title = title
         self.amount = amount
@@ -68,6 +81,9 @@ struct Expense: Identifiable, Codable {
         self.customShares = customShares
         self.originalCurrency = originalCurrency
         self.originalAmount = originalAmount
+        self.isRecurring = isRecurring
+        self.recurringFrequency = recurringFrequency
+        self.nextBillingDate = nextBillingDate
     }
     
     init(from decoder: Decoder) throws {
@@ -83,5 +99,8 @@ struct Expense: Identifiable, Codable {
         customShares = try container.decodeIfPresent([SplitShare].self, forKey: .customShares)
         originalCurrency = try container.decodeIfPresent(Currency.self, forKey: .originalCurrency)
         originalAmount = try container.decodeIfPresent(Double.self, forKey: .originalAmount)
+        isRecurring = try container.decodeIfPresent(Bool.self, forKey: .isRecurring)
+        recurringFrequency = try container.decodeIfPresent(RecurringFrequency.self, forKey: .recurringFrequency)
+        nextBillingDate = try container.decodeIfPresent(Date.self, forKey: .nextBillingDate)
     }
 }

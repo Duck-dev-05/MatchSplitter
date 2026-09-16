@@ -31,6 +31,8 @@ targets:
         product: GoogleSignInSwift
       - package: Firebase
         product: FirebaseFirestore
+      - package: Firebase
+        product: FirebaseMessaging
     info:
       path: Info.plist
       properties:

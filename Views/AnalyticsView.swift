@@ -117,6 +117,53 @@ struct AnalyticsView: View {
                                 iOS15ChartView(categoryData: categoryData, appear: appear)
                             }
                         }
+                        
+                        // MARK: Budgets
+                        let budgetedGroups = myGroups.filter { $0.budgetLimit != nil }
+                        if !budgetedGroups.isEmpty {
+                            VStack(alignment: .leading, spacing: 16) {
+                                Text("Group Budgets")
+                                    .font(.system(size: 18, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 20)
+                                
+                                ForEach(budgetedGroups) { group in
+                                    let budget = group.budgetLimit ?? 0
+                                    let spent = group.expenses.map { $0.amount }.reduce(0, +)
+                                    let percentage = min(spent / budget, 1.0)
+                                    let isOver = spent > budget
+                                    
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        HStack {
+                                            Text(group.name)
+                                                .font(.system(size: 14, weight: .semibold))
+                                                .foregroundColor(.white)
+                                            Spacer()
+                                            Text("\(group.currency.symbol)\(String(format: "%.0f", spent)) / \(group.currency.symbol)\(String(format: "%.0f", budget))")
+                                                .font(.system(size: 12, weight: .medium))
+                                                .foregroundColor(isOver ? Theme.dangerColor : .white.opacity(0.6))
+                                        }
+                                        
+                                        GeometryReader { geo in
+                                            ZStack(alignment: .leading) {
+                                                RoundedRectangle(cornerRadius: 6)
+                                                    .fill(Color.white.opacity(0.1))
+                                                    .frame(height: 8)
+                                                
+                                                RoundedRectangle(cornerRadius: 6)
+                                                    .fill(isOver ? Theme.dangerColor : Theme.primaryAccent)
+                                                    .frame(width: geo.size.width * CGFloat(percentage), height: 8)
+                                            }
+                                        }
+                                        .frame(height: 8)
+                                    }
+                                    .padding(16)
+                                    .glassCard(cornerRadius: 16)
+                                    .padding(.horizontal, 20)
+                                }
+                            }
+                            .padding(.top, 10)
+                        }
                     }
                     .padding(.bottom, 120)
                 }

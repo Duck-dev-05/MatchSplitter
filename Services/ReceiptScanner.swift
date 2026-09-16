@@ -119,4 +119,84 @@ class ReceiptScanner {
         // Fallback to absolute maximum value found if no keywords matched
         return possibleAmounts.max()
     }
+    
+    /// Scans the image for text and attempts to find line items (name and price).
+    func scanForItems(in image: UIImage) async throws -> [ReceiptItem] {
+        guard let cgImage = image.cgImage else { return [] }
+
+        return try await withCheckedThrowingContinuation { continuation in
+            let request = VNRecognizeTextRequest { request, error in
+                if let error = error {
+                    continuation.resume(throwing: error)
+                    return
+                }
+
+                guard let observations = request.results as? [VNRecognizedTextObservation] else {
+                    continuation.resume(returning: [])
+                    return
+                }
+
+                var recognizedStrings = [String]()
+                for observation in observations {
+                    guard let topCandidate = observation.topCandidates(1).first else { continue }
+                    recognizedStrings.append(topCandidate.string)
+                }
+
+                let items = self.extractItems(from: recognizedStrings)
+                continuation.resume(returning: items)
+            }
+
+            request.recognitionLevel = .accurate
+            request.usesLanguageCorrection = true
+
+            let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+            do {
+                try handler.perform([request])
+            } catch {
+                continuation.resume(throwing: error)
+            }
+        }
+    }
+    
+    private func extractItems(from textLines: [String]) -> [ReceiptItem] {
+        var items: [ReceiptItem] = []
+        let numberPattern = "(\\d+([.,]\\d{2}))"
+        let regex = try? NSRegularExpression(pattern: numberPattern)
+        
+        for line in textLines {
+            let lowerLine = line.lowercased()
+            // Skip common summary lines
+            if lowerLine.contains("total") || lowerLine.contains("subtotal") || lowerLine.contains("tax") {
+                continue
+            }
+            
+            if let regex = regex {
+                let nsString = line as NSString
+                let results = regex.matches(in: line, range: NSRange(location: 0, length: nsString.length))
+                
+                if let lastMatch = results.last {
+                    let matchString = nsString.substring(with: lastMatch.range)
+                    let cleanPrice = matchString.replacingOccurrences(of: ",", with: ".")
+                    
+                    if let price = Double(cleanPrice), price > 0 {
+                        // Extract name (everything before the price)
+                        let nameRange = NSRange(location: 0, length: lastMatch.range.location)
+                        var name = nsString.substring(with: nameRange).trimmingCharacters(in: .whitespacesAndNewlines)
+                        
+                        // Clean up trailing characters like '$'
+                        if name.hasSuffix("$") {
+                            name.removeLast()
+                        }
+                        name = name.trimmingCharacters(in: .whitespacesAndNewlines)
+                        
+                        if !name.isEmpty {
+                            items.append(ReceiptItem(name: name, price: price))
+                        }
+                    }
+                }
+            }
+        }
+        
+        return items
+    }
 }

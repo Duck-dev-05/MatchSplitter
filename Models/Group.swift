@@ -11,8 +11,10 @@ struct Group: Identifiable, Codable {
     var paymentBankBin: String?
     var paymentAccountNo: String?
     var paymentAccountName: String?
+    var simplifyDebts: Bool
+    var budgetLimit: Double?
     
-    init(id: UUID = UUID(), name: String, members: [User] = [], expenses: [Expense] = [], payments: [Payment] = [], currency: Currency = .thb, creatorID: UUID, paymentBankBin: String? = nil, paymentAccountNo: String? = nil, paymentAccountName: String? = nil) {
+    init(id: UUID = UUID(), name: String, members: [User] = [], expenses: [Expense] = [], payments: [Payment] = [], currency: Currency = .thb, creatorID: UUID, paymentBankBin: String? = nil, paymentAccountNo: String? = nil, paymentAccountName: String? = nil, simplifyDebts: Bool = true, budgetLimit: Double? = nil) {
         self.id = id
         self.name = name
         self.members = members
@@ -23,11 +25,13 @@ struct Group: Identifiable, Codable {
         self.paymentBankBin = paymentBankBin
         self.paymentAccountNo = paymentAccountNo
         self.paymentAccountName = paymentAccountName
+        self.simplifyDebts = simplifyDebts
+        self.budgetLimit = budgetLimit
     }
     
     enum CodingKeys: String, CodingKey {
         case id, name, members, expenses, payments, currency, creatorID
-        case paymentBankBin, paymentAccountNo, paymentAccountName
+        case paymentBankBin, paymentAccountNo, paymentAccountName, simplifyDebts, budgetLimit
     }
     
     init(from decoder: Decoder) throws {
@@ -42,5 +46,7 @@ struct Group: Identifiable, Codable {
         paymentBankBin = try container.decodeIfPresent(String.self, forKey: .paymentBankBin)
         paymentAccountNo = try container.decodeIfPresent(String.self, forKey: .paymentAccountNo)
         paymentAccountName = try container.decodeIfPresent(String.self, forKey: .paymentAccountName)
+        simplifyDebts = try container.decodeIfPresent(Bool.self, forKey: .simplifyDebts) ?? true
+        budgetLimit = try container.decodeIfPresent(Double.self, forKey: .budgetLimit)
     }
 }

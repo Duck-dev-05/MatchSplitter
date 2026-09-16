@@ -10,6 +10,8 @@ struct GroupSettingsView: View {
     @State private var showingDeleteConfirm = false
     @State private var showingShareSheet = false
     @State private var shareSheetURL: URL?
+    @State private var simplifyDebts: Bool
+    @State private var showingBudgetSettings = false
     
     @State private var bankBin: String
     @State private var paymentAccountNo: String
@@ -25,6 +27,7 @@ struct GroupSettingsView: View {
         self._bankBin = State(initialValue: group.paymentBankBin ?? "")
         self._paymentAccountNo = State(initialValue: group.paymentAccountNo ?? "")
         self._bankAccountName = State(initialValue: group.paymentAccountName ?? "")
+        self._simplifyDebts = State(initialValue: group.simplifyDebts)
     }
 
     var body: some View {
@@ -48,7 +51,8 @@ struct GroupSettingsView: View {
                             currency: selectedCurrency,
                             paymentBankBin: bankBin.isEmpty ? nil : bankBin,
                             paymentAccountNo: paymentAccountNo.isEmpty ? nil : paymentAccountNo,
-                            paymentAccountName: bankAccountName.isEmpty ? nil : bankAccountName
+                            paymentAccountName: bankAccountName.isEmpty ? nil : bankAccountName,
+                            simplifyDebts: simplifyDebts
                         )
                         presentationMode.wrappedValue.dismiss()
                     }
@@ -85,6 +89,19 @@ struct GroupSettingsView: View {
                                 }
                                 Spacer()
                             }
+                            .padding(20)
+                            
+                            Divider().background(Color.white.opacity(0.08))
+                            
+                            Toggle(isOn: $simplifyDebts) {
+                                HStack(spacing: 16) {
+                                    IconBadge(systemName: "arrow.triangle.merge", color: Theme.successColor)
+                                    Text("Simplify Debts")
+                                        .font(.system(size: 16, weight: .medium))
+                                        .foregroundColor(.white)
+                                }
+                            }
+                            .tint(Theme.primaryAccent)
                             .padding(20)
                         }
                         .glassCard(cornerRadius: 24)
@@ -161,6 +178,24 @@ struct GroupSettingsView: View {
                         }
                         .buttonStyle(PressableButtonStyle())
 
+                        // Budget Button
+                        Button(action: { showingBudgetSettings = true }) {
+                            HStack(spacing: 16) {
+                                IconBadge(systemName: "chart.bar.fill", color: Theme.warmGold)
+                                Text("Budget Limit")
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(.white)
+                                Spacer()
+                                if let budget = group.budgetLimit {
+                                    Text("\(group.currency.symbol)\(String(format: "%.0f", budget))")
+                                        .foregroundColor(.white.opacity(0.5))
+                                }
+                            }
+                            .padding(20)
+                            .premiumCard(cornerRadius: 20, accentColor: Theme.warmGold)
+                        }
+                        .buttonStyle(PressableButtonStyle())
+
                         // Delete Button
                         Button(action: { showingDeleteConfirm = true }) {
                             HStack(spacing: 16) {
@@ -183,6 +218,9 @@ struct GroupSettingsView: View {
             if let url = shareSheetURL {
                 ShareSheet(items: [url])
             }
+        }
+        .sheet(isPresented: $showingBudgetSettings) {
+            BudgetSettingsView(group: group)
         }
         .onAppear {
             Task {

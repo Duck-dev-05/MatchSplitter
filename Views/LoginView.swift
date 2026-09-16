@@ -33,6 +33,7 @@ struct LoginView: View {
     @State private var isAnimating: Bool = false
     @State private var errorMessage: String = ""
     @State private var isAuthenticating: Bool = false
+    @State private var showingForgotPassword: Bool = false
     @FocusState private var focusedField: LoginField?
 
     enum LoginField: Hashable {
@@ -215,6 +216,9 @@ struct LoginView: View {
                 }
             }
         }
+        .sheet(isPresented: $showingForgotPassword) {
+            ForgotPasswordView()
+        }
     }
 
     // MARK: - Animated Segment Control
@@ -266,6 +270,17 @@ struct LoginView: View {
         VStack(spacing: 14) {
             glassTextField(icon: "envelope.fill", iconColor: Theme.secondaryAccent, placeholder: "Email", text: $email, keyboard: .emailAddress, field: .email)
             glassTextField(icon: "lock.fill", iconColor: Theme.primaryAccent, placeholder: "Password", text: $password, isSecure: true, field: .password)
+
+            HStack {
+                Spacer()
+                Button(action: { showingForgotPassword = true }) {
+                    Text("Forgot Password?")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(Theme.secondaryAccent)
+                }
+            }
+            .padding(.horizontal, 8)
+            .padding(.top, -6)
 
             GradientButton(label: "Login", isEnabled: isStepValid, action: handleLogin)
                 .padding(.top, 6)

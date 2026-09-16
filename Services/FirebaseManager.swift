@@ -151,4 +151,25 @@ class FirebaseManager {
             
         userGroupsListener = listener
     }
+    
+    // MARK: - Notifications
+    func updateFCMToken(_ token: String, forUserId userId: String) async throws {
+        try await db.collection("users").document(userId).setData(["fcmToken": token], merge: true)
+    }
+    
+    func sendNotification(to userIds: [String], title: String, body: String, data: [String: String] = [:]) {
+        for userId in userIds {
+            let notificationId = UUID().uuidString
+            let payload: [String: Any] = [
+                "id": notificationId,
+                "userId": userId,
+                "title": title,
+                "body": body,
+                "data": data,
+                "timestamp": FieldValue.serverTimestamp(),
+                "status": "pending" // A hypothetical Cloud Function would listen to this collection and send the actual push notification.
+            ]
+            db.collection("notifications").document(notificationId).setData(payload)
+        }
+    }
 }

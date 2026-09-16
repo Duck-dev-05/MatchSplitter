@@ -28,6 +28,9 @@ class GroupViewModel: ObservableObject {
     
     private func loadData() {
         if !storedUserId.isEmpty {
+            // Load from cache for instantaneous UI
+            self.groups = LocalCacheService.shared.loadGroups()
+            
             isLoading = true
             Task {
                 if let user = try? await FirebaseManager.shared.fetchUser(byId: storedUserId) {
@@ -48,7 +51,15 @@ class GroupViewModel: ObservableObject {
     func saveData() {
         if let current = currentUser {
             storedUserId = current.id.uuidString
+            // Save token if available
+            if let token = NotificationManager.shared.fcmToken {
+                Task {
+                    try? await FirebaseManager.shared.updateFCMToken(token, forUserId: current.id.uuidString)
+                }
+            }
         }
+        
+        LocalCacheService.shared.saveGroups(groups)
         
         Task {
             for group in groups {
@@ -89,6 +100,7 @@ class GroupViewModel: ObservableObject {
             guard let self = self else { return }
             self.isLoading = false
             self.groups = fetchedGroups.sorted { $0.name < $1.name }
+            LocalCacheService.shared.saveGroups(self.groups) // Update cache
         }
     }
     
@@ -164,13 +176,14 @@ class GroupViewModel: ObservableObject {
         }
     }
     
-    func updateGroup(id: UUID, name: String, currency: Currency, paymentBankBin: String? = nil, paymentAccountNo: String? = nil, paymentAccountName: String? = nil) {
+    func updateGroup(id: UUID, name: String, currency: Currency, paymentBankBin: String? = nil, paymentAccountNo: String? = nil, paymentAccountName: String? = nil, simplifyDebts: Bool = true) {
         if let index = groups.firstIndex(where: { $0.id == id }) {
             let oldCurrency = groups[index].currency
             groups[index].name = name
             groups[index].paymentBankBin = paymentBankBin
             groups[index].paymentAccountNo = paymentAccountNo
             groups[index].paymentAccountName = paymentAccountName
+            groups[index].simplifyDebts = simplifyDebts
             
             if oldCurrency != currency {
                 Task {
@@ -207,6 +220,13 @@ class GroupViewModel: ObservableObject {
             } else {
                 saveData()
             }
+        }
+    }
+    
+    func updateGroupBudget(id: UUID, budgetLimit: Double?) {
+        if let index = groups.firstIndex(where: { $0.id == id }) {
+            groups[index].budgetLimit = budgetLimit
+            saveData()
         }
     }
     
