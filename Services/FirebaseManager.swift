@@ -39,6 +39,22 @@ class FirebaseManager {
         return nil
     }
     
+    func fetchUserCaseInsensitive(byEmail email: String) async throws -> User? {
+        let snapshot = try await db.collection("users").getDocuments()
+        let lowerEmail = email.lowercased()
+        
+        for document in snapshot.documents {
+            let data = document.data()
+            if let userEmail = data["email"] as? String, userEmail.lowercased() == lowerEmail {
+                if let userJsonString = data["user_data"] as? String,
+                   let userData = userJsonString.data(using: .utf8) {
+                    return try JSONDecoder().decode(User.self, from: userData)
+                }
+            }
+        }
+        return nil
+    }
+    
     func fetchUser(byId id: String) async throws -> User? {
         let snapshot = try await db.collection("users").document(id).getDocument()
         guard let data = snapshot.data() else { return nil }

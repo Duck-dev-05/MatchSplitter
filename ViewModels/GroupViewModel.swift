@@ -97,7 +97,13 @@ class GroupViewModel: ObservableObject {
     
     func authenticateUser(email: String, password: String) async -> User? {
         let lowerEmail = email.lowercased()
-        if let user = try? await FirebaseManager.shared.fetchUser(byEmail: lowerEmail) {
+        var existingUser = try? await FirebaseManager.shared.fetchUser(byEmail: lowerEmail)
+        
+        if existingUser == nil {
+            existingUser = try? await FirebaseManager.shared.fetchUserCaseInsensitive(byEmail: lowerEmail)
+        }
+        
+        if let user = existingUser {
             if user.password == password {
                 await MainActor.run {
                     self.login(user: user)
@@ -110,7 +116,13 @@ class GroupViewModel: ObservableObject {
     
     func authenticateGoogleUser(name: String, email: String, avatarURL: String?) async -> User? {
         let lowerEmail = email.lowercased()
-        if var user = try? await FirebaseManager.shared.fetchUser(byEmail: lowerEmail) {
+        
+        var existingUser = try? await FirebaseManager.shared.fetchUser(byEmail: lowerEmail)
+        if existingUser == nil {
+            existingUser = try? await FirebaseManager.shared.fetchUserCaseInsensitive(byEmail: lowerEmail)
+        }
+        
+        if var user = existingUser {
             user.avatarURL = avatarURL
             let updatedUser = user
             Task {
