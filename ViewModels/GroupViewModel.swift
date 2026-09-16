@@ -136,10 +136,11 @@ class GroupViewModel: ObservableObject {
     func registerUserAsync(user: User, defaultCurrency: Currency) async {
         var newUser = user
         newUser.email = newUser.email?.lowercased()
-        try? await FirebaseManager.shared.saveUser(newUser)
+        let finalUser = newUser
+        try? await FirebaseManager.shared.saveUser(finalUser)
         await MainActor.run {
-            self.register(user: newUser, defaultCurrency: defaultCurrency)
-            self.login(user: newUser)
+            self.register(user: finalUser, defaultCurrency: defaultCurrency)
+            self.login(user: finalUser)
         }
     }
 

@@ -91,6 +91,7 @@ struct AddMemberSheet: View {
     @State private var bankAccountName: String = ""
     @State private var isVerifyingAccount = false
     @State private var verificationError: String? = nil
+    @State private var verificationTask: Task<Void, Never>? = nil
 
     let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "VietQR", "PayOS", "None"]
     
