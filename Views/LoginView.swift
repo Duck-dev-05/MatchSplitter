@@ -583,10 +583,17 @@ struct LoginView: View {
         isAuthenticating = true
         errorMessage = ""
         Task {
-            await self.viewModel.registerUserAsync(user: newUser, defaultCurrency: currency)
-            await MainActor.run {
-                self.isAuthenticating = false
-                self.presentationMode.wrappedValue.dismiss()
+            do {
+                try await self.viewModel.registerUserAsync(user: newUser, defaultCurrency: currency)
+                await MainActor.run {
+                    self.isAuthenticating = false
+                    self.presentationMode.wrappedValue.dismiss()
+                }
+            } catch {
+                await MainActor.run {
+                    self.isAuthenticating = false
+                    self.errorMessage = error.localizedDescription
+                }
             }
         }
     }

@@ -39,20 +39,22 @@ class FirebaseManager {
         return nil
     }
     
-    func fetchUserCaseInsensitive(byEmail email: String) async throws -> User? {
+    func fetchAllUsersCaseInsensitive(byEmail email: String) async throws -> [User] {
         let snapshot = try await db.collection("users").getDocuments()
         let lowerEmail = email.lowercased()
+        var matchedUsers: [User] = []
         
         for document in snapshot.documents {
             let data = document.data()
             if let userEmail = data["email"] as? String, userEmail.lowercased() == lowerEmail {
                 if let userJsonString = data["user_data"] as? String,
-                   let userData = userJsonString.data(using: .utf8) {
-                    return try JSONDecoder().decode(User.self, from: userData)
+                   let userData = userJsonString.data(using: .utf8),
+                   let user = try? JSONDecoder().decode(User.self, from: userData) {
+                    matchedUsers.append(user)
                 }
             }
         }
-        return nil
+        return matchedUsers
     }
     
     func fetchUser(byId id: String) async throws -> User? {

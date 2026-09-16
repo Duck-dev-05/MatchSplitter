@@ -97,10 +97,20 @@ class GroupViewModel: ObservableObject {
     
     func authenticateUser(email: String, password: String) async -> User? {
         let lowerEmail = email.lowercased()
-        var existingUser = try? await FirebaseManager.shared.fetchUser(byEmail: lowerEmail)
+        var existingUser: User? = nil
         
-        if existingUser == nil {
-            existingUser = try? await FirebaseManager.shared.fetchUserCaseInsensitive(byEmail: lowerEmail)
+        if let allMatching = try? await FirebaseManager.shared.fetchAllUsersCaseInsensitive(byEmail: lowerEmail), !allMatching.isEmpty {
+            var bestUser = allMatching[0]
+            var maxGroups = -1
+            
+            for u in allMatching {
+                let userGroups = (try? await FirebaseManager.shared.fetchGroupsForUser(userId: u.id)) ?? []
+                if userGroups.count > maxGroups {
+                    maxGroups = userGroups.count
+                    bestUser = u
+                }
+            }
+            existingUser = bestUser
         }
         
         if let user = existingUser {
@@ -117,9 +127,20 @@ class GroupViewModel: ObservableObject {
     func authenticateGoogleUser(name: String, email: String, avatarURL: String?) async -> User? {
         let lowerEmail = email.lowercased()
         
-        var existingUser = try? await FirebaseManager.shared.fetchUser(byEmail: lowerEmail)
-        if existingUser == nil {
-            existingUser = try? await FirebaseManager.shared.fetchUserCaseInsensitive(byEmail: lowerEmail)
+        var existingUser: User? = nil
+        
+        if let allMatching = try? await FirebaseManager.shared.fetchAllUsersCaseInsensitive(byEmail: lowerEmail), !allMatching.isEmpty {
+            var bestUser = allMatching[0]
+            var maxGroups = -1
+            
+            for u in allMatching {
+                let userGroups = (try? await FirebaseManager.shared.fetchGroupsForUser(userId: u.id)) ?? []
+                if userGroups.count > maxGroups {
+                    maxGroups = userGroups.count
+                    bestUser = u
+                }
+            }
+            existingUser = bestUser
         }
         
         if var user = existingUser {
@@ -145,9 +166,25 @@ class GroupViewModel: ObservableObject {
         }
     }
     
-    func registerUserAsync(user: User, defaultCurrency: Currency) async {
+    enum AuthError: Error, LocalizedError {
+        case emailAlreadyExists
+        
+        var errorDescription: String? {
+            switch self {
+            case .emailAlreadyExists: return "This email is already registered. Please log in instead."
+            }
+        }
+    }
+    
+    func registerUserAsync(user: User, defaultCurrency: Currency) async throws {
         var newUser = user
-        newUser.email = newUser.email?.lowercased()
+        if let email = newUser.email?.lowercased() {
+            newUser.email = email
+            if let matching = try? await FirebaseManager.shared.fetchAllUsersCaseInsensitive(byEmail: email), !matching.isEmpty {
+                throw AuthError.emailAlreadyExists
+            }
+        }
+        
         let finalUser = newUser
         try? await FirebaseManager.shared.saveUser(finalUser)
         await MainActor.run {
