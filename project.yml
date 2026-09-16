@@ -33,6 +33,8 @@ targets:
         product: FirebaseFirestore
       - package: Firebase
         product: FirebaseMessaging
+      - package: Firebase
+        product: FirebaseAuth
     settings:
       base:
         OTHER_LDFLAGS: ["-ObjC"]

@@ -99,6 +99,23 @@ class GroupViewModel: ObservableObject {
         let lowerEmail = email.lowercased()
         var existingUser: User? = nil
         
+        // 1. Authenticate with Firebase Auth
+        do {
+            _ = try await FirebaseManager.shared.signIn(email: lowerEmail, password: password)
+        } catch let error as NSError {
+            // If user doesn't exist in Firebase Auth (e.g. from old version), try to recreate it
+            if error.code == AuthErrorCode.userNotFound.rawValue {
+                do {
+                    _ = try await FirebaseManager.shared.createUser(email: lowerEmail, password: password)
+                } catch {
+                    return nil
+                }
+            } else {
+                return nil
+            }
+        }
+        
+        // 2. Fetch the corresponding Firestore User document
         if let allMatching = try? await FirebaseManager.shared.fetchAllUsersCaseInsensitive(byEmail: lowerEmail), !allMatching.isEmpty {
             var bestUser = allMatching[0]
             var maxGroups = -1
@@ -114,12 +131,10 @@ class GroupViewModel: ObservableObject {
         }
         
         if let user = existingUser {
-            if user.password == password {
-                await MainActor.run {
-                    self.login(user: user)
-                }
-                return user
+            await MainActor.run {
+                self.login(user: user)
             }
+            return user
         }
         return nil
     }
@@ -141,6 +156,16 @@ class GroupViewModel: ObservableObject {
                 }
             }
             existingUser = bestUser
+        }
+        
+        // Sync with Firebase Auth (Google Sign-In handles the actual auth on the client, 
+        // but to ensure they have a Firebase Auth account linked to this email, we could sign in.
+        // However, GIDSignIn already handles this if we used Firebase Auth Google provider.
+        // For now, if we just want to ensure Firebase Auth exists, we can create a dummy one if it doesn't.
+        do {
+            _ = try await FirebaseManager.shared.signIn(email: lowerEmail, password: "GoogleSignInUser")
+        } catch {
+            _ = try? await FirebaseManager.shared.createUser(email: lowerEmail, password: "GoogleSignInUser")
         }
         
         if var user = existingUser {
@@ -178,13 +203,17 @@ class GroupViewModel: ObservableObject {
     
     func registerUserAsync(user: User, defaultCurrency: Currency) async throws {
         var newUser = user
-        if let email = newUser.email?.lowercased() {
-            newUser.email = email
-            if let matching = try? await FirebaseManager.shared.fetchAllUsersCaseInsensitive(byEmail: email), !matching.isEmpty {
-                throw AuthError.emailAlreadyExists
-            }
+        guard let email = newUser.email?.lowercased(), let password = newUser.password else { return }
+        newUser.email = email
+        
+        if let matching = try? await FirebaseManager.shared.fetchAllUsersCaseInsensitive(byEmail: email), !matching.isEmpty {
+            throw AuthError.emailAlreadyExists
         }
         
+        // 1. Create user in Firebase Auth
+        _ = try await FirebaseManager.shared.createUser(email: email, password: password)
+        
+        // 2. Save user to Firestore
         let finalUser = newUser
         try? await FirebaseManager.shared.saveUser(finalUser)
         await MainActor.run {

@@ -1,13 +1,28 @@
 import Foundation
 import FirebaseFirestore
+import FirebaseAuth
 
 class FirebaseManager {
     static let shared = FirebaseManager()
     
     let db = Firestore.firestore()
+    let auth = Auth.auth()
     private var listeners: [UUID: ListenerRegistration] = [:]
     
     private init() {}
+    
+    // MARK: - Auth
+    func createUser(email: String, password: String) async throws -> AuthDataResult {
+        return try await auth.createUser(withEmail: email, password: password)
+    }
+    
+    func signIn(email: String, password: String) async throws -> AuthDataResult {
+        return try await auth.signIn(withEmail: email, password: password)
+    }
+    
+    func signOut() throws {
+        try auth.signOut()
+    }
     
     // MARK: - User Management
     func saveUser(_ user: User) async throws {
