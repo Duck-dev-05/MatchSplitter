@@ -223,9 +223,9 @@ class GroupViewModel: ObservableObject {
         }
     }
 
-    func updateCurrentUser(name: String, paymentID: String, paymentType: String? = nil, bankBin: String? = nil, bankAccountName: String? = nil, payOSClientId: String? = nil, payOSApiKey: String? = nil, payOSChecksumKey: String? = nil) {
+    func updateCurrentUser(name: String, paymentID: String, paymentType: String? = nil, bankBin: String? = nil, bankAccountName: String? = nil, vietQRClientId: String? = nil, vietQRApiKey: String? = nil, payOSClientId: String? = nil, payOSApiKey: String? = nil, payOSChecksumKey: String? = nil) {
         if let current = currentUser {
-            let updatedUser = User(id: current.id, name: name, paymentID: paymentID.isEmpty ? nil : paymentID, paymentType: paymentType, bankBin: bankBin, bankAccountName: bankAccountName, payOSClientId: payOSClientId, payOSApiKey: payOSApiKey, payOSChecksumKey: payOSChecksumKey)
+            let updatedUser = User(id: current.id, name: name, paymentID: paymentID.isEmpty ? nil : paymentID, paymentType: paymentType, bankBin: bankBin, bankAccountName: bankAccountName, vietQRClientId: vietQRClientId, vietQRApiKey: vietQRApiKey, payOSClientId: payOSClientId, payOSApiKey: payOSApiKey, payOSChecksumKey: payOSChecksumKey)
             currentUser = updatedUser
             
             // Also update this user's name across all groups they belong to

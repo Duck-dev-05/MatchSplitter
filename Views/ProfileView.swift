@@ -295,6 +295,9 @@ struct EditProfileView: View {
     @State private var isVerifyingAccount = false
     @State private var verificationError: String? = nil
 
+    @State private var vietQRClientId: String = ""
+    @State private var vietQRApiKey: String = ""
+
     @State private var payOSClientId: String = ""
     @State private var payOSApiKey: String = ""
     @State private var payOSChecksumKey: String = ""
@@ -407,6 +410,14 @@ struct EditProfileView: View {
 
                                         Divider().background(Color.white.opacity(0.07)).padding(.leading, 56)
                                         settingsFieldRow(icon: "person.text.rectangle", iconColor: Theme.secondaryAccent, placeholder: "Account Name (Optional)", text: $bankAccountName)
+                                        
+                                        Divider().background(Color.white.opacity(0.07)).padding(.leading, 56)
+                                        settingsFieldRow(icon: "person.badge.key.fill", iconColor: Theme.secondaryAccent, placeholder: "VietQR Client ID", text: $vietQRClientId)
+                                            .onChange(of: vietQRClientId) { _ in triggerAutoVerification() }
+                                        
+                                        Divider().background(Color.white.opacity(0.07)).padding(.leading, 56)
+                                        settingsFieldRow(icon: "key.fill", iconColor: Theme.secondaryAccent, placeholder: "VietQR API Key", text: $vietQRApiKey)
+                                            .onChange(of: vietQRApiKey) { _ in triggerAutoVerification() }
                                     } else if paymentType == "PayOS" {
                                         settingsFieldRow(icon: "person.badge.key.fill", iconColor: Theme.secondaryAccent, placeholder: "Client ID", text: $payOSClientId)
                                         Divider().background(Color.white.opacity(0.07)).padding(.leading, 56)
@@ -498,6 +509,8 @@ struct EditProfileView: View {
             paymentID = viewModel.currentUser?.paymentID ?? ""
             bankBin = viewModel.currentUser?.bankBin ?? ""
             bankAccountName = viewModel.currentUser?.bankAccountName ?? ""
+            vietQRClientId = viewModel.currentUser?.vietQRClientId ?? ""
+            vietQRApiKey = viewModel.currentUser?.vietQRApiKey ?? ""
             payOSClientId = viewModel.currentUser?.payOSClientId ?? ""
             payOSApiKey = viewModel.currentUser?.payOSApiKey ?? ""
             payOSChecksumKey = viewModel.currentUser?.payOSChecksumKey ?? ""
@@ -550,6 +563,8 @@ struct EditProfileView: View {
             paymentType: finalType,
             bankBin: finalBin,
             bankAccountName: finalAccountName,
+            vietQRClientId: paymentType == "VietQR" ? vietQRClientId : nil,
+            vietQRApiKey: paymentType == "VietQR" ? vietQRApiKey : nil,
             payOSClientId: paymentType == "PayOS" ? payOSClientId : nil,
             payOSApiKey: paymentType == "PayOS" ? payOSApiKey : nil,
             payOSChecksumKey: paymentType == "PayOS" ? payOSChecksumKey : nil
@@ -584,11 +599,14 @@ struct EditProfileView: View {
         
         Task {
             do {
+                let finalClientId = vietQRClientId.isEmpty ? nil : vietQRClientId
+                let finalApiKey = vietQRApiKey.isEmpty ? nil : vietQRApiKey
+                
                 if let name = try await VietQRService.shared.verifyAccount(
                     bin: bankBin, 
                     accountNumber: paymentID,
-                    clientId: "d2d29479-08d5-4e64-8fdb-f31c63c764d7",
-                    apiKey: "09ff7378-7c1e-4061-9b53-32843c87a75c"
+                    clientId: finalClientId,
+                    apiKey: finalApiKey
                 ) {
                     await MainActor.run {
                         self.bankAccountName = name
