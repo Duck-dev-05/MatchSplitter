@@ -13,20 +13,17 @@ struct GroupSettingsView: View {
     @State private var simplifyDebts: Bool
     @State private var showingBudgetSettings = false
     
-    @State private var bankBin: String
-    @State private var paymentAccountNo: String
-    @State private var bankAccountName: String
-    @State private var showingBankSelection = false
-    @State private var banks: [VietQRBank] = []
-    @State private var isLoadingBanks = false
+    @State private var payOSClientId: String
+    @State private var payOSApiKey: String
+    @State private var payOSChecksumKey: String
 
     init(group: Group) {
         self.group = group
         self._groupName = State(initialValue: group.name)
         self._selectedCurrency = State(initialValue: group.currency)
-        self._bankBin = State(initialValue: group.paymentBankBin ?? "")
-        self._paymentAccountNo = State(initialValue: group.paymentAccountNo ?? "")
-        self._bankAccountName = State(initialValue: group.paymentAccountName ?? "")
+        self._payOSClientId = State(initialValue: group.payOSClientId ?? "")
+        self._payOSApiKey = State(initialValue: group.payOSApiKey ?? "")
+        self._payOSChecksumKey = State(initialValue: group.payOSChecksumKey ?? "")
         self._simplifyDebts = State(initialValue: group.simplifyDebts)
     }
 
@@ -49,9 +46,9 @@ struct GroupSettingsView: View {
                             id: group.id, 
                             name: groupName, 
                             currency: selectedCurrency,
-                            paymentBankBin: bankBin.isEmpty ? nil : bankBin,
-                            paymentAccountNo: paymentAccountNo.isEmpty ? nil : paymentAccountNo,
-                            paymentAccountName: bankAccountName.isEmpty ? nil : bankAccountName,
+                            payOSClientId: payOSClientId.isEmpty ? nil : payOSClientId,
+                            payOSApiKey: payOSApiKey.isEmpty ? nil : payOSApiKey,
+                            payOSChecksumKey: payOSChecksumKey.isEmpty ? nil : payOSChecksumKey,
                             simplifyDebts: simplifyDebts
                         )
                         presentationMode.wrappedValue.dismiss()
@@ -106,41 +103,18 @@ struct GroupSettingsView: View {
                         }
                         .glassCard(cornerRadius: 24)
 
-                        // Group Payment Info (VietQR)
+                        // Group Payment Info (PayOS)
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("GROUP PAYMENT QR (VIETQR)")
+                            Text("GROUP PAYMENT QR (PAYOS)")
                                 .kerning(1.2)
                                 .font(.system(size: 11, weight: .bold))
                                 .foregroundColor(.white.opacity(0.50))
                                 .padding(.leading, 8)
                             
                             VStack(spacing: 0) {
-                                Button(action: { showingBankSelection = true }) {
-                                    HStack(spacing: 16) {
-                                        IconBadge(systemName: "building.2.fill", color: Theme.secondaryAccent)
-                                        if isLoadingBanks {
-                                            ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                            Spacer()
-                                        } else {
-                                            HStack {
-                                                Text(banks.first(where: { $0.bin == bankBin })?.shortName ?? "Select Bank")
-                                                    .foregroundColor(bankBin.isEmpty ? .white.opacity(0.5) : .white)
-                                                Spacer()
-                                                Image(systemName: "chevron.right")
-                                                    .font(.system(size: 12, weight: .semibold))
-                                                    .foregroundColor(.white.opacity(0.3))
-                                            }
-                                        }
-                                    }
-                                    .padding(20)
-                                }
-                                
-                                Divider().background(Color.white.opacity(0.08))
-                                
                                 HStack(spacing: 16) {
-                                    IconBadge(systemName: "number", color: Theme.secondaryAccent)
-                                    TextField("Account Number", text: $paymentAccountNo)
-                                        .keyboardType(.numberPad)
+                                    IconBadge(systemName: "person.badge.key.fill", color: Theme.secondaryAccent)
+                                    TextField("Client ID", text: $payOSClientId)
                                         .font(.system(size: 16, weight: .medium))
                                         .foregroundColor(.white)
                                 }
@@ -149,8 +123,18 @@ struct GroupSettingsView: View {
                                 Divider().background(Color.white.opacity(0.08))
                                 
                                 HStack(spacing: 16) {
-                                    IconBadge(systemName: "person.text.rectangle", color: Theme.secondaryAccent)
-                                    TextField("Account Name (Optional)", text: $bankAccountName)
+                                    IconBadge(systemName: "key.fill", color: Theme.secondaryAccent)
+                                    TextField("API Key", text: $payOSApiKey)
+                                        .font(.system(size: 16, weight: .medium))
+                                        .foregroundColor(.white)
+                                }
+                                .padding(20)
+                                
+                                Divider().background(Color.white.opacity(0.08))
+                                
+                                HStack(spacing: 16) {
+                                    IconBadge(systemName: "lock.fill", color: Theme.secondaryAccent)
+                                    TextField("Checksum Key", text: $payOSChecksumKey)
                                         .font(.system(size: 16, weight: .medium))
                                         .foregroundColor(.white)
                                 }
@@ -221,20 +205,6 @@ struct GroupSettingsView: View {
         }
         .sheet(isPresented: $showingBudgetSettings) {
             BudgetSettingsView(group: group)
-        }
-        .onAppear {
-            Task {
-                isLoadingBanks = true
-                do {
-                    banks = try await VietQRService.shared.fetchBanks()
-                } catch {
-                    print("Error fetching VietQR banks: \(error)")
-                }
-                isLoadingBanks = false
-            }
-        }
-        .sheet(isPresented: $showingBankSelection) {
-            BankSelectionView(banks: banks, selectedBankBin: $bankBin)
         }
         .alert("Delete Group", isPresented: $showingDeleteConfirm) {
             Button("Cancel", role: .cancel) { }

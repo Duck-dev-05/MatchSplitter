@@ -7,27 +7,19 @@ struct User: Identifiable, Codable, Hashable {
     var password: String?
     var paymentID: String? // e.g., phone number for PromptPay/PayNow
     var paymentType: String? // e.g., PromptPay, Bank Transfer, PayPal
-    var bankBin: String? // e.g., BIN for VietQR
-    var bankAccountName: String? // e.g., Account Name for VietQR
-    var vietQRClientId: String?
-    var vietQRApiKey: String?
     var payOSClientId: String?
     var payOSApiKey: String?
     var payOSChecksumKey: String?
     var avatarURL: String?
     var fcmToken: String?
 
-    init(id: UUID = UUID(), name: String, email: String? = nil, password: String? = nil, paymentID: String? = nil, paymentType: String? = nil, bankBin: String? = nil, bankAccountName: String? = nil, vietQRClientId: String? = nil, vietQRApiKey: String? = nil, payOSClientId: String? = nil, payOSApiKey: String? = nil, payOSChecksumKey: String? = nil, avatarURL: String? = nil, fcmToken: String? = nil) {
+    init(id: UUID = UUID(), name: String, email: String? = nil, password: String? = nil, paymentID: String? = nil, paymentType: String? = nil, payOSClientId: String? = nil, payOSApiKey: String? = nil, payOSChecksumKey: String? = nil, avatarURL: String? = nil, fcmToken: String? = nil) {
         self.id = id
         self.name = name
         self.email = email
         self.password = password
         self.paymentID = paymentID
         self.paymentType = paymentType
-        self.bankBin = bankBin
-        self.bankAccountName = bankAccountName
-        self.vietQRClientId = vietQRClientId
-        self.vietQRApiKey = vietQRApiKey
         self.payOSClientId = payOSClientId
         self.payOSApiKey = payOSApiKey
         self.payOSChecksumKey = payOSChecksumKey

@@ -14,7 +14,7 @@ const faqs = [
   {
     question: "How does the QR Code settlement work with banking apps?",
     answer:
-      "MatchSplitter integrates standard dynamic QR protocols (VietQR, PromptPay, PayNow, and SEPA links). When you settle up, the app generates a QR containing the exact debt amount and payment reference. Your teammate scans it with their mobile banking app to authenticate and complete the transfer in seconds.",
+      "MatchSplitter integrates standard dynamic QR protocols (PayOS, PromptPay, PayNow, and SEPA links). When you settle up, the app generates a QR containing the exact debt amount and payment reference. Your teammate scans it with their mobile banking app to authenticate and complete the transfer in seconds.",
   },
   {
     question: "Do all squad players need to download the app to participate?",

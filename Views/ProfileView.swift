@@ -286,24 +286,13 @@ struct EditProfileView: View {
     @State private var paymentType: String = "None"
     @State private var paymentID: String = ""
     @State private var defaultCurrency: Currency = .usd
-    @State private var bankBin: String = ""
-    @State private var bankAccountName: String = ""
-    @State private var banks: [VietQRBank] = []
-    @State private var isLoadingBanks = false
-    @State private var verificationTask: Task<Void, Never>? = nil
-    @State private var showingBankSelection = false
-    @State private var isVerifyingAccount = false
-    @State private var verificationError: String? = nil
-
-    @State private var vietQRClientId: String = ""
-    @State private var vietQRApiKey: String = ""
 
     @State private var payOSClientId: String = ""
     @State private var payOSApiKey: String = ""
     @State private var payOSChecksumKey: String = ""
 
     @AppStorage("selectedAppTheme") var selectedTheme: AppTheme = .dark
-    let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "Stripe", "VietQR", "PayOS", "None"]
+    let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "Stripe", "PayOS", "None"]
 
     var body: some View {
         NavigationView {
@@ -355,62 +344,7 @@ struct EditProfileView: View {
                                 if paymentType != "None" {
                                     Divider().background(Color.white.opacity(0.07)).padding(.leading, 56)
                                     
-                                    if paymentType == "VietQR" {
-                                        Button(action: { showingBankSelection = true }) {
-                                            HStack(spacing: 16) {
-                                                IconBadge(systemName: "building.2.fill", color: Theme.secondaryAccent)
-                                                Text("Bank")
-                                                    .foregroundColor(.white)
-                                                Spacer()
-                                                if isLoadingBanks {
-                                                    ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                                } else {
-                                                    Text(banks.first(where: { $0.bin == bankBin })?.shortName ?? "Select")
-                                                        .foregroundColor(bankBin.isEmpty ? .white.opacity(0.5) : .white.opacity(0.7))
-                                                    Image(systemName: "chevron.right")
-                                                        .font(.system(size: 12))
-                                                        .foregroundColor(.white.opacity(0.5))
-                                                }
-                                            }
-                                            .padding(.horizontal, 18)
-                                            .padding(.vertical, 14)
-                                        }
-                                        .onChange(of: bankBin) { _ in
-                                            triggerAutoVerification()
-                                        }
-                                        Divider().background(Color.white.opacity(0.07)).padding(.leading, 56)
-                                        
-                                        VStack(spacing: 0) {
-                                            settingsFieldRow(icon: "number", iconColor: Theme.secondaryAccent, placeholder: "Account Number", text: $paymentID)
-                                                .keyboardType(.numberPad)
-                                                .onChange(of: paymentID) { _ in
-                                                    triggerAutoVerification()
-                                                }
-                                            
-                                            if !paymentID.isEmpty && !bankBin.isEmpty {
-                                                if isVerifyingAccount {
-                                                    HStack {
-                                                        Spacer()
-                                                        ProgressView().progressViewStyle(CircularProgressViewStyle(tint: Theme.primaryAccent))
-                                                            .padding(.vertical, 8)
-                                                        Spacer()
-                                                    }
-                                                }
-                                                
-                                                if let error = verificationError {
-                                                    Text(error)
-                                                        .font(.system(size: 12))
-                                                        .foregroundColor(Theme.dangerColor)
-                                                        .padding(.horizontal, 18)
-                                                        .padding(.bottom, 10)
-                                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                                }
-                                            }
-                                        }
-
-                                        Divider().background(Color.white.opacity(0.07)).padding(.leading, 56)
-                                        settingsFieldRow(icon: "person.text.rectangle", iconColor: Theme.secondaryAccent, placeholder: "Account Name (Optional)", text: $bankAccountName)
-                                    } else if paymentType == "PayOS" {
+                                    if paymentType == "PayOS" {
                                         settingsFieldRow(icon: "person.badge.key.fill", iconColor: Theme.secondaryAccent, placeholder: "Client ID", text: $payOSClientId)
                                         Divider().background(Color.white.opacity(0.07)).padding(.leading, 56)
                                         settingsFieldRow(icon: "key.fill", iconColor: Theme.secondaryAccent, placeholder: "API Key", text: $payOSApiKey)
@@ -499,23 +433,10 @@ struct EditProfileView: View {
             name = viewModel.currentUser?.name ?? ""
             paymentType = viewModel.currentUser?.paymentType ?? "None"
             paymentID = viewModel.currentUser?.paymentID ?? ""
-            bankBin = viewModel.currentUser?.bankBin ?? ""
-            bankAccountName = viewModel.currentUser?.bankAccountName ?? ""
-            vietQRClientId = viewModel.currentUser?.vietQRClientId ?? ""
-            vietQRApiKey = viewModel.currentUser?.vietQRApiKey ?? ""
             payOSClientId = viewModel.currentUser?.payOSClientId ?? ""
             payOSApiKey = viewModel.currentUser?.payOSApiKey ?? ""
             payOSChecksumKey = viewModel.currentUser?.payOSChecksumKey ?? ""
             defaultCurrency = viewModel.defaultCurrency
-
-            Task {
-                isLoadingBanks = true
-                banks = (try? await VietQRService.shared.fetchBanks()) ?? []
-                isLoadingBanks = false
-            }
-        }
-        .sheet(isPresented: $showingBankSelection) {
-            BankSelectionView(banks: banks, selectedBankBin: $bankBin)
         }
     }
     
@@ -547,138 +468,15 @@ struct EditProfileView: View {
     private func saveProfile() {
         let finalType = paymentType == "None" ? nil : paymentType
         let finalID = paymentType == "None" ? "" : paymentID
-        let finalBin = paymentType == "VietQR" ? bankBin : nil
-        let finalAccountName = paymentType == "VietQR" ? bankAccountName : nil
         viewModel.updateCurrentUser(
             name: name,
             paymentID: finalID,
             paymentType: finalType,
-            bankBin: finalBin,
-            bankAccountName: finalAccountName,
-            vietQRClientId: paymentType == "VietQR" ? vietQRClientId : nil,
-            vietQRApiKey: paymentType == "VietQR" ? vietQRApiKey : nil,
             payOSClientId: paymentType == "PayOS" ? payOSClientId : nil,
             payOSApiKey: paymentType == "PayOS" ? payOSApiKey : nil,
             payOSChecksumKey: paymentType == "PayOS" ? payOSChecksumKey : nil
         )
         viewModel.defaultCurrency = defaultCurrency
         presentationMode.wrappedValue.dismiss()
-    }
-    
-    private func triggerAutoVerification() {
-        verificationError = nil
-        bankAccountName = ""
-        verificationTask?.cancel()
-        guard !paymentID.isEmpty, !bankBin.isEmpty else { return }
-        
-        verificationTask = Task {
-            do {
-                // 1-second debounce
-                try await Task.sleep(nanoseconds: 1_000_000_000)
-                guard !Task.isCancelled else { return }
-                await MainActor.run { verifyBankAccount() }
-            } catch {
-                // Task cancelled
-            }
-        }
-    }
-    
-    private func verifyBankAccount() {
-        guard !paymentID.isEmpty, !bankBin.isEmpty else { return }
-        
-        isVerifyingAccount = true
-        verificationError = nil
-        
-        Task {
-            do {
-                if let name = try await VietQRService.shared.verifyAccount(
-                    bin: bankBin, 
-                    accountNumber: paymentID,
-                    clientId: "d2d29479-08d5-4e64-8fdb-f31c63c764d7",
-                    apiKey: "09ff7378-7c1e-4061-9b53-32843c87a75c"
-                ) {
-                    await MainActor.run {
-                        self.bankAccountName = name
-                        self.isVerifyingAccount = false
-                    }
-                } else {
-                    await MainActor.run {
-                        self.verificationError = "Account not found."
-                        self.isVerifyingAccount = false
-                    }
-                }
-            } catch {
-                await MainActor.run {
-                    self.verificationError = "Auto-lookup unavailable. Please enter account name manually."
-                    self.isVerifyingAccount = false
-                }
-            }
-        }
-    }
-}
-
-// MARK: - Bank Selection View
-struct BankSelectionView: View {
-    let banks: [VietQRBank]
-    @Binding var selectedBankBin: String
-    @Environment(\.presentationMode) var presentationMode
-    @State private var searchText = ""
-
-    var filteredBanks: [VietQRBank] {
-        if searchText.isEmpty {
-            return banks
-        } else {
-            return banks.filter { $0.shortName.localizedCaseInsensitiveContains(searchText) || $0.name.localizedCaseInsensitiveContains(searchText) }
-        }
-    }
-
-    var body: some View {
-        NavigationView {
-            ZStack {
-                Theme.backgroundGradient.ignoresSafeArea()
-
-                List(filteredBanks) { bank in
-                    Button(action: {
-                        selectedBankBin = bank.bin
-                        presentationMode.wrappedValue.dismiss()
-                    }) {
-                        HStack(spacing: 14) {
-                            AsyncImage(url: URL(string: bank.logo)) { image in
-                                image.resizable().scaledToFit()
-                            } placeholder: {
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(Color.white.opacity(0.1))
-                            }
-                            .frame(width: 44, height: 44)
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
-                            .background(RoundedRectangle(cornerRadius: 8).fill(Color.white))
-
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(bank.shortName)
-                                    .font(.system(size: 16, weight: .bold))
-                                    .foregroundColor(.white)
-                                Text(bank.name)
-                                    .font(.system(size: 12))
-                                    .foregroundColor(.white.opacity(0.6))
-                                    .lineLimit(1)
-                            }
-                        }
-                        .padding(.vertical, 6)
-                    }
-                    .listRowBackground(Color.clear)
-                }
-                .listStyle(.plain)
-                .searchable(text: $searchText, prompt: "Search banks...")
-            }
-            .navigationTitle("Select Bank")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") { presentationMode.wrappedValue.dismiss() }
-                        .foregroundColor(Theme.secondaryAccent)
-                }
-            }
-        }
-        .preferredColorScheme(.dark)
     }
 }

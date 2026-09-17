@@ -22,10 +22,6 @@ struct LoginView: View {
     @State private var paymentType: String = "None"
     @State private var selectedCurrency: Currency? = .vnd
 
-    @State private var bankBin: String = ""
-    @State private var banks: [VietQRBank] = []
-    @State private var isLoadingBanks = false
-
     @State private var payOSClientId: String = ""
     @State private var payOSApiKey: String = ""
     @State private var payOSChecksumKey: String = ""
@@ -40,7 +36,7 @@ struct LoginView: View {
         case email, password, name, paymentID
     }
 
-    let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "VietQR", "PayOS", "None"]
+    let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "PayOS", "None"]
 
     var isModal: Bool = true
 
@@ -50,9 +46,7 @@ struct LoginView: View {
         case .login:         return !email.isEmpty && !password.isEmpty
         case .registerStep1: return !name.isEmpty && !email.isEmpty && !password.isEmpty
         case .registerStep2:
-            if paymentType == "VietQR" {
-                return selectedCurrency != nil && !paymentID.isEmpty && !bankBin.isEmpty
-            } else if paymentType == "PayOS" {
+            if paymentType == "PayOS" {
                 return selectedCurrency != nil && !payOSClientId.isEmpty && !payOSApiKey.isEmpty && !payOSChecksumKey.isEmpty
             }
             return selectedCurrency != nil && !(paymentType != "None" && paymentID.isEmpty)
@@ -330,9 +324,6 @@ struct LoginView: View {
                         ForEach(paymentTypes, id: \.self) { type in
                             Button(type) { 
                                 paymentType = type 
-                                if type == "VietQR" && banks.isEmpty {
-                                    Task { await loadBanks() }
-                                }
                             }
                         }
                     } label: {
@@ -353,46 +344,7 @@ struct LoginView: View {
             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
 
             if paymentType != "None" {
-                if paymentType == "VietQR" {
-                    VStack(spacing: 0) {
-                        HStack(spacing: 12) {
-                            IconBadge(systemName: "building.2.fill", color: Theme.secondaryAccent, size: 36, iconSize: 14)
-                            if isLoadingBanks {
-                                ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                Spacer()
-                            } else {
-                                Menu {
-                                    ForEach(banks) { bank in
-                                        Button("\(bank.shortName) - \(bank.name)") {
-                                            bankBin = bank.bin
-                                        }
-                                    }
-                                } label: {
-                                    HStack {
-                                        Text(banks.first(where: { $0.bin == bankBin })?.shortName ?? "Select Bank")
-                                            .foregroundColor(bankBin.isEmpty ? .white.opacity(0.5) : .white)
-                                        Spacer()
-                                        Image(systemName: "chevron.up.chevron.down")
-                                            .foregroundColor(.white.opacity(0.6))
-                                            .font(.system(size: 12))
-                                    }
-                                }
-                            }
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 12)
-                    }
-                    .background(Color.white.opacity(0.12))
-                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-
-                    glassTextField(
-                        icon: "number",
-                        iconColor: Theme.secondaryAccent,
-                        placeholder: "Account Number",
-                        text: $paymentID,
-                        keyboard: .numberPad
-                    )
-                } else if paymentType == "PayOS" {
+                if paymentType == "PayOS" {
                     glassTextField(icon: "person.badge.key.fill", iconColor: Theme.secondaryAccent, placeholder: "Client ID", text: $payOSClientId)
                     glassTextField(icon: "key.fill", iconColor: Theme.secondaryAccent, placeholder: "API Key", text: $payOSApiKey)
                     glassTextField(icon: "lock.fill", iconColor: Theme.secondaryAccent, placeholder: "Checksum Key", text: $payOSChecksumKey)
@@ -564,7 +516,6 @@ struct LoginView: View {
         guard let currency = selectedCurrency else { return }
         let finalType = paymentType == "None" ? nil : paymentType
         let finalID = paymentType == "None" ? "" : paymentID
-        let finalBin = paymentType == "VietQR" ? bankBin : nil
         let finalClientId = paymentType == "PayOS" ? payOSClientId : nil
         let finalApiKey = paymentType == "PayOS" ? payOSApiKey : nil
         let finalChecksumKey = paymentType == "PayOS" ? payOSChecksumKey : nil
@@ -575,7 +526,6 @@ struct LoginView: View {
             password: password, 
             paymentID: finalID, 
             paymentType: finalType, 
-            bankBin: finalBin,
             payOSClientId: finalClientId,
             payOSApiKey: finalApiKey,
             payOSChecksumKey: finalChecksumKey
@@ -604,20 +554,6 @@ struct LoginView: View {
         case "Bank Transfer": return "Account Number & Bank"
         case "PayPal": return "Email address"
         default: return "Payment Details"
-        }
-    }
-    
-    private func loadBanks() async {
-        isLoadingBanks = true
-        do {
-            let fetchedBanks = try await VietQRService.shared.fetchBanks()
-            await MainActor.run {
-                self.banks = fetchedBanks
-                self.isLoadingBanks = false
-            }
-        } catch {
-            print("Failed to load banks: \(error)")
-            await MainActor.run { self.isLoadingBanks = false }
         }
     }
 }

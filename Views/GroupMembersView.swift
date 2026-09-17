@@ -82,18 +82,11 @@ struct AddMemberSheet: View {
     @State private var showingQRScanner = false
     
     @State private var paymentType: String = "None"
-    @State private var bankBin: String = ""
     @State private var payOSClientId: String = ""
     @State private var payOSApiKey: String = ""
     @State private var payOSChecksumKey: String = ""
-    @State private var banks: [VietQRBank] = []
-    @State private var isLoadingBanks = false
-    @State private var bankAccountName: String = ""
-    @State private var isVerifyingAccount = false
-    @State private var verificationError: String? = nil
-    @State private var verificationTask: Task<Void, Never>? = nil
 
-    let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "VietQR", "PayOS", "None"]
+    let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "PayOS", "None"]
     
     var availableFriends: [User] {
         viewModel.getFriendsNotInGroup(group: group)
@@ -144,9 +137,6 @@ struct AddMemberSheet: View {
                                         ForEach(paymentTypes, id: \.self) { type in
                                             Button(type) {
                                                 paymentType = type
-                                                if type == "VietQR" && banks.isEmpty {
-                                                    Task { await loadBanks() }
-                                                }
                                             }
                                         }
                                     } label: {
@@ -171,15 +161,11 @@ struct AddMemberSheet: View {
                                     withAnimation(.spring()) {
                                         let finalType = paymentType == "None" ? nil : paymentType
                                         let finalID = paymentType == "None" ? "" : newPaymentID
-                                        let finalBin = paymentType == "VietQR" ? bankBin : nil
-                                        let finalAccountName = paymentType == "VietQR" ? bankAccountName : nil
                                         viewModel.addMember(
                                             to: group, 
                                             name: newName.trimmingCharacters(in: .whitespacesAndNewlines), 
                                             paymentID: finalID, 
                                             paymentType: finalType,
-                                            bankBin: finalBin,
-                                            bankAccountName: finalAccountName,
                                             payOSClientId: paymentType == "PayOS" ? payOSClientId : nil,
                                             payOSApiKey: paymentType == "PayOS" ? payOSApiKey : nil,
                                             payOSChecksumKey: paymentType == "PayOS" ? payOSChecksumKey : nil
@@ -187,8 +173,6 @@ struct AddMemberSheet: View {
                                         newName = ""
                                         newPaymentID = ""
                                         paymentType = "None"
-                                        bankBin = ""
-                                        bankAccountName = ""
                                         payOSClientId = ""
                                         payOSApiKey = ""
                                         payOSChecksumKey = ""
@@ -252,16 +236,7 @@ struct AddMemberSheet: View {
             QRScannerView(
                 onResult: { payload in
                     showingQRScanner = false
-                    if let parsed = VietQRParser.parse(payload: payload), let bin = parsed.bankBin, let account = parsed.accountNumber {
-                        paymentType = "VietQR"
-                        bankBin = bin
-                        newPaymentID = account
-                        if banks.isEmpty {
-                            Task { await loadBanks() }
-                        }
-                    } else {
-                        newPaymentID = payload
-                    }
+                    newPaymentID = payload
                 },
                 onCancel: {
                     showingQRScanner = false
@@ -274,65 +249,7 @@ struct AddMemberSheet: View {
     @ViewBuilder
     private var paymentDetailsSection: some View {
         if paymentType != "None" {
-            if paymentType == "VietQR" {
-                HStack(spacing: 14) {
-                    IconBadge(systemName: "building.2.fill", color: Theme.secondaryAccent)
-                    if isLoadingBanks {
-                        ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .white))
-                        Spacer()
-                    } else {
-                        Menu {
-                            ForEach(banks) { bank in
-                                Button("\(bank.shortName) - \(bank.name)") {
-                                    bankBin = bank.bin
-                                }
-                            }
-                        } label: {
-                            HStack {
-                                Text(banks.first(where: { $0.bin == bankBin })?.shortName ?? "Select Bank")
-                                    .foregroundColor(bankBin.isEmpty ? .white.opacity(0.5) : .white)
-                                Spacer()
-                                Image(systemName: "chevron.up.chevron.down")
-                            }
-                            .foregroundColor(.white)
-                        }
-                    }
-                }
-                .padding(.horizontal, 18)
-                .padding(.vertical, 14)
-                Divider().background(Color.white.opacity(0.07))
-
-                VStack(spacing: 0) {
-                    EditFieldRow(icon: "number.circle.fill", iconColor: Theme.secondaryAccent, placeholder: "Account Number", text: $newPaymentID)
-                        .keyboardType(.numberPad)
-                        .onChange(of: newPaymentID) { _ in
-                            triggerAutoVerification()
-                        }
-                    
-                    if !newPaymentID.isEmpty && !bankBin.isEmpty {
-                        if isVerifyingAccount {
-                            HStack {
-                                Spacer()
-                                ProgressView().progressViewStyle(CircularProgressViewStyle(tint: Theme.secondaryAccent))
-                                    .padding(.vertical, 8)
-                                Spacer()
-                            }
-                        }
-                        
-                        if let error = verificationError {
-                            Text(error)
-                                .font(.system(size: 12))
-                                .foregroundColor(Theme.dangerColor)
-                                .padding(.horizontal, 18)
-                                .padding(.bottom, 10)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                    }
-                }
-
-                Divider().background(Color.white.opacity(0.07))
-                EditFieldRow(icon: "person.text.rectangle", iconColor: Theme.secondaryAccent, placeholder: "Account Name (Optional)", text: $bankAccountName)
-            } else if paymentType == "PayOS" {
+            if paymentType == "PayOS" {
                 EditFieldRow(icon: "person.badge.key.fill", iconColor: Theme.secondaryAccent, placeholder: "Client ID", text: $payOSClientId)
                 Divider().background(Color.white.opacity(0.07))
                 EditFieldRow(icon: "key.fill", iconColor: Theme.secondaryAccent, placeholder: "API Key", text: $payOSApiKey)
@@ -340,63 +257,6 @@ struct AddMemberSheet: View {
                 EditFieldRow(icon: "lock.fill", iconColor: Theme.secondaryAccent, placeholder: "Checksum Key", text: $payOSChecksumKey)
             } else {
                 EditFieldRow(icon: "creditcard.fill", iconColor: Theme.secondaryAccent, placeholder: "Payment Details / ID", text: $newPaymentID)
-            }
-        }
-    }
-
-    private func loadBanks() async {
-        isLoadingBanks = true
-        do {
-            let fetchedBanks = try await VietQRService.shared.fetchBanks()
-            await MainActor.run {
-                self.banks = fetchedBanks
-                self.isLoadingBanks = false
-            }
-        } catch {
-            print("Failed to load banks: \(error)")
-            await MainActor.run { self.isLoadingBanks = false }
-        }
-    }
-
-    private func triggerAutoVerification() {
-        verificationError = nil
-        bankAccountName = ""
-        verificationTask?.cancel()
-        guard !newPaymentID.isEmpty, !bankBin.isEmpty else { return }
-        
-        verificationTask = Task {
-            do {
-                try await Task.sleep(nanoseconds: 1_000_000_000) // 1s debounce
-                guard !Task.isCancelled else { return }
-                await MainActor.run { verifyBankAccount() }
-            } catch { }
-        }
-    }
-    
-    private func verifyBankAccount() {
-        guard !newPaymentID.isEmpty, !bankBin.isEmpty else { return }
-        
-        isVerifyingAccount = true
-        verificationError = nil
-        
-        Task {
-            do {
-                if let name = try await VietQRService.shared.verifyAccount(bin: bankBin, accountNumber: newPaymentID) {
-                    await MainActor.run {
-                        self.bankAccountName = name
-                        self.isVerifyingAccount = false
-                    }
-                } else {
-                    await MainActor.run {
-                        self.verificationError = "Account not found."
-                        self.isVerifyingAccount = false
-                    }
-                }
-            } catch {
-                await MainActor.run {
-                    self.verificationError = error.localizedDescription
-                    self.isVerifyingAccount = false
-                }
             }
         }
     }
@@ -503,13 +363,6 @@ struct EditMemberView: View {
     @State private var name: String = ""
     @State private var paymentType: String = "None"
     @State private var paymentID: String = ""
-    @State private var bankBin: String = ""
-    @State private var banks: [VietQRBank] = []
-    @State private var isLoadingBanks = false
-    @State private var bankAccountName: String = ""
-    @State private var isVerifyingAccount = false
-    @State private var verificationError: String? = nil
-    @State private var verificationTask: Task<Void, Never>? = nil
 
     @State private var payOSClientId: String = ""
     @State private var payOSApiKey: String = ""
@@ -517,7 +370,7 @@ struct EditMemberView: View {
     
     @State private var showingQRScanner = false
 
-    let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "VietQR", "PayOS", "None"]
+    let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "PayOS", "None"]
 
     var body: some View {
         ZStack {
@@ -535,16 +388,12 @@ struct EditMemberView: View {
                     onTrailing: {
                         let finalType = paymentType == "None" ? nil : paymentType
                         let finalID = paymentType == "None" ? "" : paymentID
-                        let finalBin = paymentType == "VietQR" ? bankBin : nil
-                        let finalAccountName = paymentType == "VietQR" ? bankAccountName : nil
                         viewModel.updateMember(
                             in: group,
                             memberId: member.id,
                             name: name,
                             paymentID: finalID,
                             paymentType: finalType,
-                            bankBin: finalBin,
-                            bankAccountName: finalAccountName,
                             payOSClientId: paymentType == "PayOS" ? payOSClientId : nil,
                             payOSApiKey: paymentType == "PayOS" ? payOSApiKey : nil,
                             payOSChecksumKey: paymentType == "PayOS" ? payOSChecksumKey : nil
@@ -578,9 +427,6 @@ struct EditMemberView: View {
                                     ForEach(paymentTypes, id: \.self) { type in
                                         Button(type) {
                                             paymentType = type
-                                            if type == "VietQR" && banks.isEmpty {
-                                                Task { await loadBanks() }
-                                            }
                                         }
                                     }
                                 } label: {
@@ -608,17 +454,7 @@ struct EditMemberView: View {
             QRScannerView(
                 onResult: { payload in
                     showingQRScanner = false
-                    if let parsed = VietQRParser.parse(payload: payload), let bin = parsed.bankBin, let account = parsed.accountNumber {
-                        paymentType = "VietQR"
-                        bankBin = bin
-                        paymentID = account
-                        if banks.isEmpty {
-                            Task { await loadBanks() }
-                        }
-                    } else {
-                        // Just set it as raw payment ID if we don't recognize it
-                        paymentID = payload
-                    }
+                    paymentID = payload
                 },
                 onCancel: {
                     showingQRScanner = false
@@ -630,80 +466,16 @@ struct EditMemberView: View {
             name = member.name
             paymentType = member.paymentType ?? "None"
             paymentID = member.paymentID ?? ""
-            bankBin = member.bankBin ?? ""
-            bankAccountName = member.bankAccountName ?? ""
             payOSClientId = member.payOSClientId ?? ""
             payOSApiKey = member.payOSApiKey ?? ""
             payOSChecksumKey = member.payOSChecksumKey ?? ""
-
-            if paymentType == "VietQR" {
-                Task { await loadBanks() }
-            }
         }
     }
 
     @ViewBuilder
     private var paymentDetailsSection: some View {
         if paymentType != "None" {
-            if paymentType == "VietQR" {
-                HStack(spacing: 14) {
-                    IconBadge(systemName: "building.2.fill", color: Theme.secondaryAccent)
-                    if isLoadingBanks {
-                        ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .white))
-                        Spacer()
-                    } else {
-                        Menu {
-                            ForEach(banks) { bank in
-                                Button("\(bank.shortName) - \(bank.name)") {
-                                    bankBin = bank.bin
-                                }
-                            }
-                        } label: {
-                            HStack {
-                                Text(banks.first(where: { $0.bin == bankBin })?.shortName ?? "Select Bank")
-                                    .foregroundColor(bankBin.isEmpty ? .white.opacity(0.5) : .white)
-                                Spacer()
-                                Image(systemName: "chevron.up.chevron.down")
-                            }
-                            .foregroundColor(.white)
-                        }
-                    }
-                }
-                .padding(.horizontal, 18)
-                .padding(.vertical, 14)
-                Divider().background(Color.white.opacity(0.07))
-
-                VStack(spacing: 0) {
-                    EditFieldRow(icon: "number.circle.fill", iconColor: Theme.secondaryAccent, placeholder: "Account Number", text: $paymentID)
-                        .keyboardType(.numberPad)
-                        .onChange(of: paymentID) { _ in
-                            triggerAutoVerification()
-                        }
-                    
-                    if !paymentID.isEmpty && !bankBin.isEmpty {
-                        if isVerifyingAccount {
-                            HStack {
-                                Spacer()
-                                ProgressView().progressViewStyle(CircularProgressViewStyle(tint: Theme.secondaryAccent))
-                                    .padding(.vertical, 8)
-                                Spacer()
-                            }
-                        }
-                        
-                        if let error = verificationError {
-                            Text(error)
-                                .font(.system(size: 12))
-                                .foregroundColor(Theme.dangerColor)
-                                .padding(.horizontal, 18)
-                                .padding(.bottom, 10)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                    }
-                }
-                Divider().background(Color.white.opacity(0.07))
-                EditFieldRow(icon: "person.text.rectangle", iconColor: Theme.secondaryAccent, placeholder: "Account Name (Optional)", text: $bankAccountName)
-                Divider().background(Color.white.opacity(0.07))
-            } else if paymentType == "PayOS" {
+            if paymentType == "PayOS" {
                 EditFieldRow(icon: "person.badge.key.fill", iconColor: Theme.secondaryAccent, placeholder: "Client ID", text: $payOSClientId)
                 Divider().background(Color.white.opacity(0.07))
                 EditFieldRow(icon: "key.fill", iconColor: Theme.secondaryAccent, placeholder: "API Key", text: $payOSApiKey)
@@ -713,63 +485,6 @@ struct EditMemberView: View {
             } else {
                 EditFieldRow(icon: "creditcard.fill", iconColor: Theme.secondaryAccent, placeholder: "Payment Details / ID", text: $paymentID)
                 Divider().background(Color.white.opacity(0.07))
-            }
-        }
-    }
-
-    private func loadBanks() async {
-        isLoadingBanks = true
-        do {
-            let fetchedBanks = try await VietQRService.shared.fetchBanks()
-            await MainActor.run {
-                self.banks = fetchedBanks
-                self.isLoadingBanks = false
-            }
-        } catch {
-            print("Failed to load banks: \(error)")
-            await MainActor.run { self.isLoadingBanks = false }
-        }
-    }
-
-    private func triggerAutoVerification() {
-        verificationError = nil
-        bankAccountName = ""
-        verificationTask?.cancel()
-        guard !paymentID.isEmpty, !bankBin.isEmpty else { return }
-        
-        verificationTask = Task {
-            do {
-                try await Task.sleep(nanoseconds: 1_000_000_000) // 1s debounce
-                guard !Task.isCancelled else { return }
-                await MainActor.run { verifyBankAccount() }
-            } catch { }
-        }
-    }
-    
-    private func verifyBankAccount() {
-        guard !paymentID.isEmpty, !bankBin.isEmpty else { return }
-        
-        isVerifyingAccount = true
-        verificationError = nil
-        
-        Task {
-            do {
-                if let name = try await VietQRService.shared.verifyAccount(bin: bankBin, accountNumber: paymentID) {
-                    await MainActor.run {
-                        self.bankAccountName = name
-                        self.isVerifyingAccount = false
-                    }
-                } else {
-                    await MainActor.run {
-                        self.verificationError = "Account not found."
-                        self.isVerifyingAccount = false
-                    }
-                }
-            } catch {
-                await MainActor.run {
-                    self.verificationError = error.localizedDescription
-                    self.isVerifyingAccount = false
-                }
             }
         }
     }

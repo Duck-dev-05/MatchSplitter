@@ -439,31 +439,6 @@ struct QRCodePaymentView: View {
                         }
                     }
                 }
-            } else if currency == .vnd, settlement.toUser.paymentType == "VietQR", let bin = settlement.toUser.bankBin, let accountNo = settlement.toUser.paymentID {
-                Task {
-                    do {
-                        let info = "MatchSplitter Settlement"
-                        let accountName = settlement.toUser.bankAccountName?.isEmpty == false ? settlement.toUser.bankAccountName! : settlement.toUser.name.uppercased()
-                        let payload = try await VietQRService.shared.generatePayload(
-                            accountNo: accountNo, 
-                            accountName: accountName, 
-                            bin: bin, 
-                            amount: amountToPay, 
-                            info: info
-                        )
-                        await MainActor.run {
-                            self.qrPayload = payload.qrCode
-                            self.qrImageBase64 = payload.qrDataURL.replacingOccurrences(of: "data:image/png;base64,", with: "")
-                            self.isLoadingQR = false
-                        }
-                    } catch {
-                        await MainActor.run {
-                            self.qrError = "Failed to load VietQR"
-                            self.qrPayload = generator.generatePaymentPayload(paymentType: settlement.toUser.paymentType, paymentID: settlement.toUser.paymentID ?? "Unknown", amount: amountToPay, currency: currency)
-                            self.isLoadingQR = false
-                        }
-                    }
-                }
             } else {
                 self.qrPayload = generator.generatePaymentPayload(paymentType: settlement.toUser.paymentType, paymentID: settlement.toUser.paymentID ?? "Unknown", amount: amountToPay, currency: currency)
                 self.isLoadingQR = false

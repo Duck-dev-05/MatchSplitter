@@ -46,7 +46,7 @@ const features = [
   {
     icon: QrCode,
     title: "Instant QR Code Settlements",
-    body: "Direct banking QR generation for VietQR, PromptPay, PayNow, and SEPA links. Teammates scan and pay in their banking app in 5 seconds.",
+    body: "Direct banking QR generation for PayOS, PromptPay, PayNow, and SEPA links. Teammates scan and pay in their banking app in 5 seconds.",
     badge: "Zero Friction",
     wide: false,
   },
@@ -206,7 +206,7 @@ function HeroMockPhone() {
         <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
           <p className="text-[10px] text-emerald-300 font-medium">
-            VietQR Instant: Dave transferred $14.00
+            PayOS Instant: Dave transferred $14.00
           </p>
         </div>
       </div>
@@ -276,7 +276,7 @@ export default function Home() {
                     <Zap className="w-3.5 h-3.5 text-violet-400" /> Instant Splits
                   </span>
                   <span className="px-3 py-1 rounded-md bg-white/[0.03] border border-white/[0.06] flex items-center gap-1.5">
-                    <QrCode className="w-3.5 h-3.5 text-cyan-400" /> VietQR & PromptPay
+                    <QrCode className="w-3.5 h-3.5 text-cyan-400" /> PayOS & PromptPay
                   </span>
                   <span className="px-3 py-1 rounded-md bg-white/[0.03] border border-white/[0.06] flex items-center gap-1.5">
                     <Globe className="w-3.5 h-3.5 text-emerald-400" /> Multi-Currency
