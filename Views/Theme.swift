@@ -1,31 +1,31 @@
 import SwiftUI
 
 struct Theme {
-    // MARK: - Color Palette
-    // Deep space backgrounds
-    static let backgroundStart   = Color(red: 0.04, green: 0.04, blue: 0.12)
-    static let backgroundMid     = Color(red: 0.07, green: 0.06, blue: 0.20)
-    static let backgroundEnd     = Color(red: 0.10, green: 0.06, blue: 0.26)
+    // MARK: - Color Palette (Soft Dark Pastel)
+    // Soft slate/mocha backgrounds
+    static let backgroundStart   = Color(red: 0.12, green: 0.12, blue: 0.16) // #1E1E2E
+    static let backgroundMid     = Color(red: 0.09, green: 0.09, blue: 0.14) // #181825
+    static let backgroundEnd     = Color(red: 0.07, green: 0.07, blue: 0.11) // #11111B
 
-    // Card surfaces — frosted glass feel
-    static let cardBackground    = Color(red: 0.12, green: 0.11, blue: 0.22)
-    static let cardBorder        = Color.white.opacity(0.09)
-    static let cardBorderStrong  = Color.white.opacity(0.16)
+    // Card surfaces — matte flat feel
+    static let cardBackground    = Color(red: 0.16, green: 0.16, blue: 0.22) // #29293B
+    static let cardBorder        = Color.white.opacity(0.05)
+    static let cardBorderStrong  = Color.white.opacity(0.10)
 
-    // Electric violet accent
-    static let primaryAccent     = Color(red: 0.45, green: 0.22, blue: 1.00)
-    // Neon cyan accent
-    static let secondaryAccent   = Color(red: 0.10, green: 0.82, blue: 0.95)
-    // Rose for negative / delete
-    static let dangerColor       = Color(red: 0.95, green: 0.30, blue: 0.52)
-    // Mint green for positive / settled
-    static let successColor      = Color(red: 0.18, green: 0.88, blue: 0.62)
-    // Warm gold for currency/logout
-    static let warmGold          = Color(red: 1.0, green: 0.65, blue: 0.15)
-    // Amber
-    static let amber             = Color(red: 1.0, green: 0.75, blue: 0.10)
-    // Electric purple (slightly lighter than primary)
-    static let electricPurple    = Color(red: 0.60, green: 0.35, blue: 1.00)
+    // Soft Lavender accent
+    static let primaryAccent     = Color(red: 0.80, green: 0.65, blue: 0.97) // #CBA6F7
+    // Soft Mint accent
+    static let secondaryAccent   = Color(red: 0.58, green: 0.88, blue: 0.83) // #94E2D5
+    // Soft Rose for negative
+    static let dangerColor       = Color(red: 0.95, green: 0.55, blue: 0.66) // #F38BA8
+    // Soft Green for positive
+    static let successColor      = Color(red: 0.65, green: 0.89, blue: 0.63) // #A6E3A1
+    // Soft Yellow
+    static let warmGold          = Color(red: 0.98, green: 0.89, blue: 0.69) // #F9E2AF
+    // Soft Peach
+    static let amber             = Color(red: 0.97, green: 0.76, blue: 0.68) // #F5C2B7
+    // Muted purple
+    static let electricPurple    = Color(red: 0.70, green: 0.55, blue: 0.85)
 
     // Chip (tag) colors
     static let chipBackground    = Color(red: 0.45, green: 0.22, blue: 1.00).opacity(0.18)
@@ -89,10 +89,10 @@ struct Theme {
         view.accentCard(cornerRadius: cornerRadius)
     }
 
-    /// Glow shadow helper
-    static func glowShadow(_ color: Color = primaryAccent, radius: CGFloat = 18) -> some View {
+    /// Soft shadow helper (Replaces glow)
+    static func glowShadow(_ color: Color = primaryAccent, radius: CGFloat = 8) -> some View {
         Circle()
-            .fill(color.opacity(0.25))
+            .fill(color.opacity(0.10))
             .blur(radius: radius)
     }
 }
@@ -117,7 +117,7 @@ struct GlassCardModifier: ViewModifier {
                                 lineWidth: 1
                             )
                     )
-                    .shadow(color: Color.black.opacity(0.28), radius: 12, x: 0, y: 6)
+                    .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
             )
             .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
     }
@@ -154,7 +154,7 @@ struct AccentCardModifier: ViewModifier {
                         )
                 }
             )
-            .shadow(color: Theme.primaryAccent.opacity(0.22), radius: 18, x: 0, y: 10)
+            .shadow(color: Color.black.opacity(0.2), radius: 12, x: 0, y: 6)
             .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
     }
 }
@@ -181,8 +181,7 @@ struct PremiumCardModifier: ViewModifier {
                         )
                 }
             )
-            .shadow(color: accentColor.opacity(0.18), radius: 16, x: 0, y: 8)
-            .shadow(color: Color.black.opacity(0.3), radius: 8, x: 0, y: 4)
+            .shadow(color: Color.black.opacity(0.15), radius: 10, x: 0, y: 4)
             .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
     }
 }
@@ -505,20 +504,19 @@ struct AmbientGlob: View {
     }
 }
 
-// MARK: - Neon Glow Modifier
+// MARK: - Neon Glow Modifier (Softened to standard drop shadow)
 struct NeonGlowModifier: ViewModifier {
     var color: Color
     var radius: CGFloat
 
     func body(content: Content) -> some View {
         content
-            .shadow(color: color.opacity(0.55), radius: radius, x: 0, y: 0)
-            .shadow(color: color.opacity(0.30), radius: radius * 2, x: 0, y: 0)
+            .shadow(color: color.opacity(0.15), radius: radius * 0.5, x: 0, y: 2)
     }
 }
 
 extension View {
-    func neonGlow(_ color: Color = Theme.primaryAccent, radius: CGFloat = 12) -> some View {
+    func neonGlow(_ color: Color = Theme.primaryAccent, radius: CGFloat = 8) -> some View {
         modifier(NeonGlowModifier(color: color, radius: radius))
     }
 }

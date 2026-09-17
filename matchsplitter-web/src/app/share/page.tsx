@@ -37,7 +37,7 @@ function ShareContent() {
   const joinLink =
     typeof window !== "undefined"
       ? `${window.location.origin}/join?id=${id}`
-      : `https://matchsplitter.com/join?id=${id}`;
+      : `https://matchsplitter-web.vercel.app/join?id=${id}`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(joinLink);

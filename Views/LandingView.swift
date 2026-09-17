@@ -12,55 +12,15 @@ struct LandingView: View {
             LoginView()
         } else {
             ZStack {
-                // Deep animated gradient background
+                // Clean pastel gradient background
                 LinearGradient(
                     gradient: Gradient(colors: [
                         Theme.backgroundStart,
-                        Theme.primaryAccent.opacity(0.55),
-                        Theme.secondaryAccent.opacity(0.35),
                         Theme.backgroundEnd
                     ]),
-                    startPoint: isAnimating ? .topLeading : .bottomTrailing,
-                    endPoint: isAnimating ? .bottomTrailing : .topLeading
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
                 )
-                .ignoresSafeArea()
-                .animation(Animation.easeInOut(duration: 6.0).repeatForever(autoreverses: true), value: isAnimating)
-
-                // Floating particle blobs
-                GeometryReader { geo in
-                    // Primary violet blob
-                    Circle()
-                        .fill(Theme.primaryAccent.opacity(0.18))
-                        .frame(width: 280, height: 280)
-                        .blur(radius: 70)
-                        .offset(
-                            x: isAnimating ? geo.size.width * 0.65 : geo.size.width * 0.45,
-                            y: isAnimating ? geo.size.height * 0.08 : geo.size.height * 0.18
-                        )
-                        .animation(.easeInOut(duration: 8.0).repeatForever(autoreverses: true), value: isAnimating)
-
-                    // Cyan blob
-                    Circle()
-                        .fill(Theme.secondaryAccent.opacity(0.14))
-                        .frame(width: 200, height: 200)
-                        .blur(radius: 55)
-                        .offset(
-                            x: isAnimating ? geo.size.width * 0.04 : geo.size.width * 0.14,
-                            y: isAnimating ? geo.size.height * 0.62 : geo.size.height * 0.72
-                        )
-                        .animation(.easeInOut(duration: 10.0).repeatForever(autoreverses: true), value: isAnimating)
-
-                    // Rose accent blob
-                    Circle()
-                        .fill(Theme.dangerColor.opacity(0.09))
-                        .frame(width: 140, height: 140)
-                        .blur(radius: 40)
-                        .offset(
-                            x: isAnimating ? geo.size.width * 0.42 : geo.size.width * 0.58,
-                            y: isAnimating ? geo.size.height * 0.40 : geo.size.height * 0.30
-                        )
-                        .animation(.easeInOut(duration: 7.0).repeatForever(autoreverses: true), value: isAnimating)
-                }
                 .ignoresSafeArea()
 
                 VStack(spacing: 0) {
@@ -68,48 +28,16 @@ struct LandingView: View {
 
                     // Logo and Title
                     VStack(spacing: metrics.adaptive(16, 22, 26)) {
-                        // Icon with layered glow rings
+                        // Clean Soft Icon
                         ZStack {
-                            // Outer rotating gradient ring
                             Circle()
-                                .strokeBorder(
-                                    AngularGradient(
-                                        gradient: Gradient(colors: [
-                                            Theme.primaryAccent.opacity(0.7),
-                                            Theme.secondaryAccent.opacity(0.5),
-                                            Theme.primaryAccent.opacity(0.2),
-                                            Theme.secondaryAccent.opacity(0.7),
-                                            Theme.primaryAccent.opacity(0.7)
-                                        ]),
-                                        center: .center
-                                    ),
-                                    lineWidth: 1.5
-                                )
-                                .frame(width: metrics.logoLargeCircle + 20, height: metrics.logoLargeCircle + 20)
-                                .rotationEffect(.degrees(ringRotation))
-
-                            // Inner glow ring
-                            Circle()
-                                .strokeBorder(Color.white.opacity(0.14), lineWidth: 1)
-                                .frame(width: metrics.logoLargeCircle, height: metrics.logoLargeCircle)
-
-                            // Core icon circle
-                            Circle()
-                                .fill(
-                                    RadialGradient(
-                                        colors: [Color.white.opacity(0.20), Color.white.opacity(0.08)],
-                                        center: .center,
-                                        startRadius: 0,
-                                        endRadius: metrics.logoCircleSize / 2
-                                    )
-                                )
+                                .fill(Theme.primaryAccent.opacity(0.15))
                                 .frame(width: metrics.logoCircleSize, height: metrics.logoCircleSize)
-                                .shadow(color: Theme.primaryAccent.opacity(0.45), radius: 30, x: 0, y: 10)
+                                .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
 
                             Image(systemName: "figure.sporting.court")
                                 .font(.system(size: metrics.logoIconFont))
-                                .foregroundColor(.white)
-                                .shadow(color: Theme.primaryAccent.opacity(0.30), radius: 10, x: 0, y: 4)
+                                .foregroundColor(Theme.primaryAccent)
                         }
                         .scaleEffect(pulseScale)
 
@@ -155,28 +83,9 @@ struct LandingView: View {
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, metrics.adaptive(14, 18, 20))
-                        .background(
-                            ZStack {
-                                LinearGradient(
-                                    colors: [Theme.primaryAccent, Theme.secondaryAccent.opacity(0.90)],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            }
-                        )
+                        .background(Theme.primaryAccent)
                         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-                        .shadow(color: Theme.primaryAccent.opacity(0.60), radius: 20, x: 0, y: 10)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                                .stroke(
-                                    LinearGradient(
-                                        colors: [Color.white.opacity(0.30), Color.white.opacity(0.06)],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
-                                    lineWidth: 1
-                                )
-                        )
+                        .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
                     }
                     .buttonStyle(PressableButtonStyle())
                     .padding(.horizontal, metrics.hPad)
@@ -185,9 +94,6 @@ struct LandingView: View {
             }
             .onAppear {
                 isAnimating = true
-                withAnimation(.linear(duration: 18).repeatForever(autoreverses: false)) {
-                    ringRotation = 360
-                }
                 withAnimation(.easeInOut(duration: 2.5).repeatForever(autoreverses: true)) {
                     pulseScale = 1.05
                 }

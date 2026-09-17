@@ -7,9 +7,9 @@ class DeepLinkManager {
     
     func handleDeepLink(_ url: URL, viewModel: GroupViewModel) {
         // Accept custom scheme: matchsplitter://join?id=UUID
-        // Accept universal link: https://matchsplitter.com/join?id=UUID
+        // Accept universal link: https://matchsplitter-web.vercel.app/join?id=UUID
         let isCustomScheme = url.scheme == "matchsplitter" && url.host == "join"
-        let isUniversalLink = (url.scheme == "https" || url.scheme == "http") && url.host == "matchsplitter.com" && url.path == "/join"
+        let isUniversalLink = (url.scheme == "https" || url.scheme == "http") && url.host == "matchsplitter-web.vercel.app" && url.path == "/join"
         
         guard isCustomScheme || isUniversalLink else { return }
         
