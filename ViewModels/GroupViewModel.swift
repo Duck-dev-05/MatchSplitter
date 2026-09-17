@@ -250,6 +250,11 @@ class GroupViewModel: ObservableObject {
         if let current = currentUser {
             var newGroup = Group(name: name, currency: currency ?? defaultCurrency, creatorID: current.id)
             newGroup.members.append(current)
+            
+            // Optimistic update so the user sees it immediately
+            self.groups.append(newGroup)
+            self.groups.sort { $0.name < $1.name }
+            
             Task {
                 try? await FirebaseManager.shared.saveGroup(newGroup)
             }
