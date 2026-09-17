@@ -584,7 +584,12 @@ struct EditProfileView: View {
         
         Task {
             do {
-                if let name = try await VietQRService.shared.verifyAccount(bin: bankBin, accountNumber: paymentID) {
+                if let name = try await VietQRService.shared.verifyAccount(
+                    bin: bankBin, 
+                    accountNumber: paymentID,
+                    clientId: "d2d29479-08d5-4e64-8fdb-f31c63c764d7",
+                    apiKey: "09ff7378-7c1e-4061-9b53-32843c87a75c"
+                ) {
                     await MainActor.run {
                         self.bankAccountName = name
                         self.isVerifyingAccount = false
@@ -597,7 +602,7 @@ struct EditProfileView: View {
                 }
             } catch {
                 await MainActor.run {
-                    self.verificationError = error.localizedDescription
+                    self.verificationError = "Auto-lookup unavailable. Please enter account name manually."
                     self.isVerifyingAccount = false
                 }
             }
