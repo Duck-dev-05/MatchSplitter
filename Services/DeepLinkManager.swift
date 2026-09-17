@@ -46,10 +46,18 @@ class DeepLinkManager {
                                 viewModel.groups[index] = updatedGroup
                             }
                             viewModel.saveData()
+                            
+                            // Post success notification
+                            NotificationCenter.default.post(name: NSNotification.Name("JoinGroupSuccess"), object: updatedGroup)
                         }
                         
                         // Push immediately to Firebase so creator sees it
                         try? await FirebaseManager.shared.saveGroup(group)
+                    } else {
+                        // Already in group, post success as well (or another notification)
+                        await MainActor.run {
+                            NotificationCenter.default.post(name: NSNotification.Name("JoinGroupSuccess"), object: group)
+                        }
                     }
                 }
             }

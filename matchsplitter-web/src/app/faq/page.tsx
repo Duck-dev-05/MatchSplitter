@@ -1,32 +1,45 @@
+import Link from "next/link";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Accordion } from "@/components/ui/Accordion";
+import { HelpCircle, MessageSquare, ArrowRight, ShieldCheck } from "lucide-react";
 
 export const metadata = {
-  title: "FAQ | MatchSplitter",
-  description: "Frequently asked questions about MatchSplitter.",
+  title: "Frequently Asked Questions | MatchSplitter",
+  description:
+    "Find answers to common questions about team expense management, bank QR code settlements, and group permissions.",
 };
 
 const faqs = [
   {
-    question: "How much does MatchSplitter cost?",
-    answer: "MatchSplitter is free to download and use for basic expense tracking. We offer a Premium Team plan for advanced features like automated recurring payments and detailed analytics exports.",
+    question: "How does the QR Code settlement work with banking apps?",
+    answer:
+      "MatchSplitter integrates standard dynamic QR protocols (VietQR, PromptPay, PayNow, and SEPA links). When you settle up, the app generates a QR containing the exact debt amount and payment reference. Your teammate scans it with their mobile banking app to authenticate and complete the transfer in seconds.",
   },
   {
-    question: "Do my teammates need the app to join my group?",
-    answer: "Yes, to track and settle balances properly, your teammates will need to download the app and join via your invite link or QR code.",
+    question: "Do all squad players need to download the app to participate?",
+    answer:
+      "Only the organizers/captains logging expenses need the full app. Teammates can be added as offline roster members, or they can join via a simple web invite link to view balances and scan payment QRs directly from any browser without installing anything.",
   },
   {
-    question: "What payment methods are supported?",
-    answer: "MatchSplitter currently supports QR-based settlements including VietQR, PromptPay, PayNow, and standard PayPal links. We do not process payments directly; we generate the exact QR code so your friends can pay you through their banking app.",
+    question: "How does the Goalkeeper Plays Free feature work?",
+    answer:
+      "It is a grassroots football staple! In many squads, the goalkeeper does not pay pitch fees. MatchSplitter has a one-tap toggle for each match that automatically excludes the goalkeeper from the pitch cost division and splits it equally among the outfield players.",
   },
   {
-    question: "Can I use multiple currencies in one group?",
-    answer: "Yes! MatchSplitter automatically handles currency conversions based on real-time exchange rates, so you can track expenses on international trips effortlessly.",
+    question: "What is the Smart Debt Minimizer algorithm?",
+    answer:
+      "If player A owes player B $10, and player B owes player C $10, our graph optimizer settles the chain directly (Player A pays Player C $10). In a squad of 15 players with dozens of fragmented payments, this reduces transfers by up to 80%, meaning far fewer banking transactions for everyone.",
   },
   {
-    question: "Is my data secure?",
-    answer: "Absolutely. We use industry-standard encryption for all data in transit and at rest. Your financial tracking data is strictly private to your group members.",
+    question: "Can we use multiple currencies for international friendly tours?",
+    answer:
+      "Yes. Pro squads can create groups with multi-currency enabled. You can log expenses in EUR, GBP, USD, THB, or VND, and the app automatically converts debts back to your squad's primary currency using real-time exchange rates.",
+  },
+  {
+    question: "Is financial and personal data protected?",
+    answer:
+      "Completely. MatchSplitter does not require or store your bank credentials, passwords, or credit card numbers. All team ledger data is encrypted in transit and at rest, and group financial records are strictly private to your verified group members.",
   },
 ];
 
@@ -34,34 +47,68 @@ export default function FAQPage() {
   return (
     <>
       <Navbar />
-      <main className="bg-page relative overflow-hidden" style={{ minHeight: "100vh" }}>
-        {/* Ambient blobs */}
-        <div className="blob blob-1" aria-hidden="true" />
-        <div className="blob blob-3" aria-hidden="true" />
 
-        <section className="relative z-10 section-padding" style={{ paddingTop: "120px" }}>
-          <div className="container-page" style={{ maxWidth: "800px" }}>
-            <div className="text-center mb-12 animate-fade-up">
-              <span className="label-tag mb-6">Need Help?</span>
-              <h1 className="hero-title mb-6">
-                Frequently Asked <span>Questions</span>
+      <main className="bg-page relative selection:bg-violet-500/30 selection:text-violet-200">
+        {/* Ambient Glows */}
+        <div
+          className="glow-orb glow-orb-primary top-[-100px] left-1/2 -translate-x-1/2 w-[600px] h-[400px]"
+          aria-hidden="true"
+        />
+        <div
+          className="glow-orb glow-orb-cyan top-[500px] right-[-100px] w-[500px] h-[400px]"
+          aria-hidden="true"
+        />
+
+        <section className="relative z-10 pt-32 pb-24 md:pt-40 md:pb-32">
+          <div className="container-page max-w-4xl">
+            {/* Header */}
+            <div className="text-center max-w-2xl mx-auto mb-16">
+              <div className="label-tag mb-3">
+                <HelpCircle className="w-3.5 h-3.5 text-violet-400" />
+                <span>Knowledge Base</span>
+              </div>
+              <h1 className="text-4xl sm:text-6xl font-black text-white tracking-tight mb-4">
+                Frequently Asked <br />
+                <span className="text-gradient-accent">Questions</span>
               </h1>
-              <p className="hero-subtitle">
-                Everything you need to know about the app, payments, and splitting costs with your team.
+              <p className="text-slate-400 text-sm sm:text-base leading-relaxed">
+                Everything you need to know about payments, squad balances, and matchday expense tracking.
               </p>
             </div>
 
-            <div className="animate-fade-up" style={{ animationDelay: "0.2s" }}>
+            {/* Accordion Component */}
+            <div className="mb-16">
               <Accordion items={faqs} />
             </div>
-            
-            <div className="text-center mt-16 animate-fade-up" style={{ animationDelay: "0.4s" }}>
-              <p style={{ color: "rgba(255,255,255,0.6)", marginBottom: "16px" }}>
-                Still have questions?
-              </p>
-              <a href="/support" className="btn-primary" style={{ display: "inline-flex" }}>
-                Contact Support
-              </a>
+
+            {/* Need More Help Box */}
+            <div className="glass-card-accent p-8 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-6">
+              <div className="flex items-center gap-4 text-left">
+                <div className="w-12 h-12 rounded-xl bg-violet-500/20 border border-violet-500/40 flex items-center justify-center text-violet-300 shrink-0">
+                  <MessageSquare className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white mb-1">
+                    Still have questions?
+                  </h3>
+                  <p className="text-xs sm:text-sm text-slate-300">
+                    Our team is here to help with squad setup, custom club plans, and feature requests.
+                  </p>
+                </div>
+              </div>
+
+              <Link
+                href="/support"
+                className="btn-primary shrink-0 w-full sm:w-auto"
+              >
+                <span>Contact Support</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+
+            <div className="mt-12 text-center flex items-center justify-center gap-2 text-xs text-slate-500">
+              <ShieldCheck className="w-4 h-4 text-violet-400" />
+              <span>Verified FAQ documentation updated for version 2.4</span>
             </div>
           </div>
         </section>

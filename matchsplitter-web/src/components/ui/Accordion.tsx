@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ChevronDown } from "lucide-react";
 
 interface AccordionProps {
   items: {
@@ -10,74 +11,57 @@ interface AccordionProps {
 }
 
 export function Accordion({ items }: AccordionProps) {
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
+
+  const toggle = (idx: number) => {
+    setOpenIndex(openIndex === idx ? null : idx);
+  };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+    <div className="space-y-3.5">
       {items.map((item, idx) => {
         const isOpen = openIndex === idx;
         return (
           <div
             key={idx}
-            className="glass-card"
-            style={{
-              padding: "20px 24px",
-              cursor: "pointer",
-              transition: "all 0.3s ease",
-              border: isOpen
-                ? "1px solid var(--primary-light)"
-                : "1px solid rgba(255,255,255,0.06)",
-              boxShadow: isOpen ? "0 8px 32px rgba(115,56,255,0.15)" : "none",
-            }}
-            onClick={() => setOpenIndex(isOpen ? null : idx)}
+            onClick={() => toggle(idx)}
+            className={`glass-card p-5 sm:p-6 cursor-pointer transition-all duration-300 ${
+              isOpen
+                ? "border-violet-500/40 bg-[#111626]/90 shadow-[0_8px_30px_rgba(139,92,246,0.15)]"
+                : "hover:border-white/[0.15]"
+            }`}
           >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
+            <div className="flex justify-between items-center gap-4">
               <h3
-                style={{
-                  fontSize: "1.125rem",
-                  fontWeight: 600,
-                  color: isOpen ? "white" : "rgba(255,255,255,0.8)",
-                  margin: 0,
-                }}
+                className={`text-base sm:text-lg font-semibold tracking-tight transition-colors ${
+                  isOpen ? "text-violet-300" : "text-white"
+                }`}
               >
                 {item.question}
               </h3>
               <div
-                style={{
-                  fontSize: "1.25rem",
-                  color: isOpen ? "var(--primary-light)" : "rgba(255,255,255,0.5)",
-                  transform: isOpen ? "rotate(45deg)" : "rotate(0deg)",
-                  transition: "transform 0.3s ease",
-                }}
+                className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 border transition-all duration-300 ${
+                  isOpen
+                    ? "bg-violet-500/20 border-violet-500/40 text-violet-300 rotate-180"
+                    : "bg-white/[0.04] border-white/[0.08] text-slate-400 rotate-0"
+                }`}
               >
-                +
+                <ChevronDown className="w-4 h-4" />
               </div>
             </div>
-            
+
             <div
-              style={{
-                maxHeight: isOpen ? "200px" : "0",
-                opacity: isOpen ? 1 : 0,
-                overflow: "hidden",
-                transition: "all 0.3s ease",
-                marginTop: isOpen ? "16px" : "0",
-              }}
+              className={`grid transition-all duration-300 ease-in-out ${
+                isOpen
+                  ? "grid-rows-[1fr] opacity-100 mt-3 pt-3 border-t border-white/[0.06]"
+                  : "grid-rows-[0fr] opacity-0"
+              }`}
             >
-              <p
-                style={{
-                  color: "rgba(255,255,255,0.6)",
-                  lineHeight: 1.6,
-                  margin: 0,
-                }}
-              >
-                {item.answer}
-              </p>
+              <div className="overflow-hidden">
+                <p className="text-sm text-slate-300 leading-relaxed">
+                  {item.answer}
+                </p>
+              </div>
             </div>
           </div>
         );

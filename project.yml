@@ -24,6 +24,11 @@ targets:
       - Services
       - Assets.xcassets
       - GoogleService-Info.plist
+    entitlements:
+      path: MatchSplitter.entitlements
+      properties:
+        com.apple.developer.associated-domains:
+          - applinks:matchsplitter-web.vercel.app
     dependencies:
       - package: EFQRCode
       - package: GoogleSignIn

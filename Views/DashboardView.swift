@@ -7,6 +7,8 @@ struct DashboardView: View {
     @State private var appear = false
     @State private var showLoginAlert = false
     @State private var showingJoinScanner = false
+    @State private var showJoinSuccessAlert = false
+    @State private var joinedGroupName = ""
 
     var myGroups: [Group] {
         guard let user = viewModel.currentUser else { return [] }
@@ -182,6 +184,17 @@ struct DashboardView: View {
             Button("OK", role: .cancel) { }
         } message: {
             Text("Please go to the Profile tab to Login or Register before creating groups.")
+        }
+        .alert("Successfully Joined!", isPresented: $showJoinSuccessAlert) {
+            Button("Awesome!", role: .cancel) { }
+        } message: {
+            Text("You are now a member of '\(joinedGroupName)'.")
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("JoinGroupSuccess"))) { notification in
+            if let group = notification.object as? Group {
+                self.joinedGroupName = group.name
+                self.showJoinSuccessAlert = true
+            }
         }
         .onAppear {
             withAnimation { appear = true }
