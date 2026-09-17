@@ -13,7 +13,7 @@ struct MatchSplitterApp: App {
     var body: some Scene {
         WindowGroup {
             GeometryReader { geo in
-                Group {
+                SwiftUI.Group {
                     if groupViewModel.currentUser == nil {
                         LandingView()
                     } else {
