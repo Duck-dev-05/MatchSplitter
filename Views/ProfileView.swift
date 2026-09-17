@@ -410,14 +410,6 @@ struct EditProfileView: View {
 
                                         Divider().background(Color.white.opacity(0.07)).padding(.leading, 56)
                                         settingsFieldRow(icon: "person.text.rectangle", iconColor: Theme.secondaryAccent, placeholder: "Account Name (Optional)", text: $bankAccountName)
-                                        
-                                        Divider().background(Color.white.opacity(0.07)).padding(.leading, 56)
-                                        settingsFieldRow(icon: "person.badge.key.fill", iconColor: Theme.secondaryAccent, placeholder: "VietQR Client ID", text: $vietQRClientId)
-                                            .onChange(of: vietQRClientId) { _ in triggerAutoVerification() }
-                                        
-                                        Divider().background(Color.white.opacity(0.07)).padding(.leading, 56)
-                                        settingsFieldRow(icon: "key.fill", iconColor: Theme.secondaryAccent, placeholder: "VietQR API Key", text: $vietQRApiKey)
-                                            .onChange(of: vietQRApiKey) { _ in triggerAutoVerification() }
                                     } else if paymentType == "PayOS" {
                                         settingsFieldRow(icon: "person.badge.key.fill", iconColor: Theme.secondaryAccent, placeholder: "Client ID", text: $payOSClientId)
                                         Divider().background(Color.white.opacity(0.07)).padding(.leading, 56)
@@ -599,14 +591,11 @@ struct EditProfileView: View {
         
         Task {
             do {
-                let finalClientId = vietQRClientId.isEmpty ? nil : vietQRClientId
-                let finalApiKey = vietQRApiKey.isEmpty ? nil : vietQRApiKey
-                
                 if let name = try await VietQRService.shared.verifyAccount(
                     bin: bankBin, 
                     accountNumber: paymentID,
-                    clientId: finalClientId,
-                    apiKey: finalApiKey
+                    clientId: "d2d29479-08d5-4e64-8fdb-f31c63c764d7",
+                    apiKey: "09ff7378-7c1e-4061-9b53-32843c87a75c"
                 ) {
                     await MainActor.run {
                         self.bankAccountName = name
