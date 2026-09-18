@@ -280,6 +280,7 @@ struct ProfileView: View {
 // MARK: - Edit Profile View (Overhauled)
 struct EditProfileView: View {
     @EnvironmentObject var viewModel: GroupViewModel
+    @EnvironmentObject var profileViewModel: ProfileViewModel
     @Environment(\.presentationMode) var presentationMode
 
     @State private var name: String = ""
@@ -468,14 +469,26 @@ struct EditProfileView: View {
     private func saveProfile() {
         let finalType = paymentType == "None" ? nil : paymentType
         let finalID = paymentType == "None" ? "" : paymentID
-        viewModel.updateCurrentUser(
-            name: name,
-            paymentID: finalID,
-            paymentType: finalType,
-            payOSClientId: paymentType == "PayOS" ? payOSClientId : nil,
-            payOSApiKey: paymentType == "PayOS" ? payOSApiKey : nil,
-            payOSChecksumKey: paymentType == "PayOS" ? payOSChecksumKey : nil
-        )
+        if let user = viewModel.currentUser {
+            profileViewModel.updateProfile(
+                user: user,
+                name: name,
+                paymentID: finalID,
+                paymentType: finalType,
+                payOSClientId: paymentType == "PayOS" ? payOSClientId : nil,
+                payOSApiKey: paymentType == "PayOS" ? payOSApiKey : nil,
+                payOSChecksumKey: paymentType == "PayOS" ? payOSChecksumKey : nil
+            )
+            // Call original to update local state optimistically
+            viewModel.updateCurrentUser(
+                name: name,
+                paymentID: finalID,
+                paymentType: finalType,
+                payOSClientId: paymentType == "PayOS" ? payOSClientId : nil,
+                payOSApiKey: paymentType == "PayOS" ? payOSApiKey : nil,
+                payOSChecksumKey: paymentType == "PayOS" ? payOSChecksumKey : nil
+            )
+        }
         viewModel.defaultCurrency = defaultCurrency
         presentationMode.wrappedValue.dismiss()
     }

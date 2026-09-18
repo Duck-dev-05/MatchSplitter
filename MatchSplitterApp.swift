@@ -8,6 +8,10 @@ struct MatchSplitterApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     
     @StateObject private var groupViewModel = GroupViewModel()
+    @StateObject private var authViewModel = AuthViewModel()
+    @StateObject private var expenseViewModel = ExpenseViewModel()
+    @StateObject private var profileViewModel = ProfileViewModel()
+    @StateObject private var settlementViewModel = SettlementViewModel()
     @StateObject private var themeManager = ThemeManager.shared
 
     var body: some Scene {
@@ -21,6 +25,10 @@ struct MatchSplitterApp: App {
                     }
                 }
                 .environmentObject(groupViewModel)
+                .environmentObject(authViewModel)
+                .environmentObject(expenseViewModel)
+                .environmentObject(profileViewModel)
+                .environmentObject(settlementViewModel)
                 .preferredColorScheme(themeManager.colorScheme)
                 .injectLayoutMetrics(width: geo.size.width)
                 .onOpenURL { url in

@@ -10,6 +10,7 @@ enum AuthMode {
 
 struct LoginView: View {
     @EnvironmentObject var viewModel: GroupViewModel
+    @EnvironmentObject var authViewModel: AuthViewModel
     @Environment(\.presentationMode) var presentationMode
     @Environment(\.layoutMetrics) var metrics
 
@@ -447,8 +448,12 @@ struct LoginView: View {
         isAuthenticating = true
         errorMessage = ""
         Task {
-            if await self.viewModel.authenticateUser(email: self.email, password: self.password) != nil {
+            if await self.authViewModel.authenticateUser(email: self.email, password: self.password) != nil {
                 await MainActor.run {
+                    // Sync currentUser to GroupViewModel so other tabs update
+                    if let user = self.authViewModel.currentUser {
+                        self.viewModel.login(user: user)
+                    }
                     self.isAuthenticating = false
                     self.presentationMode.wrappedValue.dismiss()
                 }
@@ -503,8 +508,11 @@ struct LoginView: View {
             self.isAuthenticating = true
             self.errorMessage = ""
             Task {
-                _ = await viewModel.authenticateGoogleUser(name: name, email: email, avatarURL: avatarURL)
+                _ = await authViewModel.authenticateGoogleUser(name: name, email: email, avatarURL: avatarURL)
                 await MainActor.run {
+                    if let user = self.authViewModel.currentUser {
+                        self.viewModel.login(user: user)
+                    }
                     self.isAuthenticating = false
                     presentationMode.wrappedValue.dismiss()
                 }
@@ -534,8 +542,11 @@ struct LoginView: View {
         errorMessage = ""
         Task {
             do {
-                try await self.viewModel.registerUserAsync(user: newUser, defaultCurrency: currency)
+                try await self.authViewModel.registerUserAsync(user: newUser, defaultCurrency: currency)
                 await MainActor.run {
+                    if let user = self.authViewModel.currentUser {
+                        self.viewModel.register(user: user, defaultCurrency: currency)
+                    }
                     self.isAuthenticating = false
                     self.presentationMode.wrappedValue.dismiss()
                 }

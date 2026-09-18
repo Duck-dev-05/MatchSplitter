@@ -3,6 +3,7 @@ import SwiftUI
 struct AddExpenseView: View {
     var group: Group
     @EnvironmentObject var viewModel: GroupViewModel
+    @EnvironmentObject var expenseViewModel: ExpenseViewModel
     @Environment(\.presentationMode) var presentationMode
 
     @State private var title = ""
@@ -456,7 +457,7 @@ struct AddExpenseView: View {
         }
 
         if let existingExpense = editingExpense {
-            viewModel.updateExpense(
+            expenseViewModel.updateExpense(
                 in: group,
                 expenseId: existingExpense.id,
                 title: title,
@@ -470,7 +471,7 @@ struct AddExpenseView: View {
                 originalAmount: origAmt
             )
         } else {
-            viewModel.addExpense(
+            expenseViewModel.addExpense(
                 to: group,
                 title: title,
                 amount: finalAmount,

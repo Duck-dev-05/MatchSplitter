@@ -5,6 +5,7 @@ struct ExpenseDetailView: View {
     var group: Group
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject var viewModel: GroupViewModel
+    @EnvironmentObject var expenseViewModel: ExpenseViewModel
 
     @State private var showingEditExpense = false
     @State private var showingDeleteConfirm = false
@@ -180,7 +181,7 @@ struct ExpenseDetailView: View {
         .alert("Delete Expense", isPresented: $showingDeleteConfirm) {
             Button("Cancel", role: .cancel) { }
             Button("Delete", role: .destructive) {
-                viewModel.deleteExpense(from: group, expenseId: expense.id)
+                expenseViewModel.deleteExpense(from: group, expenseId: expense.id)
                 presentationMode.wrappedValue.dismiss()
             }
         } message: {

@@ -206,6 +206,7 @@ struct QRCodePaymentView: View {
     let generator = QRCodeGenerator()
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject var viewModel: GroupViewModel
+    @EnvironmentObject var settlementViewModel: SettlementViewModel
     
     @State private var qrPayload: String = ""
     @State private var qrImageBase64: String? = nil
@@ -426,7 +427,7 @@ struct QRCodePaymentView: View {
                                     self.isPaymentSuccess = true
                                 }
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                                    viewModel.addPayment(to: group, fromUser: settlement.fromUser, toUser: settlement.toUser, amount: amountToPay)
+                                    settlementViewModel.addPayment(to: group, fromUser: settlement.fromUser, toUser: settlement.toUser, amount: amountToPay)
                                     presentationMode.wrappedValue.dismiss()
                                 }
                             }
