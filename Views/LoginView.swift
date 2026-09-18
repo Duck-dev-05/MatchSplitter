@@ -23,9 +23,9 @@ struct LoginView: View {
     @State private var paymentType: String = "None"
     @State private var selectedCurrency: Currency? = .vnd
 
-    @State private var payOSClientId: String = ""
-    @State private var payOSApiKey: String = ""
-    @State private var payOSChecksumKey: String = ""
+    @State private var cassoApiKey: String = ""
+    @State private var bankID: String = ""
+    @State private var bankAccountNumber: String = ""
 
     @State private var isAnimating: Bool = false
     @State private var errorMessage: String = ""
@@ -37,7 +37,7 @@ struct LoginView: View {
         case email, password, name, paymentID
     }
 
-    let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "PayOS", "None"]
+    let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "PayOS", "Casso", "None"]
 
     var isModal: Bool = true
 
@@ -47,8 +47,8 @@ struct LoginView: View {
         case .login:         return !email.isEmpty && !password.isEmpty
         case .registerStep1: return !name.isEmpty && !email.isEmpty && !password.isEmpty
         case .registerStep2:
-            if paymentType == "PayOS" {
-                return selectedCurrency != nil
+            if paymentType == "Casso" {
+                return selectedCurrency != nil && !cassoApiKey.isEmpty && !bankID.isEmpty && !bankAccountNumber.isEmpty
             }
             return selectedCurrency != nil && !(paymentType != "None" && paymentID.isEmpty)
         }
@@ -345,13 +345,18 @@ struct LoginView: View {
             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
 
             if paymentType != "None" {
-                if paymentType != "PayOS" {
+                if paymentType != "Casso" && paymentType != "PayOS" {
                     glassTextField(
                         icon: "creditcard.fill",
                         iconColor: Theme.secondaryAccent,
                         placeholder: placeholderFor(type: paymentType),
                         text: $paymentID
                     )
+                }
+                if paymentType == "Casso" {
+                    glassTextField(icon: "key.fill", iconColor: Theme.successColor, placeholder: "API Key", text: $cassoApiKey)
+                    glassTextField(icon: "building.2.fill", iconColor: Theme.successColor, placeholder: "Bank ID", text: $bankID)
+                    glassTextField(icon: "number.square.fill", iconColor: Theme.successColor, placeholder: "Account Number", text: $bankAccountNumber)
                 }
             }
 
@@ -520,9 +525,10 @@ struct LoginView: View {
         guard let currency = selectedCurrency else { return }
         let finalType = paymentType == "None" ? nil : paymentType
         let finalID = paymentType == "None" ? "" : paymentID
-        let finalClientId = paymentType == "PayOS" ? payOSClientId : nil
-        let finalApiKey = paymentType == "PayOS" ? payOSApiKey : nil
-        let finalChecksumKey = paymentType == "PayOS" ? payOSChecksumKey : nil
+        
+        let finalCassoApiKey = paymentType == "Casso" ? cassoApiKey : nil
+        let finalBankID = paymentType == "Casso" ? bankID : nil
+        let finalBankAccountNumber = paymentType == "Casso" ? bankAccountNumber : nil
 
         let newUser = User(
             name: name, 
@@ -530,9 +536,9 @@ struct LoginView: View {
             password: password, 
             paymentID: finalID, 
             paymentType: finalType, 
-            payOSClientId: finalClientId,
-            payOSApiKey: finalApiKey,
-            payOSChecksumKey: finalChecksumKey
+            cassoApiKey: finalCassoApiKey,
+            bankID: finalBankID,
+            bankAccountNumber: finalBankAccountNumber
         )
         isAuthenticating = true
         errorMessage = ""

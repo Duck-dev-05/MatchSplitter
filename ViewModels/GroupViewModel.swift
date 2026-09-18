@@ -223,9 +223,9 @@ class GroupViewModel: ObservableObject {
         }
     }
 
-    func updateCurrentUser(name: String, paymentID: String, paymentType: String? = nil, payOSClientId: String? = nil, payOSApiKey: String? = nil, payOSChecksumKey: String? = nil) {
+    func updateCurrentUser(name: String, paymentID: String, paymentType: String? = nil, cassoApiKey: String? = nil, bankID: String? = nil, bankAccountNumber: String? = nil) {
         if let current = currentUser {
-            let updatedUser = User(id: current.id, name: name, paymentID: paymentID.isEmpty ? nil : paymentID, paymentType: paymentType, payOSClientId: payOSClientId, payOSApiKey: payOSApiKey, payOSChecksumKey: payOSChecksumKey)
+            let updatedUser = User(id: current.id, name: name, paymentID: paymentID.isEmpty ? nil : paymentID, paymentType: paymentType, cassoApiKey: cassoApiKey, bankID: bankID, bankAccountNumber: bankAccountNumber)
             currentUser = updatedUser
             
             // Also update this user's name across all groups they belong to
@@ -261,14 +261,12 @@ class GroupViewModel: ObservableObject {
         }
     }
     
-    func updateGroup(id: UUID, name: String, currency: Currency, payOSClientId: String? = nil, payOSApiKey: String? = nil, payOSChecksumKey: String? = nil, simplifyDebts: Bool = true) {
+    func updateGroup(id: UUID, name: String, currency: Currency, cassoApiKey: String? = nil, simplifyDebts: Bool = true) {
         if let index = groups.firstIndex(where: { $0.id == id }) {
             var updatedGroup = groups[index]
             let oldCurrency = updatedGroup.currency
             updatedGroup.name = name
-            updatedGroup.payOSClientId = payOSClientId
-            updatedGroup.payOSApiKey = payOSApiKey
-            updatedGroup.payOSChecksumKey = payOSChecksumKey
+            updatedGroup.cassoApiKey = cassoApiKey
             updatedGroup.simplifyDebts = simplifyDebts
             
             if oldCurrency != currency {
@@ -323,10 +321,10 @@ class GroupViewModel: ObservableObject {
         }
     }
     
-    func addMember(to group: Group, name: String, paymentID: String, paymentType: String? = nil, payOSClientId: String? = nil, payOSApiKey: String? = nil, payOSChecksumKey: String? = nil) {
+    func addMember(to group: Group, name: String, paymentID: String, paymentType: String? = nil, cassoApiKey: String? = nil, bankID: String? = nil, bankAccountNumber: String? = nil) {
         if let index = groups.firstIndex(where: { $0.id == group.id }) {
             var updatedGroup = groups[index]
-            updatedGroup.members.append(User(name: name, paymentID: paymentID.isEmpty ? nil : paymentID, paymentType: paymentType, payOSClientId: payOSClientId, payOSApiKey: payOSApiKey, payOSChecksumKey: payOSChecksumKey))
+            updatedGroup.members.append(User(name: name, paymentID: paymentID.isEmpty ? nil : paymentID, paymentType: paymentType, cassoApiKey: cassoApiKey, bankID: bankID, bankAccountNumber: bankAccountNumber))
             Task {
                 try? await FirebaseManager.shared.saveGroup(updatedGroup)
             }
@@ -358,7 +356,7 @@ class GroupViewModel: ObservableObject {
         return Array(allFriends.filter { !groupMemberIds.contains($0.id) }).sorted(by: { $0.name < $1.name })
     }
     
-    func updateMember(in group: Group, memberId: UUID, name: String, paymentID: String, paymentType: String? = nil, payOSClientId: String? = nil, payOSApiKey: String? = nil, payOSChecksumKey: String? = nil) {
+    func updateMember(in group: Group, memberId: UUID, name: String, paymentID: String, paymentType: String? = nil, cassoApiKey: String? = nil, bankID: String? = nil, bankAccountNumber: String? = nil) {
         if let groupIndex = groups.firstIndex(where: { $0.id == group.id }) {
             if let memberIndex = groups[groupIndex].members.firstIndex(where: { $0.id == memberId }) {
                 let currentMember = groups[groupIndex].members[memberIndex]
@@ -369,9 +367,9 @@ class GroupViewModel: ObservableObject {
                     password: currentMember.password,
                     paymentID: paymentID.isEmpty ? nil : paymentID,
                     paymentType: paymentType,
-                    payOSClientId: payOSClientId,
-                    payOSApiKey: payOSApiKey,
-                    payOSChecksumKey: payOSChecksumKey
+                    cassoApiKey: cassoApiKey,
+                    bankID: bankID,
+                    bankAccountNumber: bankAccountNumber
                 )
                 var updatedGroup = groups[groupIndex]
                 updatedGroup.members[memberIndex] = updatedMember

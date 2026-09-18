@@ -5,16 +5,16 @@ class ProfileViewModel: ObservableObject {
     
     init() {}
     
-    func updateProfile(user: User, name: String, paymentID: String, paymentType: String? = nil, payOSClientId: String? = nil, payOSApiKey: String? = nil, payOSChecksumKey: String? = nil) {
+    func updateProfile(user: User, name: String, paymentID: String, paymentType: String? = nil, cassoApiKey: String? = nil, bankID: String? = nil, bankAccountNumber: String? = nil) {
         
         let updatedUser = User(
             id: user.id, 
             name: name, 
             paymentID: paymentID.isEmpty ? nil : paymentID, 
             paymentType: paymentType, 
-            payOSClientId: payOSClientId, 
-            payOSApiKey: payOSApiKey, 
-            payOSChecksumKey: payOSChecksumKey
+            cassoApiKey: cassoApiKey,
+            bankID: bankID,
+            bankAccountNumber: bankAccountNumber
         )
         
         Task {

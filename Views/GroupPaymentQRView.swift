@@ -68,7 +68,7 @@ struct GroupPaymentQRView: View {
                         .padding(.horizontal, 20)
                         .padding(.bottom, 30)
                     } else {
-                        Text("Scan this PayOS QR code with your banking app.")
+                        Text("Scan this QR code with your banking app.")
                             .multilineTextAlignment(.center)
                             .foregroundColor(.gray)
                             .padding(.horizontal, 40)
@@ -108,14 +108,31 @@ struct GroupPaymentQRView: View {
                                         .cornerRadius(20)
                                         .padding(10)
                                 } else if !qrPayload.isEmpty {
-                                    Image(uiImage: qrGenerator.generateQRCode(from: qrPayload))
-                                        .interpolation(.none)
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(width: 200, height: 200)
-                                        .padding(30)
-                                        .background(Color.white)
-                                        .cornerRadius(20)
+                                    if qrPayload.hasPrefix("http") {
+                                        AsyncImage(url: URL(string: qrPayload)) { phase in
+                                            if let image = phase.image {
+                                                image.resizable()
+                                                    .scaledToFit()
+                                                    .cornerRadius(20)
+                                                    .padding(10)
+                                            } else if phase.error != nil {
+                                                Image(systemName: "xmark.octagon.fill")
+                                                    .foregroundColor(Theme.dangerColor)
+                                                    .font(.system(size: 64))
+                                            } else {
+                                                ProgressView().scaleEffect(1.5)
+                                            }
+                                        }
+                                    } else {
+                                        Image(uiImage: qrGenerator.generateQRCode(from: qrPayload))
+                                            .interpolation(.none)
+                                            .resizable()
+                                            .scaledToFit()
+                                            .frame(width: 200, height: 200)
+                                            .padding(30)
+                                            .background(Color.white)
+                                            .cornerRadius(20)
+                                    }
                                 }
                             }
                         }
@@ -148,28 +165,79 @@ struct GroupPaymentQRView: View {
         
         Task {
             do {
-                let description = "Fund for \(group.name.prefix(15))"
-                let orderCode = Int(Date().timeIntervalSince1970)
-                
-                let paymentData = try await PayOSService.shared.createPaymentLink(
-                    amount: amount,
-                    description: description,
-                    orderCode: orderCode
-                )
-                
-                await MainActor.run {
-                    if let qrBase64 = paymentData.qrCode {
-                        self.qrImageBase64 = qrBase64.replacingOccurrences(of: "data:image/png;base64,", with: "")
-                    } else if let checkoutUrl = paymentData.checkoutUrl {
-                        self.qrPayload = checkoutUrl
-                    } else {
-                        self.qrError = "Invalid PayOS response"
+                if group.members.contains(where: { $0.id == group.creatorID && $0.paymentType == "PayOS" }) {
+                    let description = "Fund for \(group.name.prefix(15))"
+                    let orderCode = Int(Date().timeIntervalSince1970)
+                    
+                    let paymentData = try await PayOSService.shared.createPaymentLink(
+                        amount: amount,
+                        description: description,
+                        orderCode: orderCode
+                    )
+                    
+                    await MainActor.run {
+                        if let qrBase64 = paymentData.qrCode {
+                            self.qrImageBase64 = qrBase64.replacingOccurrences(of: "data:image/png;base64,", with: "")
+                        } else if let checkoutUrl = paymentData.checkoutUrl {
+                            self.qrPayload = checkoutUrl
+                        } else {
+                            self.qrError = "Invalid PayOS response"
+                        }
+                        self.isLoadingQR = false
                     }
-                    self.isLoadingQR = false
+                    
+                    // Start polling PayOS
+                    var isPaid = false
+                    for _ in 0..<120 { // 6 mins
+                        try? await Task.sleep(nanoseconds: 3_000_000_000)
+                        if let info = try? await PayOSService.shared.getPaymentInfo(orderCode: orderCode), info.status == "PAID" {
+                            isPaid = true
+                            break
+                        }
+                    }
+                    if isPaid {
+                        await MainActor.run {
+                            self.presentationMode.wrappedValue.dismiss()
+                        }
+                    }
+                } else if let cassoKey = group.cassoApiKey, let creator = group.members.first(where: { $0.id == group.creatorID }) {
+                    let orderCode = "\(Int(Date().timeIntervalSince1970) + Int.random(in: 1...1000))"
+                    let info = orderCode
+                    let bankID = creator.bankID ?? ""
+                    let bankAccountNumber = creator.bankAccountNumber ?? ""
+                    
+                    let urlString = "https://img.vietqr.io/image/\(bankID)-\(bankAccountNumber)-compact2.png?amount=\(amount)&addInfo=\(info)"
+                    
+                    CassoService.apiKey = cassoKey
+                    
+                    await MainActor.run {
+                        self.qrPayload = urlString
+                        self.isLoadingQR = false
+                    }
+                    
+                    // Start polling
+                    var isPaid = false
+                    for _ in 0..<120 { // 6 mins
+                        try? await Task.sleep(nanoseconds: 3_000_000_000)
+                        if let matched = try? await CassoService.shared.verifyPayment(amount: Double(amount), orderCode: orderCode), matched {
+                            isPaid = true
+                            break
+                        }
+                    }
+                    if isPaid {
+                        await MainActor.run {
+                            self.presentationMode.wrappedValue.dismiss()
+                        }
+                    }
+                } else {
+                    await MainActor.run {
+                        self.qrError = "No payment gateway configured for group."
+                        self.isLoadingQR = false
+                    }
                 }
             } catch {
                 await MainActor.run {
-                    self.qrError = "Failed to load PayOS QR: \(error.localizedDescription)"
+                    self.qrError = "Failed to load payment QR: \(error.localizedDescription)"
                     self.isLoadingQR = false
                 }
             }

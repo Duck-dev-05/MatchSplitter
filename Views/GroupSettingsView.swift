@@ -13,17 +13,13 @@ struct GroupSettingsView: View {
     @State private var simplifyDebts: Bool
     @State private var showingBudgetSettings = false
     
-    @State private var payOSClientId: String
-    @State private var payOSApiKey: String
-    @State private var payOSChecksumKey: String
+    @State private var cassoApiKey: String
 
     init(group: Group) {
         self.group = group
         self._groupName = State(initialValue: group.name)
         self._selectedCurrency = State(initialValue: group.currency)
-        self._payOSClientId = State(initialValue: group.payOSClientId ?? "")
-        self._payOSApiKey = State(initialValue: group.payOSApiKey ?? "")
-        self._payOSChecksumKey = State(initialValue: group.payOSChecksumKey ?? "")
+        self._cassoApiKey = State(initialValue: group.cassoApiKey ?? "")
         self._simplifyDebts = State(initialValue: group.simplifyDebts)
     }
 
@@ -46,9 +42,7 @@ struct GroupSettingsView: View {
                             id: group.id, 
                             name: groupName, 
                             currency: selectedCurrency,
-                            payOSClientId: payOSClientId.isEmpty ? nil : payOSClientId,
-                            payOSApiKey: payOSApiKey.isEmpty ? nil : payOSApiKey,
-                            payOSChecksumKey: payOSChecksumKey.isEmpty ? nil : payOSChecksumKey,
+                            cassoApiKey: cassoApiKey.isEmpty ? nil : cassoApiKey,
                             simplifyDebts: simplifyDebts
                         )
                         presentationMode.wrappedValue.dismiss()

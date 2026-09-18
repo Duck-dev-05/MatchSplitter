@@ -41,9 +41,9 @@ class PayOSService {
     private init() {}
     
     // MARK: - Global Configuration
-    static var clientId: String = "YOUR_CLIENT_ID"
-    static var apiKey: String = "YOUR_API_KEY"
-    static var checksumKey: String = "YOUR_CHECKSUM_KEY"
+    static var clientId: String = "c4d9e61b-a77d-4d9b-95af-d45271e00fc7"
+    static var apiKey: String = "cc68e433-e999-4f5d-812d-9fa0fccc069d"
+    static var checksumKey: String = "191d5d3f4ff4b1340a6031e5232407f37b84ca548"
     
     func createPaymentLink(
         amount: Int,

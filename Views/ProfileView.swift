@@ -288,12 +288,12 @@ struct EditProfileView: View {
     @State private var paymentID: String = ""
     @State private var defaultCurrency: Currency = .usd
 
-    @State private var payOSClientId: String = ""
-    @State private var payOSApiKey: String = ""
-    @State private var payOSChecksumKey: String = ""
+    @State private var cassoApiKey: String = ""
+    @State private var bankID: String = ""
+    @State private var bankAccountNumber: String = ""
 
     @AppStorage("selectedAppTheme") var selectedTheme: AppTheme = .dark
-    let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "Stripe", "PayOS", "None"]
+    let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "Stripe", "PayOS", "Casso", "None"]
 
     var body: some View {
         NavigationView {
@@ -345,9 +345,14 @@ struct EditProfileView: View {
                                 if paymentType != "None" {
                                     Divider().background(Color.white.opacity(0.07)).padding(.leading, 56)
                                     
-                                    if paymentType != "PayOS" {
+                                    if paymentType != "Casso" && paymentType != "PayOS" {
                                         let placeholder = (paymentType == "PayPal") ? "Username" : (paymentType == "Stripe" ? "Payment Link URL" : "Payment ID")
                                         settingsFieldRow(icon: "link", iconColor: Theme.secondaryAccent, placeholder: placeholder, text: $paymentID)
+                                    }
+                                    if paymentType == "Casso" {
+                                        settingsFieldRow(icon: "key.fill", iconColor: Theme.successColor, placeholder: "API Key", text: $cassoApiKey)
+                                        settingsFieldRow(icon: "building.2.fill", iconColor: Theme.successColor, placeholder: "Bank ID (e.g. MB, VCB)", text: $bankID)
+                                        settingsFieldRow(icon: "number.square.fill", iconColor: Theme.successColor, placeholder: "Account Number", text: $bankAccountNumber)
                                     }
                                 }
                             }
@@ -428,9 +433,9 @@ struct EditProfileView: View {
             name = viewModel.currentUser?.name ?? ""
             paymentType = viewModel.currentUser?.paymentType ?? "None"
             paymentID = viewModel.currentUser?.paymentID ?? ""
-            payOSClientId = viewModel.currentUser?.payOSClientId ?? ""
-            payOSApiKey = viewModel.currentUser?.payOSApiKey ?? ""
-            payOSChecksumKey = viewModel.currentUser?.payOSChecksumKey ?? ""
+            cassoApiKey = viewModel.currentUser?.cassoApiKey ?? ""
+            bankID = viewModel.currentUser?.bankID ?? ""
+            bankAccountNumber = viewModel.currentUser?.bankAccountNumber ?? ""
             defaultCurrency = viewModel.defaultCurrency
         }
     }
@@ -469,18 +474,18 @@ struct EditProfileView: View {
                 name: name,
                 paymentID: finalID,
                 paymentType: finalType,
-                payOSClientId: paymentType == "PayOS" ? payOSClientId : nil,
-                payOSApiKey: paymentType == "PayOS" ? payOSApiKey : nil,
-                payOSChecksumKey: paymentType == "PayOS" ? payOSChecksumKey : nil
+                cassoApiKey: paymentType == "Casso" ? cassoApiKey : nil,
+                bankID: paymentType == "Casso" ? bankID : nil,
+                bankAccountNumber: paymentType == "Casso" ? bankAccountNumber : nil
             )
             // Call original to update local state optimistically
             viewModel.updateCurrentUser(
                 name: name,
                 paymentID: finalID,
                 paymentType: finalType,
-                payOSClientId: paymentType == "PayOS" ? payOSClientId : nil,
-                payOSApiKey: paymentType == "PayOS" ? payOSApiKey : nil,
-                payOSChecksumKey: paymentType == "PayOS" ? payOSChecksumKey : nil
+                cassoApiKey: paymentType == "Casso" ? cassoApiKey : nil,
+                bankID: paymentType == "Casso" ? bankID : nil,
+                bankAccountNumber: paymentType == "Casso" ? bankAccountNumber : nil
             )
         }
         viewModel.defaultCurrency = defaultCurrency
