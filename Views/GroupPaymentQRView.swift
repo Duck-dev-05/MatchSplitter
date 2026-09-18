@@ -135,8 +135,9 @@ struct GroupPaymentQRView: View {
                         }
                         .padding(.bottom, 30)
                     }
-        }
-    }
+            } // end VStack
+        } // end ZStack
+    } // end body
     
     // MARK: - Actions
     
