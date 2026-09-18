@@ -16,8 +16,8 @@ class SettlementViewModel: ObservableObject {
         }
     }
     
-    func calculateDebts(for group: Group) -> [(debtor: User, creditor: User, amount: Double)] {
+    func calculateDebts(for group: Group) -> [Settlement] {
         // Wrapper for SettlementService logic
-        return SettlementService.shared.calculateOptimalSettlement(for: group)
+        return SettlementService.shared.calculateSettlements(for: group)
     }
 }

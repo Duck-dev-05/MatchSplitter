@@ -369,8 +369,6 @@ class GroupViewModel: ObservableObject {
                     password: currentMember.password,
                     paymentID: paymentID.isEmpty ? nil : paymentID,
                     paymentType: paymentType,
-                    bankBin: bankBin,
-                    bankAccountName: bankAccountName,
                     payOSClientId: payOSClientId,
                     payOSApiKey: payOSApiKey,
                     payOSChecksumKey: payOSChecksumKey

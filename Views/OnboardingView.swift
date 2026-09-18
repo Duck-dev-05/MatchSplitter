@@ -65,7 +65,7 @@ struct OnboardingView: View {
                     .padding(.bottom, 40)
             }
         }
-        .background(Theme.backgroundColor.edgesIgnoringSafeArea(.all))
+        .background(Theme.backgroundGradient.edgesIgnoringSafeArea(.all))
     }
 }
 
