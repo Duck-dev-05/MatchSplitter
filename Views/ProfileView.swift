@@ -345,13 +345,7 @@ struct EditProfileView: View {
                                 if paymentType != "None" {
                                     Divider().background(Color.white.opacity(0.07)).padding(.leading, 56)
                                     
-                                    if paymentType == "PayOS" {
-                                        settingsFieldRow(icon: "person.badge.key.fill", iconColor: Theme.secondaryAccent, placeholder: "Client ID", text: $payOSClientId)
-                                        Divider().background(Color.white.opacity(0.07)).padding(.leading, 56)
-                                        settingsFieldRow(icon: "key.fill", iconColor: Theme.secondaryAccent, placeholder: "API Key", text: $payOSApiKey)
-                                        Divider().background(Color.white.opacity(0.07)).padding(.leading, 56)
-                                        settingsFieldRow(icon: "lock.fill", iconColor: Theme.secondaryAccent, placeholder: "Checksum Key", text: $payOSChecksumKey)
-                                    } else {
+                                    if paymentType != "PayOS" {
                                         let placeholder = (paymentType == "PayPal") ? "Username" : (paymentType == "Stripe" ? "Payment Link URL" : "Payment ID")
                                         settingsFieldRow(icon: "link", iconColor: Theme.secondaryAccent, placeholder: placeholder, text: $paymentID)
                                     }

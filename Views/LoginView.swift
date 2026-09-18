@@ -48,7 +48,7 @@ struct LoginView: View {
         case .registerStep1: return !name.isEmpty && !email.isEmpty && !password.isEmpty
         case .registerStep2:
             if paymentType == "PayOS" {
-                return selectedCurrency != nil && !payOSClientId.isEmpty && !payOSApiKey.isEmpty && !payOSChecksumKey.isEmpty
+                return selectedCurrency != nil
             }
             return selectedCurrency != nil && !(paymentType != "None" && paymentID.isEmpty)
         }
@@ -345,11 +345,7 @@ struct LoginView: View {
             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
 
             if paymentType != "None" {
-                if paymentType == "PayOS" {
-                    glassTextField(icon: "person.badge.key.fill", iconColor: Theme.secondaryAccent, placeholder: "Client ID", text: $payOSClientId)
-                    glassTextField(icon: "key.fill", iconColor: Theme.secondaryAccent, placeholder: "API Key", text: $payOSApiKey)
-                    glassTextField(icon: "lock.fill", iconColor: Theme.secondaryAccent, placeholder: "Checksum Key", text: $payOSChecksumKey)
-                } else {
+                if paymentType != "PayOS" {
                     glassTextField(
                         icon: "creditcard.fill",
                         iconColor: Theme.secondaryAccent,

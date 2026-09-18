@@ -40,10 +40,12 @@ class PayOSService {
     
     private init() {}
     
+    // MARK: - Global Configuration
+    static var clientId: String = "YOUR_CLIENT_ID"
+    static var apiKey: String = "YOUR_API_KEY"
+    static var checksumKey: String = "YOUR_CHECKSUM_KEY"
+    
     func createPaymentLink(
-        clientId: String,
-        apiKey: String,
-        checksumKey: String,
         amount: Int,
         description: String,
         orderCode: Int
@@ -56,7 +58,7 @@ class PayOSService {
         // Generate signature
         let signatureData = "amount=\(amount)&cancelUrl=\(cancelUrl)&description=\(description)&orderCode=\(orderCode)&returnUrl=\(returnUrl)"
         
-        let key = SymmetricKey(data: checksumKey.data(using: .utf8)!)
+        let key = SymmetricKey(data: PayOSService.checksumKey.data(using: .utf8)!)
         let hmac = HMAC<SHA256>.authenticationCode(for: signatureData.data(using: .utf8)!, using: key)
         let signature = Data(hmac).map { String(format: "%02x", $0) }.joined()
         
@@ -72,8 +74,8 @@ class PayOSService {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.addValue(clientId, forHTTPHeaderField: "x-client-id")
-        request.addValue(apiKey, forHTTPHeaderField: "x-api-key")
+        request.addValue(PayOSService.clientId, forHTTPHeaderField: "x-client-id")
+        request.addValue(PayOSService.apiKey, forHTTPHeaderField: "x-api-key")
         request.httpBody = try JSONSerialization.data(withJSONObject: parameters)
         
         let (data, _) = try await URLSession.shared.data(for: request)
@@ -87,8 +89,6 @@ class PayOSService {
     }
     
     func getPaymentInfo(
-        clientId: String,
-        apiKey: String,
         orderCode: Int
     ) async throws -> PayOSPaymentData {
         let url = URL(string: "https://api-merchant.payos.vn/v2/payment-requests/\(orderCode)")!
@@ -96,8 +96,8 @@ class PayOSService {
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.addValue(clientId, forHTTPHeaderField: "x-client-id")
-        request.addValue(apiKey, forHTTPHeaderField: "x-api-key")
+        request.addValue(PayOSService.clientId, forHTTPHeaderField: "x-client-id")
+        request.addValue(PayOSService.apiKey, forHTTPHeaderField: "x-api-key")
         
         let (data, _) = try await URLSession.shared.data(for: request)
         let response = try JSONDecoder().decode(PayOSPaymentResponse.self, from: data)

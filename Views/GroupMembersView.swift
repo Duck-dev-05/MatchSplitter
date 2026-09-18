@@ -249,13 +249,7 @@ struct AddMemberSheet: View {
     @ViewBuilder
     private var paymentDetailsSection: some View {
         if paymentType != "None" {
-            if paymentType == "PayOS" {
-                EditFieldRow(icon: "person.badge.key.fill", iconColor: Theme.secondaryAccent, placeholder: "Client ID", text: $payOSClientId)
-                Divider().background(Color.white.opacity(0.07))
-                EditFieldRow(icon: "key.fill", iconColor: Theme.secondaryAccent, placeholder: "API Key", text: $payOSApiKey)
-                Divider().background(Color.white.opacity(0.07))
-                EditFieldRow(icon: "lock.fill", iconColor: Theme.secondaryAccent, placeholder: "Checksum Key", text: $payOSChecksumKey)
-            } else {
+            if paymentType != "PayOS" {
                 EditFieldRow(icon: "creditcard.fill", iconColor: Theme.secondaryAccent, placeholder: "Payment Details / ID", text: $newPaymentID)
             }
         }
@@ -475,14 +469,7 @@ struct EditMemberView: View {
     @ViewBuilder
     private var paymentDetailsSection: some View {
         if paymentType != "None" {
-            if paymentType == "PayOS" {
-                EditFieldRow(icon: "person.badge.key.fill", iconColor: Theme.secondaryAccent, placeholder: "Client ID", text: $payOSClientId)
-                Divider().background(Color.white.opacity(0.07))
-                EditFieldRow(icon: "key.fill", iconColor: Theme.secondaryAccent, placeholder: "API Key", text: $payOSApiKey)
-                Divider().background(Color.white.opacity(0.07))
-                EditFieldRow(icon: "lock.fill", iconColor: Theme.secondaryAccent, placeholder: "Checksum Key", text: $payOSChecksumKey)
-                Divider().background(Color.white.opacity(0.07))
-            } else {
+            if paymentType != "PayOS" {
                 EditFieldRow(icon: "creditcard.fill", iconColor: Theme.secondaryAccent, placeholder: "Payment Details / ID", text: $paymentID)
                 Divider().background(Color.white.opacity(0.07))
             }

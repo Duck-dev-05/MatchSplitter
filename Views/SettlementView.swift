@@ -388,10 +388,7 @@ struct QRCodePaymentView: View {
     private func loadQR() {
         isLoadingQR = true
         qrError = nil
-            if settlement.toUser.paymentType == "PayOS",
-               let clientId = settlement.toUser.payOSClientId,
-               let apiKey = settlement.toUser.payOSApiKey,
-               let checksumKey = settlement.toUser.payOSChecksumKey {
+            if settlement.toUser.paymentType == "PayOS" {
                 Task {
                     do {
                         // Generate a unique order code less than 9007199254740991 (PayOS limit)
@@ -399,7 +396,6 @@ struct QRCodePaymentView: View {
                         let orderCode = Int(Date().timeIntervalSince1970) + Int.random(in: 1...1000)
                         let info = "MatchSplitter"
                         let data = try await PayOSService.shared.createPaymentLink(
-                            clientId: clientId, apiKey: apiKey, checksumKey: checksumKey,
                             amount: Int(amountToPay), description: info, orderCode: orderCode
                         )
                         
@@ -414,7 +410,7 @@ struct QRCodePaymentView: View {
                         var isPaid = false
                         for _ in 0..<120 { // 120 * 3 = 6 minutes timeout
                             try await Task.sleep(nanoseconds: 3_000_000_000) // 3 seconds
-                            let info = try await PayOSService.shared.getPaymentInfo(clientId: clientId, apiKey: apiKey, orderCode: orderCode)
+                            let info = try await PayOSService.shared.getPaymentInfo(orderCode: orderCode)
                             if info.status == "PAID" {
                                 isPaid = true
                                 break

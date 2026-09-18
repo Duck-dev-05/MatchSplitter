@@ -13,12 +13,7 @@ struct GroupPaymentQRView: View {
     @State private var isLoadingQR: Bool = false
     @State private var qrError: String? = nil
     
-    // Configuration states
-    @State private var payOSClientId: String = ""
-    @State private var payOSApiKey: String = ""
-    @State private var payOSChecksumKey: String = ""
-    @State private var isConfigured: Bool = false
-    
+    // Payment amount
     // Payment amount
     @State private var amountString: String = ""
     
@@ -39,31 +34,14 @@ struct GroupPaymentQRView: View {
                 .padding(.horizontal, 24)
                 .padding(.top, 20)
                 
-                Text(isConfigured ? "Pay Group Fund" : "Setup Group Payment")
+                Text("Pay Group Fund")
                     .font(.largeTitle)
                     .fontWeight(.heavy)
                     .foregroundColor(.white)
                     .neonGlow(Theme.primaryAccent, radius: 4)
                     .padding(.top, 10)
                 
-                if !isConfigured {
-                    Text("Configure your PayOS credentials to receive group funds.")
-                        .multilineTextAlignment(.center)
-                        .foregroundColor(.white.opacity(0.6))
-                        .padding(.horizontal, 40)
-                    
-                    configurationForm
-                        .padding(.horizontal, 20)
-                    
-                    Spacer()
-                    
-                    GradientButton(label: "Save Configuration", isEnabled: !payOSClientId.isEmpty && !payOSApiKey.isEmpty && !payOSChecksumKey.isEmpty) {
-                        saveConfiguration()
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 30)
-                } else {
-                    if qrPayload.isEmpty && qrImageBase64 == nil {
+                if qrPayload.isEmpty && qrImageBase64 == nil {
                         Text("Enter the amount you want to add to \(group.name).")
                             .multilineTextAlignment(.center)
                             .foregroundColor(.gray)
@@ -157,66 +135,10 @@ struct GroupPaymentQRView: View {
                         }
                         .padding(.bottom, 30)
                     }
-                }
-            }
         }
-        .onAppear {
-            payOSClientId = group.payOSClientId ?? ""
-            payOSApiKey = group.payOSApiKey ?? ""
-            payOSChecksumKey = group.payOSChecksumKey ?? ""
-            
-            if !payOSClientId.isEmpty && !payOSApiKey.isEmpty && !payOSChecksumKey.isEmpty {
-                isConfigured = true
-            }
-        }
-    }
-    
-    // MARK: - Configuration Form
-    private var configurationForm: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 16) {
-                IconBadge(systemName: "person.badge.key.fill", color: Theme.secondaryAccent)
-                TextField("Client ID", text: $payOSClientId)
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.white)
-            }
-            .padding(20)
-            
-            Divider().background(Color.white.opacity(0.08))
-            
-            HStack(spacing: 16) {
-                IconBadge(systemName: "key.fill", color: Theme.secondaryAccent)
-                TextField("API Key", text: $payOSApiKey)
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.white)
-            }
-            .padding(20)
-            
-            Divider().background(Color.white.opacity(0.08))
-            
-            HStack(spacing: 16) {
-                IconBadge(systemName: "lock.fill", color: Theme.secondaryAccent)
-                TextField("Checksum Key", text: $payOSChecksumKey)
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.white)
-            }
-            .padding(20)
-        }
-        .premiumCard(cornerRadius: 24, accentColor: Theme.primaryAccent)
     }
     
     // MARK: - Actions
-    private func saveConfiguration() {
-        viewModel.updateGroup(
-            id: group.id,
-            name: group.name,
-            currency: group.currency,
-            payOSClientId: payOSClientId,
-            payOSApiKey: payOSApiKey,
-            payOSChecksumKey: payOSChecksumKey
-        )
-        isConfigured = true
-    }
     
     private func generateQR() {
         guard let amount = Int(amountString), amount > 0 else { return }
@@ -229,9 +151,6 @@ struct GroupPaymentQRView: View {
                 let orderCode = Int(Date().timeIntervalSince1970)
                 
                 let paymentData = try await PayOSService.shared.createPaymentLink(
-                    clientId: payOSClientId,
-                    apiKey: payOSApiKey,
-                    checksumKey: payOSChecksumKey,
                     amount: amount,
                     description: description,
                     orderCode: orderCode

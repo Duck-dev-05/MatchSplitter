@@ -103,45 +103,7 @@ struct GroupSettingsView: View {
                         }
                         .glassCard(cornerRadius: 24)
 
-                        // Group Payment Info (PayOS)
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("GROUP PAYMENT QR (PAYOS)")
-                                .kerning(1.2)
-                                .font(.system(size: 11, weight: .bold))
-                                .foregroundColor(.white.opacity(0.50))
-                                .padding(.leading, 8)
-                            
-                            VStack(spacing: 0) {
-                                HStack(spacing: 16) {
-                                    IconBadge(systemName: "person.badge.key.fill", color: Theme.secondaryAccent)
-                                    TextField("Client ID", text: $payOSClientId)
-                                        .font(.system(size: 16, weight: .medium))
-                                        .foregroundColor(.white)
-                                }
-                                .padding(20)
-                                
-                                Divider().background(Color.white.opacity(0.08))
-                                
-                                HStack(spacing: 16) {
-                                    IconBadge(systemName: "key.fill", color: Theme.secondaryAccent)
-                                    TextField("API Key", text: $payOSApiKey)
-                                        .font(.system(size: 16, weight: .medium))
-                                        .foregroundColor(.white)
-                                }
-                                .padding(20)
-                                
-                                Divider().background(Color.white.opacity(0.08))
-                                
-                                HStack(spacing: 16) {
-                                    IconBadge(systemName: "lock.fill", color: Theme.secondaryAccent)
-                                    TextField("Checksum Key", text: $payOSChecksumKey)
-                                        .font(.system(size: 16, weight: .medium))
-                                        .foregroundColor(.white)
-                                }
-                                .padding(20)
-                            }
-                            .premiumCard(cornerRadius: 24, accentColor: Theme.secondaryAccent)
-                        }
+
 
                         // Export Button
                         Button(action: {
