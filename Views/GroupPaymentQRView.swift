@@ -210,6 +210,7 @@ struct GroupPaymentQRView: View {
         viewModel.updateGroup(
             id: group.id,
             name: group.name,
+            currency: group.currency,
             payOSClientId: payOSClientId,
             payOSApiKey: payOSApiKey,
             payOSChecksumKey: payOSChecksumKey
