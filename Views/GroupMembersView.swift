@@ -198,8 +198,8 @@ struct AddMemberSheet: View {
                                 .background(Theme.primaryGradient)
                                 .clipShape(Capsule())
                             }
-                            .disabled(newName.isEmpty)
-                            .opacity(newName.isEmpty ? 0.5 : 1.0)
+                            .disabled(!isFormValid)
+                            .opacity(isFormValid ? 1.0 : 0.5)
                         }
 
                         // Section: Existing Friends
@@ -307,6 +307,16 @@ struct AddMemberSheet: View {
                 print("Lookup failed: \(error)")
             }
         }
+    }
+    
+    private var isFormValid: Bool {
+        if newName.isEmpty { return false }
+        if paymentType == "PayOS" {
+            return !bankID.isEmpty && !bankAccountNumber.isEmpty && !bankAccountName.isEmpty
+        } else if paymentType != "None" {
+            return !newPaymentID.isEmpty
+        }
+        return true
     }
 }
 
@@ -438,7 +448,7 @@ struct EditMemberView: View {
                 SheetHeader(
                     title: "Edit Member",
                     trailingLabel: "Save",
-                    trailingEnabled: !name.isEmpty,
+                    trailingEnabled: isFormValid,
                     onLeading: { presentationMode.wrappedValue.dismiss() },
                     onTrailing: {
                         let finalType = paymentType == "None" ? nil : paymentType
@@ -579,6 +589,16 @@ struct EditMemberView: View {
                 print("Lookup failed: \(error)")
             }
         }
+    }
+    
+    private var isFormValid: Bool {
+        if name.isEmpty { return false }
+        if paymentType == "PayOS" {
+            return !bankID.isEmpty && !bankAccountNumber.isEmpty && !bankAccountName.isEmpty
+        } else if paymentType != "None" {
+            return !paymentID.isEmpty
+        }
+        return true
     }
 }
 

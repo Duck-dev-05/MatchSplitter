@@ -454,8 +454,9 @@ struct EditProfileView: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Save") { saveProfile() }
                         .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(name.isEmpty ? .white.opacity(0.3) : Theme.primaryAccent)
-                        .disabled(name.isEmpty)
+                        .foregroundColor(isFormValid ? Theme.primaryAccent : .white.opacity(0.3))
+                        .disabled(!isFormValid)
+                }
                 }
             }
         }
@@ -471,6 +472,16 @@ struct EditProfileView: View {
             bankAccountNumber = viewModel.currentUser?.bankAccountNumber ?? ""
             defaultCurrency = viewModel.defaultCurrency
         }
+    }
+    
+    private var isFormValid: Bool {
+        if name.isEmpty { return false }
+        if paymentType == "PayOS" {
+            return !bankID.isEmpty && !bankAccountNumber.isEmpty && !bankAccountName.isEmpty
+        } else if paymentType != "None" {
+            return !paymentID.isEmpty
+        }
+        return true
     }
     
     private func settingsSection<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
