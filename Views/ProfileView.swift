@@ -294,6 +294,13 @@ struct EditProfileView: View {
 
     @AppStorage("selectedAppTheme") var selectedTheme: AppTheme = .dark
     let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "Stripe", "PayOS", "None"]
+    
+    var availablePaymentTypes: [String] {
+        if defaultCurrency == .vnd {
+            return ["PayOS", "None"]
+        }
+        return paymentTypes
+    }
 
     var body: some View {
         NavigationView {
@@ -326,7 +333,7 @@ struct EditProfileView: View {
                                         .foregroundColor(.white)
                                     Spacer()
                                     Menu {
-                                        ForEach(paymentTypes, id: \.self) { type in
+                                        ForEach(availablePaymentTypes, id: \.self) { type in
                                             Button(type) { withAnimation { paymentType = type } }
                                         }
                                     } label: {
@@ -398,8 +405,16 @@ struct EditProfileView: View {
                                 }
                                 .padding(.horizontal, 18)
                                 .padding(.vertical, 14)
-                                
-                                Divider().background(Color.white.opacity(0.07)).padding(.leading, 56)
+                            }
+                            .onChange(of: defaultCurrency) { newCurrency in
+                                if newCurrency == .vnd {
+                                    if paymentType != "PayOS" && paymentType != "None" {
+                                        paymentType = "PayOS"
+                                    }
+                                }
+                            }
+                            
+                            Divider().background(Color.white.opacity(0.07)).padding(.leading, 56)
                                 
                                 HStack(spacing: 16) {
                                     IconBadge(systemName: "paintpalette.fill", color: Theme.successColor)

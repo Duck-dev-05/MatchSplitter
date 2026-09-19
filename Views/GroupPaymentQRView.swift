@@ -164,8 +164,7 @@ struct GroupPaymentQRView: View {
         qrError = nil
         
         Task {
-            do {
-                if let creator = group.members.first(where: { $0.id == group.creatorID && $0.paymentType == "PayOS" }) {
+            if let creator = group.members.first(where: { $0.id == group.creatorID && $0.paymentType == "PayOS" }) {
                     let orderCode = "\(Int(Date().timeIntervalSince1970) + Int.random(in: 1...1000))"
                     let info = orderCode
                     let bankID = creator.bankID ?? ""
@@ -199,11 +198,6 @@ struct GroupPaymentQRView: View {
                         self.qrError = "No payment gateway configured for group."
                         self.isLoadingQR = false
                     }
-                }
-            } catch {
-                await MainActor.run {
-                    self.qrError = "Failed to load payment QR: \(error.localizedDescription)"
-                    self.isLoadingQR = false
                 }
             }
         }

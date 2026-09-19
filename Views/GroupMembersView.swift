@@ -87,6 +87,13 @@ struct AddMemberSheet: View {
 
     let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "PayOS", "None"]
     
+    var availablePaymentTypes: [String] {
+        if group.currency == .vnd {
+            return ["PayOS", "None"]
+        }
+        return paymentTypes
+    }
+    
     var availableFriends: [User] {
         viewModel.getFriendsNotInGroup(group: group)
     }
@@ -133,7 +140,7 @@ struct AddMemberSheet: View {
                                 HStack(spacing: 14) {
                                     IconBadge(systemName: "building.columns.fill", color: Theme.secondaryAccent)
                                     Menu {
-                                        ForEach(paymentTypes, id: \.self) { type in
+                                        ForEach(availablePaymentTypes, id: \.self) { type in
                                             Button(type) {
                                                 paymentType = type
                                             }
@@ -243,7 +250,13 @@ struct AddMemberSheet: View {
             )
             .ignoresSafeArea()
         }
+        .onAppear {
+            if group.currency == .vnd && (paymentType != "PayOS" && paymentType != "None") {
+                paymentType = "PayOS"
+            }
+        }
     }
+
 
     @ViewBuilder
     private var paymentDetailsSection: some View {
@@ -390,6 +403,13 @@ struct EditMemberView: View {
     @State private var showingQRScanner = false
 
     let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "PayOS", "None"]
+    
+    var availablePaymentTypes: [String] {
+        if group.currency == .vnd {
+            return ["PayOS", "None"]
+        }
+        return paymentTypes
+    }
 
     var body: some View {
         ZStack {
@@ -443,7 +463,7 @@ struct EditMemberView: View {
                             HStack(spacing: 14) {
                                 IconBadge(systemName: "building.columns.fill", color: Theme.secondaryAccent)
                                 Menu {
-                                    ForEach(paymentTypes, id: \.self) { type in
+                                    ForEach(availablePaymentTypes, id: \.self) { type in
                                         Button(type) {
                                             paymentType = type
                                         }
@@ -484,6 +504,9 @@ struct EditMemberView: View {
         .onAppear {
             name = member.name
             paymentType = member.paymentType ?? "None"
+            if group.currency == .vnd && (paymentType != "PayOS" && paymentType != "None") {
+                paymentType = "PayOS"
+            }
             paymentID = member.paymentID ?? ""
             cassoApiKey = member.cassoApiKey ?? ""
             bankID = member.bankID ?? ""

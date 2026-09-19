@@ -38,6 +38,12 @@ struct LoginView: View {
     }
 
     let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "PayOS", "None"]
+    var availablePaymentTypes: [String] {
+        if selectedCurrency == .vnd {
+            return ["PayOS", "None"]
+        }
+        return paymentTypes
+    }
 
     var isModal: Bool = true
 
@@ -322,7 +328,7 @@ struct LoginView: View {
                 HStack(spacing: 12) {
                     IconBadge(systemName: "building.columns.fill", color: Theme.secondaryAccent, size: 36, iconSize: 14)
                     Menu {
-                        ForEach(paymentTypes, id: \.self) { type in
+                        ForEach(availablePaymentTypes, id: \.self) { type in
                             Button(type) { 
                                 paymentType = type 
                             }
@@ -408,6 +414,13 @@ struct LoginView: View {
             }
             .background(Color.white.opacity(0.12))
             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .onChange(of: selectedCurrency) { newCurrency in
+                if newCurrency == .vnd {
+                    if paymentType != "PayOS" && paymentType != "None" {
+                        paymentType = "PayOS"
+                    }
+                }
+            }
 
             GradientButton(label: "Finish & Register", isEnabled: isStepValid, action: handleRegister)
                 .padding(.top, 6)
