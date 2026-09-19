@@ -23,7 +23,7 @@ struct MatchSplitterApp: App {
                     if !hasSeenOnboarding {
                         OnboardingView()
                     } else if groupViewModel.currentUser == nil {
-                        LandingView()
+                        LoginView(isModal: false)
                     } else {
                         MainTabView()
                     }
