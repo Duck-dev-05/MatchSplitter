@@ -457,7 +457,6 @@ struct EditProfileView: View {
                         .foregroundColor(isFormValid ? Theme.primaryAccent : .white.opacity(0.3))
                         .disabled(!isFormValid)
                 }
-                }
             }
         }
         .preferredColorScheme(.dark)
