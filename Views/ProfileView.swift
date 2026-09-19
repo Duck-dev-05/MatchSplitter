@@ -291,6 +291,7 @@ struct EditProfileView: View {
     @State private var bankAccountName: String = ""
     @State private var bankID: String = ""
     @State private var bankAccountNumber: String = ""
+    @State private var lookupTask: Task<Void, Never>?
 
     @AppStorage("selectedAppTheme") var selectedTheme: AppTheme = .dark
     let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "Stripe", "PayOS", "None"]
@@ -459,6 +460,8 @@ struct EditProfileView: View {
             }
         }
         .preferredColorScheme(.dark)
+        .onChange(of: bankID) { _ in checkAccountName() }
+        .onChange(of: bankAccountNumber) { _ in checkAccountName() }
         .onAppear {
             name = viewModel.currentUser?.name ?? ""
             paymentType = viewModel.currentUser?.paymentType ?? "None"
@@ -498,6 +501,16 @@ struct EditProfileView: View {
     private func saveProfile() {
         let finalType = paymentType == "None" ? nil : paymentType
         let finalID = paymentType == "None" ? "" : paymentID
+        
+        viewModel.updateCurrentUser(
+            name: name,
+            paymentID: finalID,
+            paymentType: finalType,
+            bankAccountName: paymentType == "PayOS" ? bankAccountName : nil,
+            bankID: paymentType == "PayOS" ? bankID : nil,
+            bankAccountNumber: paymentType == "PayOS" ? bankAccountNumber : nil
+        )
+        
         if let user = viewModel.currentUser {
             profileViewModel.updateProfile(
                 user: user,
@@ -508,17 +521,25 @@ struct EditProfileView: View {
                 bankID: paymentType == "PayOS" ? bankID : nil,
                 bankAccountNumber: paymentType == "PayOS" ? bankAccountNumber : nil
             )
-            // Call original to update local state optimistically
-            viewModel.updateCurrentUser(
-                name: name,
-                paymentID: finalID,
-                paymentType: finalType,
-                bankAccountName: paymentType == "PayOS" ? bankAccountName : nil,
-                bankID: paymentType == "PayOS" ? bankID : nil,
-                bankAccountNumber: paymentType == "PayOS" ? bankAccountNumber : nil
-            )
         }
+        
         viewModel.defaultCurrency = defaultCurrency
         presentationMode.wrappedValue.dismiss()
+    }
+    
+    private func checkAccountName() {
+        guard !bankID.isEmpty, !bankAccountNumber.isEmpty else { return }
+        lookupTask?.cancel()
+        lookupTask = Task {
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            guard !Task.isCancelled else { return }
+            if let name = try? await CassoService.shared.lookupAccountName(bin: bankID, accountNumber: bankAccountNumber) {
+                await MainActor.run {
+                    if self.bankAccountName.isEmpty || self.bankAccountName != name {
+                        self.bankAccountName = name
+                    }
+                }
+            }
+        }
     }
 }

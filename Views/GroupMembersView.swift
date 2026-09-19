@@ -85,6 +85,7 @@ struct AddMemberSheet: View {
     @State private var bankAccountName: String = ""
     @State private var bankID: String = ""
     @State private var bankAccountNumber: String = ""
+    @State private var lookupTask: Task<Void, Never>?
 
     let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "PayOS", "None"]
     
@@ -251,6 +252,8 @@ struct AddMemberSheet: View {
             )
             .ignoresSafeArea()
         }
+        .onChange(of: bankID) { _ in checkAccountName() }
+        .onChange(of: bankAccountNumber) { _ in checkAccountName() }
         .onAppear {
             if group.currency == .vnd && (paymentType != "PayOS" && paymentType != "None") {
                 paymentType = "PayOS"
@@ -292,6 +295,22 @@ struct AddMemberSheet: View {
                 .padding(.vertical, 12)
                 
                 EditFieldRow(icon: "number.square.fill", iconColor: Theme.successColor, placeholder: "Account Number", text: $bankAccountNumber)
+            }
+        }
+    }
+    
+    private func checkAccountName() {
+        guard !bankID.isEmpty, !bankAccountNumber.isEmpty else { return }
+        lookupTask?.cancel()
+        lookupTask = Task {
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            guard !Task.isCancelled else { return }
+            if let name = try? await CassoService.shared.lookupAccountName(bin: bankID, accountNumber: bankAccountNumber) {
+                await MainActor.run {
+                    if self.bankAccountName.isEmpty || self.bankAccountName != name {
+                        self.bankAccountName = name
+                    }
+                }
             }
         }
     }
@@ -401,6 +420,7 @@ struct EditMemberView: View {
     @State private var bankAccountName: String = ""
     @State private var bankID: String = ""
     @State private var bankAccountNumber: String = ""
+    @State private var lookupTask: Task<Void, Never>?
     
     @State private var showingQRScanner = false
 
@@ -503,6 +523,8 @@ struct EditMemberView: View {
             )
             .ignoresSafeArea()
         }
+        .onChange(of: bankID) { _ in checkAccountName() }
+        .onChange(of: bankAccountNumber) { _ in checkAccountName() }
         .onAppear {
             name = member.name
             paymentType = member.paymentType ?? "None"
@@ -551,6 +573,22 @@ struct EditMemberView: View {
                 
                 EditFieldRow(icon: "number.square.fill", iconColor: Theme.successColor, placeholder: "Account Number", text: $bankAccountNumber)
                 Divider().background(Color.white.opacity(0.07))
+            }
+        }
+    }
+    
+    private func checkAccountName() {
+        guard !bankID.isEmpty, !bankAccountNumber.isEmpty else { return }
+        lookupTask?.cancel()
+        lookupTask = Task {
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            guard !Task.isCancelled else { return }
+            if let name = try? await CassoService.shared.lookupAccountName(bin: bankID, accountNumber: bankAccountNumber) {
+                await MainActor.run {
+                    if self.bankAccountName.isEmpty || self.bankAccountName != name {
+                        self.bankAccountName = name
+                    }
+                }
             }
         }
     }

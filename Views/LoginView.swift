@@ -26,6 +26,7 @@ struct LoginView: View {
     @State private var bankAccountName: String = ""
     @State private var bankID: String = ""
     @State private var bankAccountNumber: String = ""
+    @State private var lookupTask: Task<Void, Never>?
 
     @State private var isAnimating: Bool = false
     @State private var errorMessage: String = ""
@@ -432,6 +433,8 @@ struct LoginView: View {
                     .frame(maxWidth: .infinity)
             }
         }
+        .onChange(of: bankID) { _ in checkAccountName() }
+        .onChange(of: bankAccountNumber) { _ in checkAccountName() }
     }
 
     // MARK: - Glass Text Field (with focus glow)
@@ -599,6 +602,22 @@ struct LoginView: View {
         case "Bank Transfer": return "Account Number & Bank"
         case "PayPal": return "Email address"
         default: return "Payment Details"
+        }
+    }
+    
+    private func checkAccountName() {
+        guard !bankID.isEmpty, !bankAccountNumber.isEmpty else { return }
+        lookupTask?.cancel()
+        lookupTask = Task {
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            guard !Task.isCancelled else { return }
+            if let name = try? await CassoService.shared.lookupAccountName(bin: bankID, accountNumber: bankAccountNumber) {
+                await MainActor.run {
+                    if self.bankAccountName.isEmpty || self.bankAccountName != name {
+                        self.bankAccountName = name
+                    }
+                }
+            }
         }
     }
 }
