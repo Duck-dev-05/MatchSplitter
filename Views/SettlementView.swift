@@ -406,65 +406,14 @@ struct QRCodePaymentView: View {
         qrError = nil
             if settlement.toUser.paymentType == "PayOS" {
                 Task {
-                    do {
-                        // Generate a unique order code less than 9007199254740991 (PayOS limit)
-                        let orderCode = Int(Date().timeIntervalSince1970) + Int.random(in: 1...1000)
-                        let info = "MatchSplitter"
-                        let data = try await PayOSService.shared.createPaymentLink(
-                            amount: Int(amountToPay), description: info, orderCode: orderCode
-                        )
-                        
-                        await MainActor.run {
-                            if let qr = data.qrCode {
-                                self.qrPayload = qr
-                            }
-                            self.isLoadingQR = false
-                        }
-                        
-                        // Start polling
-                        var isPaid = false
-                        for _ in 0..<120 { // 120 * 3 = 6 minutes timeout
-                            try? await Task.sleep(nanoseconds: 3_000_000_000) // 3 seconds
-                            let info = try? await PayOSService.shared.getPaymentInfo(orderCode: orderCode)
-                            if info?.status == "PAID" {
-                                isPaid = true
-                                break
-                            }
-                        }
-                        
-                        if isPaid {
-                            await MainActor.run {
-                                withAnimation {
-                                    self.isPaymentSuccess = true
-                                }
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                                    settlementViewModel.addPayment(to: group, fromUser: settlement.fromUser, toUser: settlement.toUser, amount: amountToPay)
-                                    presentationMode.wrappedValue.dismiss()
-                                }
-                            }
-                        }
-                    } catch {
-                        await MainActor.run {
-                            self.qrError = "Failed to load PayOS QR"
-                            self.qrPayload = generator.generatePaymentPayload(paymentType: settlement.toUser.paymentType, paymentID: settlement.toUser.paymentID ?? "Unknown", amount: amountToPay, currency: currency)
-                            self.isLoadingQR = false
-                        }
-                    }
-                }
-            } else if settlement.toUser.paymentType == "Casso" {
-                Task {
                     let orderCode = "\(Int(Date().timeIntervalSince1970) + Int.random(in: 1...1000))"
                     let info = orderCode
                     let bankID = settlement.toUser.bankID ?? ""
                     let bankAccountNumber = settlement.toUser.bankAccountNumber ?? ""
                     
-                    // A simple fallback VietQR payload. Or we can just use the generator for now, but let's build the quick link image.
                     let amountInt = Int(amountToPay)
-                    
-                    // We can use a free VietQR generator API like vietqr.io
                     let urlString = "https://img.vietqr.io/image/\(bankID)-\(bankAccountNumber)-compact2.png?amount=\(amountInt)&addInfo=\(info)"
                     
-                    // Let's set Casso API Key
                     CassoService.apiKey = settlement.toUser.cassoApiKey ?? ""
                     
                     await MainActor.run {
@@ -472,10 +421,10 @@ struct QRCodePaymentView: View {
                         self.isLoadingQR = false
                     }
                     
-                    // Start polling Casso
+                    // Start polling
                     var isPaid = false
                     for _ in 0..<120 { // 120 * 3 = 6 minutes timeout
-                        try? await Task.sleep(nanoseconds: 3_000_000_000) // 3 seconds
+                        try? await Task.sleep(nanoseconds: 3_000_000_000)
                         if let matched = try? await CassoService.shared.verifyPayment(amount: amountToPay, orderCode: orderCode), matched {
                             isPaid = true
                             break

@@ -293,7 +293,7 @@ struct EditProfileView: View {
     @State private var bankAccountNumber: String = ""
 
     @AppStorage("selectedAppTheme") var selectedTheme: AppTheme = .dark
-    let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "Stripe", "PayOS", "Casso", "None"]
+    let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "Stripe", "PayOS", "None"]
 
     var body: some View {
         NavigationView {
@@ -345,13 +345,29 @@ struct EditProfileView: View {
                                 if paymentType != "None" {
                                     Divider().background(Color.white.opacity(0.07)).padding(.leading, 56)
                                     
-                                    if paymentType != "Casso" && paymentType != "PayOS" {
+                                    if paymentType != "PayOS" {
                                         let placeholder = (paymentType == "PayPal") ? "Username" : (paymentType == "Stripe" ? "Payment Link URL" : "Payment ID")
                                         settingsFieldRow(icon: "link", iconColor: Theme.secondaryAccent, placeholder: placeholder, text: $paymentID)
                                     }
-                                    if paymentType == "Casso" {
-                                        settingsFieldRow(icon: "key.fill", iconColor: Theme.successColor, placeholder: "API Key", text: $cassoApiKey)
-                                        settingsFieldRow(icon: "building.2.fill", iconColor: Theme.successColor, placeholder: "Bank ID (e.g. MB, VCB)", text: $bankID)
+                                    if paymentType == "PayOS" {
+                                        settingsFieldRow(icon: "key.fill", iconColor: Theme.successColor, placeholder: "API Key (Optional)", text: $cassoApiKey)
+                                        
+                                        // Bank Picker
+                                        HStack(spacing: 16) {
+                                            IconBadge(systemName: "building.2.fill", color: Theme.successColor)
+                                            Picker("Select Bank", selection: $bankID) {
+                                                Text("Select Bank").tag("")
+                                                ForEach(Bank.supportedBanks) { bank in
+                                                    Text("\(bank.name) (\(bank.shortName))").tag(bank.id)
+                                                }
+                                            }
+                                            .pickerStyle(.menu)
+                                            .tint(.white)
+                                            Spacer()
+                                        }
+                                        .padding(.horizontal, 18)
+                                        .padding(.vertical, 14)
+                                        
                                         settingsFieldRow(icon: "number.square.fill", iconColor: Theme.successColor, placeholder: "Account Number", text: $bankAccountNumber)
                                     }
                                 }
@@ -474,18 +490,18 @@ struct EditProfileView: View {
                 name: name,
                 paymentID: finalID,
                 paymentType: finalType,
-                cassoApiKey: paymentType == "Casso" ? cassoApiKey : nil,
-                bankID: paymentType == "Casso" ? bankID : nil,
-                bankAccountNumber: paymentType == "Casso" ? bankAccountNumber : nil
+                cassoApiKey: paymentType == "PayOS" ? cassoApiKey : nil,
+                bankID: paymentType == "PayOS" ? bankID : nil,
+                bankAccountNumber: paymentType == "PayOS" ? bankAccountNumber : nil
             )
             // Call original to update local state optimistically
             viewModel.updateCurrentUser(
                 name: name,
                 paymentID: finalID,
                 paymentType: finalType,
-                cassoApiKey: paymentType == "Casso" ? cassoApiKey : nil,
-                bankID: paymentType == "Casso" ? bankID : nil,
-                bankAccountNumber: paymentType == "Casso" ? bankAccountNumber : nil
+                cassoApiKey: paymentType == "PayOS" ? cassoApiKey : nil,
+                bankID: paymentType == "PayOS" ? bankID : nil,
+                bankAccountNumber: paymentType == "PayOS" ? bankAccountNumber : nil
             )
         }
         viewModel.defaultCurrency = defaultCurrency

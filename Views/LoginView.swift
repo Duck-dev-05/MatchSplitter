@@ -37,7 +37,7 @@ struct LoginView: View {
         case email, password, name, paymentID
     }
 
-    let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "PayOS", "Casso", "None"]
+    let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "PayOS", "None"]
 
     var isModal: Bool = true
 
@@ -47,7 +47,7 @@ struct LoginView: View {
         case .login:         return !email.isEmpty && !password.isEmpty
         case .registerStep1: return !name.isEmpty && !email.isEmpty && !password.isEmpty
         case .registerStep2:
-            if paymentType == "Casso" {
+            if paymentType == "PayOS" {
                 return selectedCurrency != nil && !cassoApiKey.isEmpty && !bankID.isEmpty && !bankAccountNumber.isEmpty
             }
             return selectedCurrency != nil && !(paymentType != "None" && paymentID.isEmpty)
@@ -345,7 +345,7 @@ struct LoginView: View {
             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
 
             if paymentType != "None" {
-                if paymentType != "Casso" && paymentType != "PayOS" {
+                if paymentType != "PayOS" {
                     glassTextField(
                         icon: "creditcard.fill",
                         iconColor: Theme.secondaryAccent,
@@ -353,9 +353,28 @@ struct LoginView: View {
                         text: $paymentID
                     )
                 }
-                if paymentType == "Casso" {
+                if paymentType == "PayOS" {
                     glassTextField(icon: "key.fill", iconColor: Theme.successColor, placeholder: "API Key", text: $cassoApiKey)
-                    glassTextField(icon: "building.2.fill", iconColor: Theme.successColor, placeholder: "Bank ID", text: $bankID)
+                    
+                    // Bank Picker
+                    HStack(spacing: 16) {
+                        IconBadge(systemName: "building.2.fill", color: Theme.successColor)
+                        Picker("Select Bank", selection: $bankID) {
+                            Text("Select Bank").tag("")
+                            ForEach(Bank.supportedBanks) { bank in
+                                Text("\(bank.name) (\(bank.shortName))").tag(bank.id)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .tint(.white)
+                        Spacer()
+                    }
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 14)
+                    .background(Color.white.opacity(0.06))
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(Color.white.opacity(0.1), lineWidth: 1))
+                    
                     glassTextField(icon: "number.square.fill", iconColor: Theme.successColor, placeholder: "Account Number", text: $bankAccountNumber)
                 }
             }
@@ -526,9 +545,9 @@ struct LoginView: View {
         let finalType = paymentType == "None" ? nil : paymentType
         let finalID = paymentType == "None" ? "" : paymentID
         
-        let finalCassoApiKey = paymentType == "Casso" ? cassoApiKey : nil
-        let finalBankID = paymentType == "Casso" ? bankID : nil
-        let finalBankAccountNumber = paymentType == "Casso" ? bankAccountNumber : nil
+        let finalCassoApiKey = paymentType == "PayOS" ? cassoApiKey : nil
+        let finalBankID = paymentType == "PayOS" ? bankID : nil
+        let finalBankAccountNumber = paymentType == "PayOS" ? bankAccountNumber : nil
 
         let newUser = User(
             name: name, 

@@ -165,42 +165,7 @@ struct GroupPaymentQRView: View {
         
         Task {
             do {
-                if group.members.contains(where: { $0.id == group.creatorID && $0.paymentType == "PayOS" }) {
-                    let description = "Fund for \(group.name.prefix(15))"
-                    let orderCode = Int(Date().timeIntervalSince1970)
-                    
-                    let paymentData = try await PayOSService.shared.createPaymentLink(
-                        amount: amount,
-                        description: description,
-                        orderCode: orderCode
-                    )
-                    
-                    await MainActor.run {
-                        if let qrBase64 = paymentData.qrCode {
-                            self.qrImageBase64 = qrBase64.replacingOccurrences(of: "data:image/png;base64,", with: "")
-                        } else if let checkoutUrl = paymentData.checkoutUrl {
-                            self.qrPayload = checkoutUrl
-                        } else {
-                            self.qrError = "Invalid PayOS response"
-                        }
-                        self.isLoadingQR = false
-                    }
-                    
-                    // Start polling PayOS
-                    var isPaid = false
-                    for _ in 0..<120 { // 6 mins
-                        try? await Task.sleep(nanoseconds: 3_000_000_000)
-                        if let info = try? await PayOSService.shared.getPaymentInfo(orderCode: orderCode), info.status == "PAID" {
-                            isPaid = true
-                            break
-                        }
-                    }
-                    if isPaid {
-                        await MainActor.run {
-                            self.presentationMode.wrappedValue.dismiss()
-                        }
-                    }
-                } else if let cassoKey = group.cassoApiKey, let creator = group.members.first(where: { $0.id == group.creatorID }) {
+                if let creator = group.members.first(where: { $0.id == group.creatorID && $0.paymentType == "PayOS" }) {
                     let orderCode = "\(Int(Date().timeIntervalSince1970) + Int.random(in: 1...1000))"
                     let info = orderCode
                     let bankID = creator.bankID ?? ""
@@ -208,7 +173,7 @@ struct GroupPaymentQRView: View {
                     
                     let urlString = "https://img.vietqr.io/image/\(bankID)-\(bankAccountNumber)-compact2.png?amount=\(amount)&addInfo=\(info)"
                     
-                    CassoService.apiKey = cassoKey
+                    CassoService.apiKey = creator.cassoApiKey ?? ""
                     
                     await MainActor.run {
                         self.qrPayload = urlString

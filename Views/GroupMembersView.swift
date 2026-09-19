@@ -85,7 +85,7 @@ struct AddMemberSheet: View {
     @State private var bankID: String = ""
     @State private var bankAccountNumber: String = ""
 
-    let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "PayOS", "Casso", "None"]
+    let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "PayOS", "None"]
     
     var availableFriends: [User] {
         viewModel.getFriendsNotInGroup(group: group)
@@ -165,9 +165,9 @@ struct AddMemberSheet: View {
                                             name: newName.trimmingCharacters(in: .whitespacesAndNewlines), 
                                             paymentID: finalID, 
                                             paymentType: finalType,
-                                            cassoApiKey: paymentType == "Casso" ? cassoApiKey : nil,
-                                            bankID: paymentType == "Casso" ? bankID : nil,
-                                            bankAccountNumber: paymentType == "Casso" ? bankAccountNumber : nil
+                                            cassoApiKey: paymentType == "PayOS" ? cassoApiKey : nil,
+                                            bankID: paymentType == "PayOS" ? bankID : nil,
+                                            bankAccountNumber: paymentType == "PayOS" ? bankAccountNumber : nil
                                         )
                                         newName = ""
                                         newPaymentID = ""
@@ -248,12 +248,35 @@ struct AddMemberSheet: View {
     @ViewBuilder
     private var paymentDetailsSection: some View {
         if paymentType != "None" {
-            if paymentType != "Casso" && paymentType != "PayOS" {
+            if paymentType != "PayOS" {
                 EditFieldRow(icon: "creditcard.fill", iconColor: Theme.secondaryAccent, placeholder: "Payment Details / ID", text: $newPaymentID)
             }
-            if paymentType == "Casso" {
-                EditFieldRow(icon: "key.fill", iconColor: Theme.successColor, placeholder: "API Key", text: $cassoApiKey)
-                EditFieldRow(icon: "building.2.fill", iconColor: Theme.successColor, placeholder: "Bank ID", text: $bankID)
+            if paymentType == "PayOS" {
+                EditFieldRow(icon: "key.fill", iconColor: Theme.successColor, placeholder: "API Key (Optional)", text: $cassoApiKey)
+                
+                // Bank Picker
+                HStack(spacing: 14) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(Theme.successColor.opacity(0.15))
+                            .frame(width: 38, height: 38)
+                        Image(systemName: "building.2.fill")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(Theme.successColor)
+                    }
+                    Picker("Select Bank", selection: $bankID) {
+                        Text("Select Bank").tag("")
+                        ForEach(Bank.supportedBanks) { bank in
+                            Text("\(bank.name) (\(bank.shortName))").tag(bank.id)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .tint(.white)
+                    Spacer()
+                }
+                .padding(.horizontal, 18)
+                .padding(.vertical, 12)
+                
                 EditFieldRow(icon: "number.square.fill", iconColor: Theme.successColor, placeholder: "Account Number", text: $bankAccountNumber)
             }
         }
@@ -366,7 +389,7 @@ struct EditMemberView: View {
     
     @State private var showingQRScanner = false
 
-    let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "PayOS", "Casso", "None"]
+    let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "PayOS", "None"]
 
     var body: some View {
         ZStack {
@@ -390,9 +413,9 @@ struct EditMemberView: View {
                             name: name,
                             paymentID: finalID,
                             paymentType: finalType,
-                            cassoApiKey: paymentType == "Casso" ? cassoApiKey : nil,
-                            bankID: paymentType == "Casso" ? bankID : nil,
-                            bankAccountNumber: paymentType == "Casso" ? bankAccountNumber : nil
+                            cassoApiKey: paymentType == "PayOS" ? cassoApiKey : nil,
+                            bankID: paymentType == "PayOS" ? bankID : nil,
+                            bankAccountNumber: paymentType == "PayOS" ? bankAccountNumber : nil
                         )
                         presentationMode.wrappedValue.dismiss()
                     }
@@ -471,13 +494,36 @@ struct EditMemberView: View {
     @ViewBuilder
     private var paymentDetailsSection: some View {
         if paymentType != "None" {
-            if paymentType != "Casso" && paymentType != "PayOS" {
+            if paymentType != "PayOS" {
                 EditFieldRow(icon: "creditcard.fill", iconColor: Theme.secondaryAccent, placeholder: "Payment Details / ID", text: $paymentID)
                 Divider().background(Color.white.opacity(0.07))
             }
-            if paymentType == "Casso" {
-                EditFieldRow(icon: "key.fill", iconColor: Theme.successColor, placeholder: "API Key", text: $cassoApiKey)
-                EditFieldRow(icon: "building.2.fill", iconColor: Theme.successColor, placeholder: "Bank ID", text: $bankID)
+            if paymentType == "PayOS" {
+                EditFieldRow(icon: "key.fill", iconColor: Theme.successColor, placeholder: "API Key (Optional)", text: $cassoApiKey)
+                
+                // Bank Picker
+                HStack(spacing: 14) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(Theme.successColor.opacity(0.15))
+                            .frame(width: 38, height: 38)
+                        Image(systemName: "building.2.fill")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(Theme.successColor)
+                    }
+                    Picker("Select Bank", selection: $bankID) {
+                        Text("Select Bank").tag("")
+                        ForEach(Bank.supportedBanks) { bank in
+                            Text("\(bank.name) (\(bank.shortName))").tag(bank.id)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .tint(.white)
+                    Spacer()
+                }
+                .padding(.horizontal, 18)
+                .padding(.vertical, 12)
+                
                 EditFieldRow(icon: "number.square.fill", iconColor: Theme.successColor, placeholder: "Account Number", text: $bankAccountNumber)
                 Divider().background(Color.white.opacity(0.07))
             }
