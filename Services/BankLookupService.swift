@@ -112,4 +112,27 @@ class BankLookupService {
             throw BankLookupError.invalidResponse
         }
     }
+    
+    private func lookupViaVietQRDirect(bin: String, accountNumber: String) async throws -> String {
+        guard let url = URL(string: "https://api.vietqr.io/v2/lookup") else {
+            throw BankLookupError.invalidResponse
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        // No client-id or api-key, relies on public free-tier limits of VietQR
+        
+        let body: [String: String] = ["bin": bin, "accountNumber": accountNumber]
+        request.httpBody = try? JSONEncoder().encode(body)
+        
+        let (data, _) = try await URLSession.shared.data(for: request)
+        let response = try JSONDecoder().decode(VietQRLookupResponse.self, from: data)
+        
+        if response.code == "00", let name = response.data?.accountName {
+            return name
+        } else {
+            throw BankLookupError.invalidResponse
+        }
+    }
 }

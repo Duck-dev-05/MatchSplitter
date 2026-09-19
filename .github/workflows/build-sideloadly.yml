@@ -33,6 +33,7 @@ jobs:
           -project MatchSplitter.xcodeproj \
           -scheme MatchSplitter \
           -sdk iphoneos \
+          -destination "generic/platform=iOS" \
           -configuration Release \
           -clonedSourcePackagesDirPath .build/SourcePackages \
           -disableAutomaticPackageResolution \
