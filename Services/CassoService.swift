@@ -50,30 +50,6 @@ class CassoService {
     // Configured at runtime or statically
     static var apiKey: String = ""
     
-    func lookupAccountName(bin: String, accountNumber: String) async throws -> String {
-        guard let url = URL(string: "https://api.vietqr.io/v2/lookup") else {
-            throw CassoError.invalidURL
-        }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.addValue(PayOSService.clientId, forHTTPHeaderField: "x-client-id")
-        request.addValue(PayOSService.apiKey, forHTTPHeaderField: "x-api-key")
-        
-        let body: [String: String] = ["bin": bin, "accountNumber": accountNumber]
-        request.httpBody = try? JSONEncoder().encode(body)
-        
-        let (data, _) = try await URLSession.shared.data(for: request)
-        let response = try JSONDecoder().decode(VietQRLookupResponse.self, from: data)
-        
-        if response.code == "00", let name = response.data?.accountName {
-            return name
-        } else {
-            throw CassoError.apiError(response.desc)
-        }
-    }
-    
     func getRecentTransactions() async throws -> [CassoTransaction] {
         guard let url = URL(string: "https://oauth.casso.vn/v2/transactions") else {
             throw CassoError.invalidURL

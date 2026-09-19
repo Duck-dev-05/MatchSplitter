@@ -609,7 +609,7 @@ struct LoginView: View {
             try? await Task.sleep(nanoseconds: 300_000_000)
             guard !Task.isCancelled else { return }
             do {
-                let name = try await CassoService.shared.lookupAccountName(bin: bankID, accountNumber: bankAccountNumber)
+                let name = try await BankLookupService.shared.lookupAccountName(bin: bankID, accountNumber: bankAccountNumber)
                 await MainActor.run {
                     self.bankAccountName = name
                 }
