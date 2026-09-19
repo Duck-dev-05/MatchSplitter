@@ -405,15 +405,7 @@ struct EditProfileView: View {
                                 }
                                 .padding(.horizontal, 18)
                                 .padding(.vertical, 14)
-                            }
-                            .onChange(of: defaultCurrency) { newCurrency in
-                                if newCurrency == .vnd {
-                                    if paymentType != "PayOS" && paymentType != "None" {
-                                        paymentType = "PayOS"
-                                    }
-                                }
-                            }
-                            
+
                             Divider().background(Color.white.opacity(0.07)).padding(.leading, 56)
                                 
                                 HStack(spacing: 16) {
@@ -437,6 +429,13 @@ struct EditProfileView: View {
                                 }
                                 .padding(.horizontal, 18)
                                 .padding(.vertical, 14)
+                            }
+                            .onChange(of: defaultCurrency) { newCurrency in
+                                if newCurrency == .vnd {
+                                    if paymentType != "PayOS" && paymentType != "None" {
+                                        paymentType = "PayOS"
+                                    }
+                                }
                             }
                         }
                     }
