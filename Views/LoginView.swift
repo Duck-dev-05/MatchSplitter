@@ -4,8 +4,7 @@ import GoogleSignInSwift
 
 enum AuthMode {
     case login
-    case registerStep1
-    case registerStep2
+    case register
 }
 
 struct LoginView: View {
@@ -17,16 +16,8 @@ struct LoginView: View {
     @State private var mode: AuthMode = .login
     @State private var email = ""
     @State private var password = ""
-
     @State private var name: String = ""
-    @State private var paymentID: String = ""
-    @State private var paymentType: String = "None"
-    @State private var selectedCurrency: Currency? = .vnd
-
-    @State private var bankAccountName: String = ""
-    @State private var bankID: String = ""
-    @State private var bankAccountNumber: String = ""
-    @State private var lookupTask: Task<Void, Never>?
+    @State private var selectedCurrency: Currency = .vnd
 
     @State private var isAnimating: Bool = false
     @State private var errorMessage: String = ""
@@ -35,29 +26,15 @@ struct LoginView: View {
     @FocusState private var focusedField: LoginField?
 
     enum LoginField: Hashable {
-        case email, password, name, paymentID
-    }
-
-    let paymentTypes = ["PromptPay", "Bank Transfer", "PayPal", "PayOS", "None"]
-    var availablePaymentTypes: [String] {
-        if selectedCurrency == .vnd {
-            return ["PayOS", "None"]
-        }
-        return paymentTypes
+        case email, password, name
     }
 
     var isModal: Bool = true
 
-    // Whether form is valid for the current step
     var isStepValid: Bool {
         switch mode {
-        case .login:         return !email.isEmpty && !password.isEmpty
-        case .registerStep1: return !name.isEmpty && !email.isEmpty && !password.isEmpty
-        case .registerStep2:
-            if paymentType == "PayOS" {
-                return selectedCurrency != nil && !bankAccountName.isEmpty && !bankID.isEmpty && !bankAccountNumber.isEmpty
-            }
-            return selectedCurrency != nil && !(paymentType != "None" && paymentID.isEmpty)
+        case .login:    return !email.isEmpty && !password.isEmpty
+        case .register: return !name.isEmpty && !email.isEmpty && !password.isEmpty
         }
     }
 
@@ -135,26 +112,12 @@ struct LoginView: View {
 
                     // Form Container
                     VStack(spacing: metrics.adaptive(12, 18, 22)) {
-                        Text(mode == .login ? "Welcome Back" : (mode == .registerStep1 ? "Create Account" : "Payment Setup"))
+                        Text(mode == .login ? "Welcome Back" : "Create Account")
                             .font(.system(size: metrics.sectionFont, weight: .bold, design: .rounded))
                             .foregroundColor(.white)
 
                         // Segmented Control
-                        if mode != .registerStep2 {
-                            animatedSegmentControl
-                        }
-
-                        // Step indicator for register
-                        if mode == .registerStep1 || mode == .registerStep2 {
-                            HStack(spacing: 8) {
-                                ForEach(0..<2) { i in
-                                    Capsule()
-                                        .fill(i == (mode == .registerStep1 ? 0 : 1) ? Theme.secondaryAccent : Color.white.opacity(0.25))
-                                        .frame(width: i == (mode == .registerStep1 ? 0 : 1) ? 24 : 8, height: 6)
-                                        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: mode)
-                                }
-                            }
-                        }
+                        animatedSegmentControl
 
                         // Error Banner
                         if !errorMessage.isEmpty {
@@ -181,10 +144,8 @@ struct LoginView: View {
                         // Form fields
                         if mode == .login {
                             loginFields
-                        } else if mode == .registerStep1 {
-                            registerStep1Fields
                         } else {
-                            registerStep2Fields
+                            registerFields
                         }
                     }
                     .padding(.horizontal, metrics.hPad)
@@ -257,10 +218,10 @@ struct LoginView: View {
                     .font(.system(size: 15, weight: mode == .login ? .bold : .semibold))
                     .foregroundColor(mode == .login ? .white : .white.opacity(0.45))
 
-                Button("Register") { mode = .registerStep1; errorMessage = "" }
+                Button("Register") { mode = .register; errorMessage = "" }
                     .frame(maxWidth: .infinity)
-                    .font(.system(size: 15, weight: mode == .registerStep1 ? .bold : .semibold))
-                    .foregroundColor(mode == .registerStep1 ? .white : .white.opacity(0.45))
+                    .font(.system(size: 15, weight: mode == .register ? .bold : .semibold))
+                    .foregroundColor(mode == .register ? .white : .white.opacity(0.45))
             }
         }
         .frame(height: 42)
@@ -291,29 +252,43 @@ struct LoginView: View {
         }
     }
 
-    // MARK: - Register Step 1 Fields
-    private var registerStep1Fields: some View {
+    // MARK: - Register Fields
+    private var registerFields: some View {
         VStack(spacing: 14) {
             glassTextField(icon: "person.fill", iconColor: Theme.primaryAccent, placeholder: "Your Name", text: $name, field: .name)
             glassTextField(icon: "envelope.fill", iconColor: Theme.secondaryAccent, placeholder: "Email", text: $email, keyboard: .emailAddress, field: .email)
             glassTextField(icon: "lock.fill", iconColor: Theme.warmGold, placeholder: "Password", text: $password, isSecure: true, field: .password)
-
-            GradientButton(label: "Next →", isEnabled: isStepValid) {
-                isAuthenticating = true
-                Task {
-                    if let _ = try? await FirebaseManager.shared.fetchUser(byEmail: email) {
-                        await MainActor.run {
-                            isAuthenticating = false
-                            errorMessage = "Email already in use."
-                        }
-                    } else {
-                        await MainActor.run {
-                            isAuthenticating = false
-                            errorMessage = ""
-                            withAnimation { mode = .registerStep2 }
-                        }
+            
+            // Simplified Currency Picker
+            HStack(spacing: 12) {
+                IconBadge(systemName: "banknote.fill", color: Theme.successColor, size: 36, iconSize: 14)
+                Menu {
+                    ForEach(Currency.allCases, id: \.self) { c in
+                        Button("\(c.rawValue) (\(c.symbol))") { selectedCurrency = c }
+                    }
+                } label: {
+                    HStack {
+                        Text("\(selectedCurrency.rawValue) (\(selectedCurrency.symbol))")
+                            .font(.system(size: 15))
+                            .foregroundColor(.white)
+                        Spacer()
+                        Image(systemName: "chevron.up.chevron.down")
+                            .foregroundColor(.white.opacity(0.6))
+                            .font(.system(size: 12))
                     }
                 }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(Color.white.opacity(0.08))
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
+            )
+
+            GradientButton(label: "Register", isEnabled: isStepValid) {
+                handleRegister()
             }
             .padding(.top, 6)
 
@@ -321,120 +296,7 @@ struct LoginView: View {
         }
     }
 
-    // MARK: - Register Step 2 Fields
-    private var registerStep2Fields: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            // Payment type picker styled as glass field
-            VStack(spacing: 0) {
-                HStack(spacing: 12) {
-                    IconBadge(systemName: "building.columns.fill", color: Theme.secondaryAccent, size: 36, iconSize: 14)
-                    Menu {
-                        ForEach(availablePaymentTypes, id: \.self) { type in
-                            Button(type) { 
-                                paymentType = type 
-                            }
-                        }
-                    } label: {
-                        HStack {
-                            Text(paymentType)
-                                .foregroundColor(.white)
-                            Spacer()
-                            Image(systemName: "chevron.up.chevron.down")
-                                .foregroundColor(.white.opacity(0.6))
-                                .font(.system(size: 12))
-                        }
-                    }
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-            }
-            .background(Color.white.opacity(0.12))
-            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-
-            if paymentType != "None" {
-                if paymentType != "PayOS" {
-                    glassTextField(
-                        icon: "creditcard.fill",
-                        iconColor: Theme.secondaryAccent,
-                        placeholder: placeholderFor(type: paymentType),
-                        text: $paymentID
-                    )
-                }
-                if paymentType == "PayOS" {
-                    // Bank Picker
-                    HStack(spacing: 16) {
-                        BankLogoView(bankID: bankID, size: 44)
-                        Picker("Select Bank", selection: $bankID) {
-                            Text("Select Bank").tag("")
-                            ForEach(Bank.supportedBanks) { bank in
-                                Text("\(bank.name) (\(bank.shortName))").tag(bank.id)
-                            }
-                        }
-                        .pickerStyle(.menu)
-                        .tint(.white)
-                        Spacer()
-                    }
-                    .padding(.horizontal, 18)
-                    .padding(.vertical, 8)
-                    
-                    glassTextField(icon: "number.square.fill", iconColor: Theme.successColor, placeholder: "Account Number", text: $bankAccountNumber)
-                    
-                    glassTextField(icon: "person.text.rectangle", iconColor: Theme.successColor, placeholder: "Account Name", text: $bankAccountName)
-                }
-            }
-
-            // Currency picker
-            VStack(spacing: 0) {
-                HStack(spacing: 12) {
-                    IconBadge(systemName: "banknote.fill", color: Theme.warmGold, size: 36, iconSize: 14)
-                    Menu {
-                        ForEach(Currency.allCases, id: \.self) { c in
-                            Button("\(c.rawValue) (\(c.symbol))") { selectedCurrency = c }
-                        }
-                    } label: {
-                        HStack {
-                            if let currency = selectedCurrency {
-                                Text("\(currency.rawValue) (\(currency.symbol))")
-                                    .foregroundColor(.white)
-                            } else {
-                                Text("Select Currency")
-                                    .foregroundColor(.white.opacity(0.5))
-                            }
-                            Spacer()
-                            Image(systemName: "chevron.up.chevron.down")
-                                .foregroundColor(.white.opacity(0.6))
-                                .font(.system(size: 12))
-                        }
-                    }
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-            }
-            .background(Color.white.opacity(0.12))
-            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-            .onChange(of: selectedCurrency) { newCurrency in
-                if newCurrency == .vnd {
-                    if paymentType != "PayOS" && paymentType != "None" {
-                        paymentType = "PayOS"
-                    }
-                }
-            }
-
-            GradientButton(label: "Finish & Register", isEnabled: isStepValid, action: handleRegister)
-                .padding(.top, 6)
-
-            Button(action: { withAnimation { mode = .registerStep1 } }) {
-                Text("← Back")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white.opacity(0.65))
-                    .frame(maxWidth: .infinity)
-            }
-        }
-        .onChange(of: bankID) { _ in checkAccountName() }
-        .onChange(of: bankAccountNumber) { _ in checkAccountName() }
-    }
-
-    // MARK: - Glass Text Field (with focus glow)
+    // MARK: - Glass Text Field
     private func glassTextField(
         icon: String,
         iconColor: Color,
@@ -483,7 +345,6 @@ struct LoginView: View {
         Task {
             if await self.authViewModel.authenticateUser(email: self.email, password: self.password) != nil {
                 await MainActor.run {
-                    // Sync currentUser to GroupViewModel so other tabs update
                     if let user = self.authViewModel.currentUser {
                         self.viewModel.login(user: user)
                     }
@@ -554,32 +415,32 @@ struct LoginView: View {
     }
 
     private func handleRegister() {
-        guard let currency = selectedCurrency else { return }
-        let finalType = paymentType == "None" ? nil : paymentType
-        let finalID = paymentType == "None" ? "" : paymentID
-        
-        let finalBankAccountName = paymentType == "PayOS" ? bankAccountName : nil
-        let finalBankID = paymentType == "PayOS" ? bankID : nil
-        let finalBankAccountNumber = paymentType == "PayOS" ? bankAccountNumber : nil
-
         let newUser = User(
             name: name, 
             email: email, 
             password: password, 
-            paymentID: finalID, 
-            paymentType: finalType, 
-            bankAccountName: finalBankAccountName,
-            bankID: finalBankID,
-            bankAccountNumber: finalBankAccountNumber
+            paymentID: "", 
+            paymentType: nil, 
+            bankAccountName: nil,
+            bankID: nil,
+            bankAccountNumber: nil
         )
         isAuthenticating = true
         errorMessage = ""
         Task {
             do {
-                try await self.authViewModel.registerUserAsync(user: newUser, defaultCurrency: currency)
+                if let _ = try? await FirebaseManager.shared.fetchUser(byEmail: email) {
+                    await MainActor.run {
+                        isAuthenticating = false
+                        errorMessage = "Email already in use."
+                    }
+                    return
+                }
+                
+                try await self.authViewModel.registerUserAsync(user: newUser, defaultCurrency: selectedCurrency)
                 await MainActor.run {
                     if let user = self.authViewModel.currentUser {
-                        self.viewModel.register(user: user, defaultCurrency: currency)
+                        self.viewModel.register(user: user, defaultCurrency: selectedCurrency)
                     }
                     self.isAuthenticating = false
                     self.presentationMode.wrappedValue.dismiss()
@@ -592,35 +453,8 @@ struct LoginView: View {
             }
         }
     }
-
-    func placeholderFor(type: String) -> String {
-        switch type {
-        case "PromptPay": return "e.g. 0812345678"
-        case "Bank Transfer": return "Account Number & Bank"
-        case "PayPal": return "Email address"
-        default: return "Payment Details"
-        }
-    }
-    
-    private func checkAccountName() {
-        guard !bankID.isEmpty, !bankAccountNumber.isEmpty else { return }
-        lookupTask?.cancel()
-        lookupTask = Task {
-            try? await Task.sleep(nanoseconds: 300_000_000)
-            guard !Task.isCancelled else { return }
-            do {
-                let name = try await BankLookupService.shared.lookupAccountName(bin: bankID, accountNumber: bankAccountNumber)
-                await MainActor.run {
-                    self.bankAccountName = name
-                }
-            } catch {
-                print("Lookup failed: \(error)")
-            }
-        }
-    }
 }
 
-// MARK: - Blur View
 struct BlurView: UIViewRepresentable {
     var style: UIBlurEffect.Style
 

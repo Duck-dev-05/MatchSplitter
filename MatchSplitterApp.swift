@@ -13,12 +13,16 @@ struct MatchSplitterApp: App {
     @StateObject private var profileViewModel = ProfileViewModel()
     @StateObject private var settlementViewModel = SettlementViewModel()
     @StateObject private var themeManager = ThemeManager.shared
+    
+    @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding: Bool = false
 
     var body: some Scene {
         WindowGroup {
             GeometryReader { geo in
                 SwiftUI.Group {
-                    if groupViewModel.currentUser == nil {
+                    if !hasSeenOnboarding {
+                        OnboardingView()
+                    } else if groupViewModel.currentUser == nil {
                         LandingView()
                     } else {
                         MainTabView()
