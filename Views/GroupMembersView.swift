@@ -79,6 +79,7 @@ struct AddMemberSheet: View {
 
     @State private var newName = ""
     @State private var newPaymentID = ""
+    @State private var paymentType = "None"
     @State private var showingQRScanner = false
     
     @State private var cassoApiKey: String = ""
@@ -395,6 +396,7 @@ struct EditMemberView: View {
     @Environment(\.presentationMode) var presentationMode
 
     @State private var name: String = ""
+    @State private var paymentID: String = ""
     @State private var paymentType: String = "None"
     @State private var cassoApiKey: String = ""
     @State private var bankID: String = ""
