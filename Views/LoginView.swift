@@ -361,11 +361,9 @@ struct LoginView: View {
                     )
                 }
                 if paymentType == "PayOS" {
-                    glassTextField(icon: "person.text.rectangle", iconColor: Theme.successColor, placeholder: "Account Name", text: $bankAccountName)
-                    
                     // Bank Picker
                     HStack(spacing: 16) {
-                        IconBadge(systemName: "building.2.fill", color: Theme.successColor)
+                        BankLogoView(bankID: bankID, size: 44)
                         Picker("Select Bank", selection: $bankID) {
                             Text("Select Bank").tag("")
                             ForEach(Bank.supportedBanks) { bank in
@@ -377,12 +375,11 @@ struct LoginView: View {
                         Spacer()
                     }
                     .padding(.horizontal, 18)
-                    .padding(.vertical, 14)
-                    .background(Color.white.opacity(0.06))
-                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(Color.white.opacity(0.1), lineWidth: 1))
+                    .padding(.vertical, 8)
                     
                     glassTextField(icon: "number.square.fill", iconColor: Theme.successColor, placeholder: "Account Number", text: $bankAccountNumber)
+                    
+                    glassTextField(icon: "person.text.rectangle", iconColor: Theme.successColor, placeholder: "Account Name", text: $bankAccountName)
                 }
             }
 
@@ -609,14 +606,15 @@ struct LoginView: View {
         guard !bankID.isEmpty, !bankAccountNumber.isEmpty else { return }
         lookupTask?.cancel()
         lookupTask = Task {
-            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            try? await Task.sleep(nanoseconds: 300_000_000)
             guard !Task.isCancelled else { return }
-            if let name = try? await CassoService.shared.lookupAccountName(bin: bankID, accountNumber: bankAccountNumber) {
+            do {
+                let name = try await CassoService.shared.lookupAccountName(bin: bankID, accountNumber: bankAccountNumber)
                 await MainActor.run {
-                    if self.bankAccountName.isEmpty || self.bankAccountName != name {
-                        self.bankAccountName = name
-                    }
+                    self.bankAccountName = name
                 }
+            } catch {
+                print("Lookup failed: \(error)")
             }
         }
     }

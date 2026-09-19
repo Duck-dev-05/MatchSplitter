@@ -269,18 +269,9 @@ struct AddMemberSheet: View {
                 EditFieldRow(icon: "creditcard.fill", iconColor: Theme.secondaryAccent, placeholder: "Payment Details / ID", text: $newPaymentID)
             }
             if paymentType == "PayOS" {
-                EditFieldRow(icon: "person.text.rectangle", iconColor: Theme.successColor, placeholder: "Account Name", text: $bankAccountName)
-                
                 // Bank Picker
                 HStack(spacing: 14) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 10)
-                            .fill(Theme.successColor.opacity(0.15))
-                            .frame(width: 38, height: 38)
-                        Image(systemName: "building.2.fill")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(Theme.successColor)
-                    }
+                    BankLogoView(bankID: bankID, size: 38)
                     Picker("Select Bank", selection: $bankID) {
                         Text("Select Bank").tag("")
                         ForEach(Bank.supportedBanks) { bank in
@@ -295,6 +286,8 @@ struct AddMemberSheet: View {
                 .padding(.vertical, 12)
                 
                 EditFieldRow(icon: "number.square.fill", iconColor: Theme.successColor, placeholder: "Account Number", text: $bankAccountNumber)
+                
+                EditFieldRow(icon: "person.text.rectangle", iconColor: Theme.successColor, placeholder: "Account Name", text: $bankAccountName)
             }
         }
     }
@@ -303,14 +296,15 @@ struct AddMemberSheet: View {
         guard !bankID.isEmpty, !bankAccountNumber.isEmpty else { return }
         lookupTask?.cancel()
         lookupTask = Task {
-            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            try? await Task.sleep(nanoseconds: 300_000_000)
             guard !Task.isCancelled else { return }
-            if let name = try? await CassoService.shared.lookupAccountName(bin: bankID, accountNumber: bankAccountNumber) {
+            do {
+                let name = try await CassoService.shared.lookupAccountName(bin: bankID, accountNumber: bankAccountNumber)
                 await MainActor.run {
-                    if self.bankAccountName.isEmpty || self.bankAccountName != name {
-                        self.bankAccountName = name
-                    }
+                    self.bankAccountName = name
                 }
+            } catch {
+                print("Lookup failed: \(error)")
             }
         }
     }
@@ -546,18 +540,9 @@ struct EditMemberView: View {
                 Divider().background(Color.white.opacity(0.07))
             }
             if paymentType == "PayOS" {
-                EditFieldRow(icon: "person.text.rectangle", iconColor: Theme.successColor, placeholder: "Account Name", text: $bankAccountName)
-                
                 // Bank Picker
                 HStack(spacing: 14) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 10)
-                            .fill(Theme.successColor.opacity(0.15))
-                            .frame(width: 38, height: 38)
-                        Image(systemName: "building.2.fill")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(Theme.successColor)
-                    }
+                    BankLogoView(bankID: bankID, size: 38)
                     Picker("Select Bank", selection: $bankID) {
                         Text("Select Bank").tag("")
                         ForEach(Bank.supportedBanks) { bank in
@@ -573,6 +558,8 @@ struct EditMemberView: View {
                 
                 EditFieldRow(icon: "number.square.fill", iconColor: Theme.successColor, placeholder: "Account Number", text: $bankAccountNumber)
                 Divider().background(Color.white.opacity(0.07))
+                
+                EditFieldRow(icon: "person.text.rectangle", iconColor: Theme.successColor, placeholder: "Account Name", text: $bankAccountName)
             }
         }
     }
@@ -581,14 +568,15 @@ struct EditMemberView: View {
         guard !bankID.isEmpty, !bankAccountNumber.isEmpty else { return }
         lookupTask?.cancel()
         lookupTask = Task {
-            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            try? await Task.sleep(nanoseconds: 300_000_000)
             guard !Task.isCancelled else { return }
-            if let name = try? await CassoService.shared.lookupAccountName(bin: bankID, accountNumber: bankAccountNumber) {
+            do {
+                let name = try await CassoService.shared.lookupAccountName(bin: bankID, accountNumber: bankAccountNumber)
                 await MainActor.run {
-                    if self.bankAccountName.isEmpty || self.bankAccountName != name {
-                        self.bankAccountName = name
-                    }
+                    self.bankAccountName = name
                 }
+            } catch {
+                print("Lookup failed: \(error)")
             }
         }
     }

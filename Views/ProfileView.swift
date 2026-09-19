@@ -358,11 +358,9 @@ struct EditProfileView: View {
                                         settingsFieldRow(icon: "link", iconColor: Theme.secondaryAccent, placeholder: placeholder, text: $paymentID)
                                     }
                                     if paymentType == "PayOS" {
-                                        settingsFieldRow(icon: "person.text.rectangle", iconColor: Theme.successColor, placeholder: "Account Name", text: $bankAccountName)
-                                        
                                         // Bank Picker
                                         HStack(spacing: 16) {
-                                            IconBadge(systemName: "building.2.fill", color: Theme.successColor)
+                                            BankLogoView(bankID: bankID, size: 44)
                                             Picker("Select Bank", selection: $bankID) {
                                                 Text("Select Bank").tag("")
                                                 ForEach(Bank.supportedBanks) { bank in
@@ -374,9 +372,11 @@ struct EditProfileView: View {
                                             Spacer()
                                         }
                                         .padding(.horizontal, 18)
-                                        .padding(.vertical, 14)
+                                        .padding(.vertical, 8)
                                         
                                         settingsFieldRow(icon: "number.square.fill", iconColor: Theme.successColor, placeholder: "Account Number", text: $bankAccountNumber)
+                                        
+                                        settingsFieldRow(icon: "person.text.rectangle", iconColor: Theme.successColor, placeholder: "Account Name", text: $bankAccountName)
                                     }
                                 }
                             }
@@ -531,14 +531,16 @@ struct EditProfileView: View {
         guard !bankID.isEmpty, !bankAccountNumber.isEmpty else { return }
         lookupTask?.cancel()
         lookupTask = Task {
-            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            try? await Task.sleep(nanoseconds: 300_000_000)
             guard !Task.isCancelled else { return }
-            if let name = try? await CassoService.shared.lookupAccountName(bin: bankID, accountNumber: bankAccountNumber) {
+            
+            do {
+                let name = try await CassoService.shared.lookupAccountName(bin: bankID, accountNumber: bankAccountNumber)
                 await MainActor.run {
-                    if self.bankAccountName.isEmpty || self.bankAccountName != name {
-                        self.bankAccountName = name
-                    }
+                    self.bankAccountName = name
                 }
+            } catch {
+                print("Lookup failed: \(error)")
             }
         }
     }
