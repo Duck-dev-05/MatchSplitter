@@ -55,7 +55,7 @@ class DeepLinkManager {
                         try? await FirebaseManager.shared.saveGroup(group)
                     } else {
                         // Already in group, post success as well (or another notification)
-                        await MainActor.run {
+                        await MainActor.run { [group] in
                             NotificationCenter.default.post(name: NSNotification.Name("JoinGroupSuccess"), object: group)
                         }
                     }

@@ -3,8 +3,8 @@ import Foundation
 struct Bank: Identifiable, Hashable {
     let id: String
     let name: String
-    let shortName: String
     let logoURL: String?
+    let shortName: String
     
     static let supportedBanks: [Bank] = [
         Bank(id: "970415", name: "Ngân hàng TMCP Công thương Việt Nam", logoURL: "https://cdn.vietqr.io/img/ICB.png", shortName: "VietinBank"),
