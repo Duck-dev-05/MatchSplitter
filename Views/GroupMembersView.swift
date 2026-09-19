@@ -82,7 +82,7 @@ struct AddMemberSheet: View {
     @State private var paymentType = "None"
     @State private var showingQRScanner = false
     
-    @State private var cassoApiKey: String = ""
+    @State private var bankAccountName: String = ""
     @State private var bankID: String = ""
     @State private var bankAccountNumber: String = ""
 
@@ -173,14 +173,14 @@ struct AddMemberSheet: View {
                                             name: newName.trimmingCharacters(in: .whitespacesAndNewlines), 
                                             paymentID: finalID, 
                                             paymentType: finalType,
-                                            cassoApiKey: paymentType == "PayOS" ? cassoApiKey : nil,
+                                            bankAccountName: paymentType == "PayOS" ? bankAccountName : nil,
                                             bankID: paymentType == "PayOS" ? bankID : nil,
                                             bankAccountNumber: paymentType == "PayOS" ? bankAccountNumber : nil
                                         )
                                         newName = ""
                                         newPaymentID = ""
                                         paymentType = "None"
-                                        cassoApiKey = ""
+                                        bankAccountName = ""
                                         bankID = ""
                                         bankAccountNumber = ""
                                     }
@@ -266,7 +266,7 @@ struct AddMemberSheet: View {
                 EditFieldRow(icon: "creditcard.fill", iconColor: Theme.secondaryAccent, placeholder: "Payment Details / ID", text: $newPaymentID)
             }
             if paymentType == "PayOS" {
-                EditFieldRow(icon: "key.fill", iconColor: Theme.successColor, placeholder: "API Key (Optional)", text: $cassoApiKey)
+                EditFieldRow(icon: "person.text.rectangle", iconColor: Theme.successColor, placeholder: "Account Name", text: $bankAccountName)
                 
                 // Bank Picker
                 HStack(spacing: 14) {
@@ -398,7 +398,7 @@ struct EditMemberView: View {
     @State private var name: String = ""
     @State private var paymentID: String = ""
     @State private var paymentType: String = "None"
-    @State private var cassoApiKey: String = ""
+    @State private var bankAccountName: String = ""
     @State private var bankID: String = ""
     @State private var bankAccountNumber: String = ""
     
@@ -435,7 +435,7 @@ struct EditMemberView: View {
                             name: name,
                             paymentID: finalID,
                             paymentType: finalType,
-                            cassoApiKey: paymentType == "PayOS" ? cassoApiKey : nil,
+                            bankAccountName: paymentType == "PayOS" ? bankAccountName : nil,
                             bankID: paymentType == "PayOS" ? bankID : nil,
                             bankAccountNumber: paymentType == "PayOS" ? bankAccountNumber : nil
                         )
@@ -510,7 +510,7 @@ struct EditMemberView: View {
                 paymentType = "PayOS"
             }
             paymentID = member.paymentID ?? ""
-            cassoApiKey = member.cassoApiKey ?? ""
+            bankAccountName = member.bankAccountName ?? ""
             bankID = member.bankID ?? ""
             bankAccountNumber = member.bankAccountNumber ?? ""
         }
@@ -524,7 +524,7 @@ struct EditMemberView: View {
                 Divider().background(Color.white.opacity(0.07))
             }
             if paymentType == "PayOS" {
-                EditFieldRow(icon: "key.fill", iconColor: Theme.successColor, placeholder: "API Key (Optional)", text: $cassoApiKey)
+                EditFieldRow(icon: "person.text.rectangle", iconColor: Theme.successColor, placeholder: "Account Name", text: $bankAccountName)
                 
                 // Bank Picker
                 HStack(spacing: 14) {

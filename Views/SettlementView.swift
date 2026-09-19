@@ -412,9 +412,9 @@ struct QRCodePaymentView: View {
                     let bankAccountNumber = settlement.toUser.bankAccountNumber ?? ""
                     
                     let amountInt = Int(amountToPay)
-                    let urlString = "https://img.vietqr.io/image/\(bankID)-\(bankAccountNumber)-compact2.png?amount=\(amountInt)&addInfo=\(info)"
-                    
-                    CassoService.apiKey = settlement.toUser.cassoApiKey ?? ""
+                    let accountName = settlement.toUser.bankAccountName ?? ""
+                    let encodedName = accountName.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+                    let urlString = "https://img.vietqr.io/image/\(bankID)-\(bankAccountNumber)-compact2.png?amount=\(amountInt)&addInfo=\(info)&accountName=\(encodedName)"
                     
                     await MainActor.run {
                         self.qrPayload = urlString

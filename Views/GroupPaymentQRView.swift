@@ -169,10 +169,10 @@ struct GroupPaymentQRView: View {
                     let info = orderCode
                     let bankID = creator.bankID ?? ""
                     let bankAccountNumber = creator.bankAccountNumber ?? ""
+                    let accountName = creator.bankAccountName ?? ""
+                    let encodedName = accountName.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
                     
-                    let urlString = "https://img.vietqr.io/image/\(bankID)-\(bankAccountNumber)-compact2.png?amount=\(amount)&addInfo=\(info)"
-                    
-                    CassoService.apiKey = creator.cassoApiKey ?? ""
+                    let urlString = "https://img.vietqr.io/image/\(bankID)-\(bankAccountNumber)-compact2.png?amount=\(amount)&addInfo=\(info)&accountName=\(encodedName)"
                     
                     await MainActor.run {
                         self.qrPayload = urlString

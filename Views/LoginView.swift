@@ -23,7 +23,7 @@ struct LoginView: View {
     @State private var paymentType: String = "None"
     @State private var selectedCurrency: Currency? = .vnd
 
-    @State private var cassoApiKey: String = ""
+    @State private var bankAccountName: String = ""
     @State private var bankID: String = ""
     @State private var bankAccountNumber: String = ""
 
@@ -54,7 +54,7 @@ struct LoginView: View {
         case .registerStep1: return !name.isEmpty && !email.isEmpty && !password.isEmpty
         case .registerStep2:
             if paymentType == "PayOS" {
-                return selectedCurrency != nil && !cassoApiKey.isEmpty && !bankID.isEmpty && !bankAccountNumber.isEmpty
+                return selectedCurrency != nil && !bankAccountName.isEmpty && !bankID.isEmpty && !bankAccountNumber.isEmpty
             }
             return selectedCurrency != nil && !(paymentType != "None" && paymentID.isEmpty)
         }
@@ -360,7 +360,7 @@ struct LoginView: View {
                     )
                 }
                 if paymentType == "PayOS" {
-                    glassTextField(icon: "key.fill", iconColor: Theme.successColor, placeholder: "API Key", text: $cassoApiKey)
+                    glassTextField(icon: "person.text.rectangle", iconColor: Theme.successColor, placeholder: "Account Name", text: $bankAccountName)
                     
                     // Bank Picker
                     HStack(spacing: 16) {
@@ -558,7 +558,7 @@ struct LoginView: View {
         let finalType = paymentType == "None" ? nil : paymentType
         let finalID = paymentType == "None" ? "" : paymentID
         
-        let finalCassoApiKey = paymentType == "PayOS" ? cassoApiKey : nil
+        let finalBankAccountName = paymentType == "PayOS" ? bankAccountName : nil
         let finalBankID = paymentType == "PayOS" ? bankID : nil
         let finalBankAccountNumber = paymentType == "PayOS" ? bankAccountNumber : nil
 
@@ -568,7 +568,7 @@ struct LoginView: View {
             password: password, 
             paymentID: finalID, 
             paymentType: finalType, 
-            cassoApiKey: finalCassoApiKey,
+            bankAccountName: finalBankAccountName,
             bankID: finalBankID,
             bankAccountNumber: finalBankAccountNumber
         )

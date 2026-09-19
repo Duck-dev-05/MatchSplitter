@@ -288,7 +288,7 @@ struct EditProfileView: View {
     @State private var paymentID: String = ""
     @State private var defaultCurrency: Currency = .usd
 
-    @State private var cassoApiKey: String = ""
+    @State private var bankAccountName: String = ""
     @State private var bankID: String = ""
     @State private var bankAccountNumber: String = ""
 
@@ -357,7 +357,7 @@ struct EditProfileView: View {
                                         settingsFieldRow(icon: "link", iconColor: Theme.secondaryAccent, placeholder: placeholder, text: $paymentID)
                                     }
                                     if paymentType == "PayOS" {
-                                        settingsFieldRow(icon: "key.fill", iconColor: Theme.successColor, placeholder: "API Key (Optional)", text: $cassoApiKey)
+                                        settingsFieldRow(icon: "person.text.rectangle", iconColor: Theme.successColor, placeholder: "Account Name", text: $bankAccountName)
                                         
                                         // Bank Picker
                                         HStack(spacing: 16) {
@@ -463,7 +463,7 @@ struct EditProfileView: View {
             name = viewModel.currentUser?.name ?? ""
             paymentType = viewModel.currentUser?.paymentType ?? "None"
             paymentID = viewModel.currentUser?.paymentID ?? ""
-            cassoApiKey = viewModel.currentUser?.cassoApiKey ?? ""
+            bankAccountName = viewModel.currentUser?.bankAccountName ?? ""
             bankID = viewModel.currentUser?.bankID ?? ""
             bankAccountNumber = viewModel.currentUser?.bankAccountNumber ?? ""
             defaultCurrency = viewModel.defaultCurrency
@@ -504,7 +504,7 @@ struct EditProfileView: View {
                 name: name,
                 paymentID: finalID,
                 paymentType: finalType,
-                cassoApiKey: paymentType == "PayOS" ? cassoApiKey : nil,
+                bankAccountName: paymentType == "PayOS" ? bankAccountName : nil,
                 bankID: paymentType == "PayOS" ? bankID : nil,
                 bankAccountNumber: paymentType == "PayOS" ? bankAccountNumber : nil
             )
@@ -513,7 +513,7 @@ struct EditProfileView: View {
                 name: name,
                 paymentID: finalID,
                 paymentType: finalType,
-                cassoApiKey: paymentType == "PayOS" ? cassoApiKey : nil,
+                bankAccountName: paymentType == "PayOS" ? bankAccountName : nil,
                 bankID: paymentType == "PayOS" ? bankID : nil,
                 bankAccountNumber: paymentType == "PayOS" ? bankAccountNumber : nil
             )

@@ -223,9 +223,9 @@ class GroupViewModel: ObservableObject {
         }
     }
 
-    func updateCurrentUser(name: String, paymentID: String, paymentType: String? = nil, cassoApiKey: String? = nil, bankID: String? = nil, bankAccountNumber: String? = nil) {
+    func updateCurrentUser(name: String, paymentID: String, paymentType: String? = nil, bankAccountName: String? = nil, bankID: String? = nil, bankAccountNumber: String? = nil) {
         if let current = currentUser {
-            let updatedUser = User(id: current.id, name: name, paymentID: paymentID.isEmpty ? nil : paymentID, paymentType: paymentType, cassoApiKey: cassoApiKey, bankID: bankID, bankAccountNumber: bankAccountNumber)
+            let updatedUser = User(id: current.id, name: name, paymentID: paymentID.isEmpty ? nil : paymentID, paymentType: paymentType, bankAccountName: bankAccountName, bankID: bankID, bankAccountNumber: bankAccountNumber)
             currentUser = updatedUser
             
             // Also update this user's name across all groups they belong to
@@ -321,10 +321,10 @@ class GroupViewModel: ObservableObject {
         }
     }
     
-    func addMember(to group: Group, name: String, paymentID: String, paymentType: String? = nil, cassoApiKey: String? = nil, bankID: String? = nil, bankAccountNumber: String? = nil) {
+    func addMember(to group: Group, name: String, paymentID: String, paymentType: String? = nil, bankAccountName: String? = nil, bankID: String? = nil, bankAccountNumber: String? = nil) {
         if let index = groups.firstIndex(where: { $0.id == group.id }) {
             var updatedGroup = groups[index]
-            updatedGroup.members.append(User(name: name, paymentID: paymentID.isEmpty ? nil : paymentID, paymentType: paymentType, cassoApiKey: cassoApiKey, bankID: bankID, bankAccountNumber: bankAccountNumber))
+            updatedGroup.members.append(User(name: name, paymentID: paymentID.isEmpty ? nil : paymentID, paymentType: paymentType, bankAccountName: bankAccountName, bankID: bankID, bankAccountNumber: bankAccountNumber))
             Task {
                 try? await FirebaseManager.shared.saveGroup(updatedGroup)
             }
@@ -356,7 +356,7 @@ class GroupViewModel: ObservableObject {
         return Array(allFriends.filter { !groupMemberIds.contains($0.id) }).sorted(by: { $0.name < $1.name })
     }
     
-    func updateMember(in group: Group, memberId: UUID, name: String, paymentID: String, paymentType: String? = nil, cassoApiKey: String? = nil, bankID: String? = nil, bankAccountNumber: String? = nil) {
+    func updateMember(in group: Group, memberId: UUID, name: String, paymentID: String, paymentType: String? = nil, bankAccountName: String? = nil, bankID: String? = nil, bankAccountNumber: String? = nil) {
         if let groupIndex = groups.firstIndex(where: { $0.id == group.id }) {
             if let memberIndex = groups[groupIndex].members.firstIndex(where: { $0.id == memberId }) {
                 let currentMember = groups[groupIndex].members[memberIndex]
@@ -367,7 +367,7 @@ class GroupViewModel: ObservableObject {
                     password: currentMember.password,
                     paymentID: paymentID.isEmpty ? nil : paymentID,
                     paymentType: paymentType,
-                    cassoApiKey: cassoApiKey,
+                    bankAccountName: bankAccountName,
                     bankID: bankID,
                     bankAccountNumber: bankAccountNumber
                 )
